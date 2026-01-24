@@ -1,7 +1,7 @@
 # EscanDoc - Estado Actual del Proyecto
 
 **Última actualización:** 24 Enero 2026
-**Versión:** Fase 0 + ÉPICA 1 + ÉPICA 2 COMPLETADAS
+**Versión:** Fase 0 + ÉPICA 1 + ÉPICA 2 + ÉPICA 3 COMPLETADAS
 
 ---
 
@@ -39,6 +39,21 @@
 
 **Ubicación:** `lib/features/notes/` + `test/features/notes/`
 
+### ✅ ÉPICA 3 (Search - Búsqueda FTS5 + Voz)
+**Tests:** 31/31 pasando (15 Domain + 11 Data + 5 SpeechService)
+
+**Implementado:**
+- Domain: 2 UseCases (`SearchDocuments`, `VoiceSearch`)
+- Data: `SearchResult` model + `SearchRepositoryImpl` (queries FTS5)
+- Core: `SpeechServiceImpl` (wrapper speech_to_text)
+- Presentation: `SearchProvider` (con debounce 500ms) + SearchPage + 5 widgets
+- HU-005: Búsqueda incremental por texto en documentos/notas ✓
+- HU-006: Búsqueda por voz con indicador visual ✓
+- FTS5 con snippets destacados (<b>query</b>)
+- Integración en home con botón búsqueda
+
+**Ubicación:** `lib/features/search/` + `test/features/search/` + `lib/core/services/speech_service*`
+
 ---
 
 ## DEPENDENCIAS INSTALADAS
@@ -47,9 +62,10 @@
 - `provider: ^6.1.2` - State management
 - `sqflite: ^2.4.2` - SQLite local
 - `easy_localization: ^3.0.7` - i18n (configurado)
+- `speech_to_text: ^7.3.0` - Búsqueda por voz (ÉPICA 3)
 - `printing: ^5.14.2` - Vista PDF
-- `google_mlkit_text_recognition: ^0.15.0` - OCR (futuro)
-- `flutter_doc_scanner: ^0.0.17` - Scanner nativo (futuro)
+- `google_mlkit_text_recognition: ^0.15.0` - OCR (futuro ÉPICA 4)
+- `flutter_doc_scanner: ^0.0.17` - Scanner nativo (futuro ÉPICA 4)
 
 ### Testing
 - `mocktail: ^1.0.4` - Mocks para tests unitarios
@@ -68,10 +84,11 @@
 - `assets/l10n/en.json`
 
 **Claves disponibles:**
-- Botones: `scan_button`, `save_button`, `delete_button`, `back_button`, `share_button`
+- Botones: `scan_button`, `save_button`, `delete_button`, `back_button`, `share_button`, `search_button`
 - Mensajes: `document_saved`, `document_deleted`, `error_loading`
 - Empty states: `documents_empty`, `documents_empty_subtitle`
 - Diálogos: `delete_confirm_title`, `delete_yes_button`, `delete_no_button`
+- Búsqueda: `search_placeholder`, `search_no_results`, `search_listening`, `search_voice_error`, `search_voice_button`
 - Meses: `month_jan` hasta `month_dec`
 - Tipos docs: `doc_type_factura`, `doc_type_recibo`, etc.
 
@@ -120,8 +137,8 @@ lib/features/[feature]/
 
 ## TESTING
 
-**Comando:** `flutter test` (16 tests pasando)
-**Análisis:** `flutter analyze` (sin issues)
+**Comando:** `flutter test` (66 tests pasando)
+**Análisis:** `flutter analyze` (3 warnings/infos no críticos)
 
 **Ubicación tests:** `test/features/[feature]/` (espeja estructura de `lib/`)
 
@@ -137,19 +154,22 @@ lib/features/[feature]/
 **Rutas definidas en `main.dart`:**
 - `/home` → `DocumentsListPage` (ruta inicial)
 - `/document/detail` → `DocumentDetailPage` (recibe `int documentId` como argumento)
+- `/search` → `SearchPage` ✓ (funcional con FTS5 + voz)
+- `/note/edit` → `NoteEditorPage` ✓ (funcional)
 - `/onboarding` → Scaffold vacío (futuro)
-- `/scan`, `/search`, `/note/edit` → Scaffolds vacíos (futuras épicas)
+- `/scan`, `/scan/crop` → Scaffolds vacíos (futuro ÉPICA 4)
 
 **Providers registrados:**
 - `DocumentsProvider` ✓ (funcional)
-- `ScanProvider`, `SearchProvider`, `NoteProvider` (vacíos)
+- `NoteProvider` ✓ (funcional)
+- `SearchProvider` ✓ (funcional con debounce + voz)
+- `ScanProvider` (vacío - futuro)
 
 ---
 
 ## PENDIENTES (No implementadas)
 
-- ÉPICA 3: Search (FTS5 con búsqueda por voz)
-- ÉPICA 4: Scan (captura con flutter_doc_scanner + OCR)
+- ÉPICA 4: Scan (captura con flutter_doc_scanner + OCR + auto-clasificación) - HU-007 a HU-012
 - ÉPICA 5: Vencimientos (notificaciones locales)
 - Onboarding (HU-013)
 

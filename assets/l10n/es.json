@@ -37,7 +37,13 @@
   "home_title": "Mis Documentos",
   "search_title": "Buscar",
   "search_hint": "Buscar documentos...",
+  "search_placeholder": "Buscar en documentos...",
   "search_empty": "No se encontraron documentos",
+  "search_no_results": "No se encontraron documentos",
+  "search_listening": "Escuchando...",
+  "search_voice_error": "No entendí, intentá de nuevo",
+  "search_voice_button": "Buscar por voz",
+  "search_results": "Resultados",
 
   "documents_empty": "No hay documentos todavía",
   "documents_empty_subtitle": "Toca el botón para escanear tu primer documento",

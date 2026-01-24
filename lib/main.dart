@@ -9,6 +9,12 @@ import 'features/documents/presentation/providers/documents_provider.dart';
 import 'features/search/presentation/providers/search_provider.dart';
 import 'features/notes/presentation/providers/note_provider.dart';
 
+// Search dependencies
+import 'features/search/data/repositories/search_repository_impl.dart';
+import 'features/search/domain/usecases/search_documents.dart';
+import 'features/search/domain/usecases/voice_search.dart';
+import 'core/services/speech_service_impl.dart';
+
 // Pages
 import 'features/onboarding/presentation/pages/onboarding_page.dart';
 import 'features/documents/presentation/pages/documents_list_page.dart';
@@ -41,7 +47,20 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ScanProvider()),
         ChangeNotifierProvider(create: (_) => DocumentsProvider()),
-        ChangeNotifierProvider(create: (_) => SearchProvider()),
+        ChangeNotifierProvider(
+          create: (_) {
+            // Crear dependencias para Search
+            final searchRepository = SearchRepositoryImpl();
+            final searchDocuments = SearchDocuments(repository: searchRepository);
+            final speechService = SpeechServiceImpl();
+            final voiceSearch = VoiceSearch(speechService: speechService);
+
+            return SearchProvider(
+              searchDocuments: searchDocuments,
+              voiceSearch: voiceSearch,
+            );
+          },
+        ),
         ChangeNotifierProvider(create: (_) => NoteProvider()),
       ],
       child: MaterialApp(

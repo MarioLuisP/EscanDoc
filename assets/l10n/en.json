@@ -37,7 +37,13 @@
   "home_title": "My Documents",
   "search_title": "Search",
   "search_hint": "Search documents...",
+  "search_placeholder": "Search in documents...",
   "search_empty": "No documents found",
+  "search_no_results": "No documents found",
+  "search_listening": "Listening...",
+  "search_voice_error": "Didn't understand, try again",
+  "search_voice_button": "Search by voice",
+  "search_results": "Results",
 
   "documents_empty": "No documents yet",
   "documents_empty_subtitle": "Tap the button to scan your first document",

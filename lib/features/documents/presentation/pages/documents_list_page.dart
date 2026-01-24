@@ -37,12 +37,13 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
           ),
         ),
         actions: [
-          // Botón de búsqueda (para futuras épicas)
+          // Botón de búsqueda
           IconButton(
             icon: const Icon(Icons.search, size: 28),
             onPressed: () {
-              // TODO: Implementar en Épica Search
+              Navigator.pushNamed(context, '/search');
             },
+            tooltip: 'search_button'.tr(),
           ),
         ],
       ),
