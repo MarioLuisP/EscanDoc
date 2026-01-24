@@ -1,0 +1,88 @@
+# ------------------------------
+# General
+# ------------------------------
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+*.bak
+*.tmp
+*.~
+*~
+.env
+NUL
+# ------------------------------
+# IntelliJ / Android Studio
+# ------------------------------
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# ------------------------------
+# VS Code
+# ------------------------------
+# La siguiente línea está comentada si querés incluir tus settings de VS Code
+#.vscode/
+
+# ------------------------------
+# Flutter / Dart / Pub
+# ------------------------------
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+
+# ------------------------------
+# Android builds
+# ------------------------------
+/android/app/debug
+/android/app/profile
+/android/app/release
+android/upload-keystore.jks
+android/key.properties
+# ------------------------------
+# Firebase
+# ------------------------------
+# NO subir archivos de configuración sensibles
+google-services.json
+GoogleService-Info.plist
+*.firebase/
+
+# Mapas y símbolos de ofuscación
+app.*.symbols
+app.*.map.json
+
+# ------------------------------
+# iOS / Xcode
+# ------------------------------
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Runner.xcworkspace/
+ios/Runner.xcworkspace/xcshareddata/
+xcuserdata/
+DerivedData/
+
+# ------------------------------
+# SO específico (por si las dudas)
+# ------------------------------
+Thumbs.db
+ehthumbs.db
+Icon?
+
+# Project exclude paths
+/.gradle/

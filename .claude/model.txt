@@ -1,0 +1,13 @@
+
+
+  "model": "claude-sonnet-4-5-20250920"
+claude-opus-4-5-20251101
+  Modos de defaultMode disponibles:
+  Según la documentación oficial y reportes de issues, los modos válidos son:
+  ModoComportamiento
+  "default"Pregunta en primer uso de cada herramienta (modo estándar)
+  "acceptEdits"Acepta ediciones automáticamente sin preguntar
+  "plan"Plan Mode: Claude analiza pero NO modifica archivos ni ejecuta comandos
+  "bypassPermissions"Saltea TODAS las confirmaciones (peligroso)
+  "delegate"No documentado oficialmente - existe en la UI pero sin explicación clara
+  "dontAsk"Mencionado en el error pero sin documentación

@@ -1,0 +1,42 @@
+{
+  "env": {
+    "DISABLE_PROMPT_CACHING": "0",
+    "DISABLE_COST_WARNINGS": "0",
+    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "8192",
+    "BASH_MAX_OUTPUT_LENGTH": "50000"
+  },
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(npm run:*)",
+      "Bash(yarn:*)",
+      "Bash(pnpm:*)",
+      "Read(**/*.md)",
+      "Read(**/*.json)",
+      "Read(**/*.js)",
+      "Read(**/*.ts)",
+      "Read(**/*.jsx)",
+      "Read(**/*.tsx)",
+      "Read(**/*.py)",
+      "Bash(flutter pub get:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(flutter test:*)"
+    ],
+    "deny": [
+      "Read(.env*)",
+      "Read(secrets/**)",
+      "Read(**/*.key)",
+      "Read(**/*.pem)",
+      "Read(config/credentials*)",
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)"
+    ],
+    "defaultMode": "default"
+  },
+  "model": "claude-sonnet-4-5-20250929",
+  "outputStyle": "Concise"
+}
