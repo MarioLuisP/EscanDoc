@@ -29,9 +29,10 @@ lib/
 
 1. **Domain → Tests → Data → UI** (siempre este orden)
 2. **TDD:** Test primero, código después
-3. **Sin texto hardcodeado:** Usar claves de localización
-4. **Domain no conoce Flutter:** Solo lógica pura
-5. **Una feature completa antes de la siguiente**
+3. **Enfoque:** TDD clásico: Test RED → Code → Test GREEN
+4. **Sin texto hardcodeado:** Usar claves de localización
+5. **Domain no conoce Flutter:** Solo lógica pura
+6. Refactorizar, sin duda. respetaremos clea**Una feature completa antes de la siguiente**
 
 ## Flujo de Escaneo
 

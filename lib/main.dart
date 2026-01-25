@@ -9,6 +9,16 @@ import 'features/documents/presentation/providers/documents_provider.dart';
 import 'features/search/presentation/providers/search_provider.dart';
 import 'features/notes/presentation/providers/note_provider.dart';
 
+// Scan dependencies
+import 'features/scan/domain/usecases/scan_document.dart';
+import 'features/scan/domain/usecases/save_scanned_document.dart';
+import 'features/scan/domain/usecases/process_ocr.dart';
+import 'core/services/document_scanner_service.dart';
+import 'core/services/pdf_generator.dart';
+import 'core/services/document_classifier.dart';
+import 'core/services/ocr_service.dart';
+import 'features/documents/data/repositories/document_repository.dart';
+
 // Search dependencies
 import 'features/search/data/repositories/search_repository_impl.dart';
 import 'features/search/domain/usecases/search_documents.dart';
@@ -45,7 +55,35 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ScanProvider()),
+        ChangeNotifierProvider(
+          create: (_) {
+            // Crear servicios para Scan
+            final scannerService = DocumentScannerServiceImpl();
+            final pdfGenerator = PDFGeneratorImpl();
+            final classifier = DocumentClassifier();
+            final ocrService = OCRServiceImpl();
+            final documentRepository = DocumentRepository();
+
+            // Crear UseCases
+            final scanDocument = ScanDocument(scannerService);
+            final saveDocument = SaveScannedDocument(
+              pdfGenerator,
+              classifier,
+              documentRepository,
+            );
+            final processOCR = ProcessOCR(
+              ocrService,
+              classifier,
+              documentRepository,
+            );
+
+            return ScanProvider(
+              scanDocument: scanDocument,
+              saveDocument: saveDocument,
+              processOCR: processOCR,
+            );
+          },
+        ),
         ChangeNotifierProvider(create: (_) => DocumentsProvider()),
         ChangeNotifierProvider(
           create: (_) {

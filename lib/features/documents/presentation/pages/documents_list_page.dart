@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
+import 'package:escandoc/features/scan/presentation/providers/scan_provider.dart';
 import 'package:escandoc/features/documents/presentation/widgets/document_card.dart';
 import 'package:escandoc/features/documents/presentation/widgets/empty_state.dart';
 import 'package:escandoc/features/documents/presentation/widgets/delete_confirmation_dialog.dart';
@@ -82,29 +83,82 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
       ),
 
       // Botón flotante ESCANEAR (grande y visible)
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Implementar en Épica Scan
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Scan feature coming in next epic',
-                style: const TextStyle(fontSize: 16),
+      floatingActionButton: Consumer<ScanProvider>(
+        builder: (context, scanProvider, child) {
+          return FloatingActionButton.extended(
+            onPressed: scanProvider.isBusy ? null : () => _handleScan(context),
+            icon: scanProvider.isBusy
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Icon(Icons.camera_alt, size: 28),
+            label: Text(
+              scanProvider.isBusy
+                  ? (scanProvider.isScanning
+                      ? 'scanning'.tr()
+                      : scanProvider.isSaving
+                          ? 'document_saved'.tr()
+                          : 'processing_text'.tr())
+                  : 'scan_button'.tr(),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
+            backgroundColor: scanProvider.isBusy
+                ? Colors.grey
+                : Theme.of(context).primaryColor,
           );
         },
-        icon: const Icon(Icons.camera_alt, size: 28),
-        label: Text(
-          'scan_button'.tr(),
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Theme.of(context).primaryColor,
       ),
     );
+  }
+
+  /// Ejecuta flujo de escaneo completo
+  Future<void> _handleScan(BuildContext context) async {
+    final scanProvider = context.read<ScanProvider>();
+    final documentsProvider = context.read<DocumentsProvider>();
+    final locale = context.locale.languageCode;
+
+    // Ejecutar scan and save
+    final document = await scanProvider.scanAndSave(locale);
+
+    // Usuario canceló o falló
+    if (document == null && mounted) {
+      if (scanProvider.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'error_scanning'.tr(),
+              style: const TextStyle(fontSize: 16),
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Éxito - recargar lista y mostrar confirmación
+    if (mounted) {
+      await documentsProvider.loadDocuments();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'document_saved'.tr(),
+            style: const TextStyle(fontSize: 16),
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   /// Navega a la vista detalle del documento

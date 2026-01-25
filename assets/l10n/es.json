@@ -14,6 +14,9 @@
   "document_deleted": "Documento eliminado",
   "error_saving": "Error al guardar documento",
   "error_loading": "Error al cargar documentos",
+  "error_scanning": "Error al escanear",
+  "scanning": "Escaneando...",
+  "processing_text": "Procesando texto...",
 
   "doc_type_factura": "factura",
   "doc_type_recibo": "recibo",
