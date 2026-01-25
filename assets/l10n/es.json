@@ -68,6 +68,13 @@
   "delete_no_button": "NO, CANCELAR",
 
   "onboarding_skip": "Saltar",
-  "onboarding_next": "Siguiente",
-  "onboarding_done": "Comenzar"
+  "onboarding_next": "SIGUIENTE",
+  "onboarding_done": "EMPEZAR",
+
+  "onboarding_step1_title": "Escaneá documentos fácilmente",
+  "onboarding_step1_desc": "Tocá el botón ESCANEAR y apuntá a tu factura, recibo o documento",
+  "onboarding_step2_title": "Encontralos con búsqueda",
+  "onboarding_step2_desc": "Buscá por nombre o contenido del documento",
+  "onboarding_step3_title": "Agregá notas y recordatorios",
+  "onboarding_step3_desc": "Anotá detalles importantes en cada documento"
 }

@@ -47,3 +47,104 @@ minSdk = 23  // antes: flutter.minSdkVersion (21)
 
 ## Resultado
 ✅ App compila y ejecuta correctamente en emulador
+
+
+
+
+
+# Informe de Cambios - Proyecto Flutter
+
+## Cambios Realizados
+
+### 1. Eliminación de `ndk { abiFilters }`
+**Archivo:** `android/app/build.gradle.kts`
+
+**Qué se hizo:**
+```kotlin
+// Se comentó/eliminó:
+// ndk {
+//     abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
+// }
+```
+
+**Motivo:**
+- Conflicto con el comando `flutter build apk --split-per-abi`
+- Flutter maneja las arquitecturas automáticamente
+- No es necesario para habilitar FTS5 en SQLite
+
+---
+
+### 2. Agregada dependencia de ML Kit Text Recognition
+**Archivo:** `android/app/build.gradle.kts`
+
+**Qué se agregó:**
+```kotlin
+dependencies {
+    implementation("com.google.mlkit:text-recognition:16.0.0")
+}
+```
+
+**Motivo:**
+- Resolver error de clases faltantes en build release
+- Soporte para reconocimiento de texto latino
+
+---
+
+### 3. Configuración de ProGuard para ML Kit
+**Archivo:** `android/app/proguard-rules.pro`
+
+**Se creó:**
+```proguard
+# Keep ML Kit classes
+-keep class com.google.mlkit.** { *; }
+
+# Suppress warnings for optional ML Kit scripts
+-dontwarn com.google.mlkit.vision.text.chinese.**
+-dontwarn com.google.mlkit.vision.text.devanagari.**
+-dontwarn com.google.mlkit.vision.text.japanese.**
+-dontwarn com.google.mlkit.vision.text.korean.**
+```
+
+**Motivo:**
+- Evitar que R8 elimine clases de ML Kit en builds release
+- Resolver error de minificación con ProGuard
+
+---
+
+### 4. Corrección de configuración release
+**Archivo:** `android/app/build.gradle.kts`
+
+**Configuración final:**
+```kotlin
+buildTypes {
+    getByName("release") {
+        isMinifyEnabled = true
+        signingConfig = signingConfigs.getByName("debug")
+        proguardFiles(
+            getDefaultProguardFile("proguard-android-optimize.txt"),
+            "proguard-rules.pro"
+        )
+    }
+}
+```
+
+**Motivo:**
+- Vincular correctamente las reglas ProGuard
+- Unificar configuración release
+
+---
+
+## Limitación Conocida
+
+**FTS5 en SQLite:**
+- `sqflite` usa SQLite del sistema Android
+- FTS5 disponible en dispositivos ARM reales
+- Emuladores x86_64 pueden no tener FTS5
+- Se recomienda pruebas en dispositivo físico
+
+---
+
+## Estado Final
+✅ Build release funcional  
+✅ APK por arquitectura sin conflictos  
+✅ ML Kit estable en release

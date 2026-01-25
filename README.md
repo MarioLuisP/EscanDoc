@@ -140,7 +140,7 @@ flutter build apk --release --split-per-abi
 ## 📝 Licencia
 
 MIT © 2026
-
+flutter build apk --release --split-per-abi
 ---
 
 <p align="center">

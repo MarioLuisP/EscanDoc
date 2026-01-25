@@ -25,6 +25,10 @@ import 'features/search/domain/usecases/search_documents.dart';
 import 'features/search/domain/usecases/voice_search.dart';
 import 'core/services/speech_service_impl.dart';
 
+// Onboarding dependencies
+import 'package:shared_preferences/shared_preferences.dart';
+import 'features/onboarding/domain/usecases/check_onboarding_status.dart';
+
 // Pages
 import 'features/onboarding/presentation/pages/onboarding_page.dart';
 import 'features/documents/presentation/pages/documents_list_page.dart';
@@ -38,18 +42,28 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
 
+  // Verificar estado de onboarding
+  final prefs = await SharedPreferences.getInstance();
+  final checkOnboarding = CheckOnboardingStatus(prefs);
+  final hasCompletedOnboarding = await checkOnboarding.call();
+
+  // Decidir ruta inicial
+  final initialRoute = hasCompletedOnboarding ? '/home' : '/onboarding';
+
   runApp(
     EasyLocalization(
       supportedLocales: const [Locale('es'), Locale('en')],
       path: 'assets/l10n',
       fallbackLocale: const Locale('es'),
-      child: const MyApp(),
+      child: MyApp(initialRoute: initialRoute),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String initialRoute;
+
+  const MyApp({super.key, required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +141,7 @@ class MyApp extends StatelessWidget {
         ),
 
         // Routing
-        initialRoute: '/home', // TODO: Cambiar a /onboarding cuando se implemente
+        initialRoute: initialRoute,
         routes: {
           '/onboarding': (context) => const OnboardingPage(),
           '/home': (context) => const DocumentsListPage(),

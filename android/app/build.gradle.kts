@@ -31,18 +31,22 @@ android {
         versionName = flutter.versionName
 
         // Habilitar FTS5 para sqflite
-        ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
-        }
+        //ndk {
+        //    abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
+        //}
     }
 
     buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+        getByName("release") {
+            isMinifyEnabled = true
             signingConfig = signingConfigs.getByName("debug")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
+
 }
 
 flutter {
@@ -54,4 +58,6 @@ dependencies {
 
     // SQLite con FTS5 habilitado
     implementation("androidx.sqlite:sqlite:2.4.0")
+    // ML Kit Text Recognition (solo latino)
+    implementation("com.google.mlkit:text-recognition:16.0.0")
 }

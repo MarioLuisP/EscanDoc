@@ -68,6 +68,13 @@
   "delete_no_button": "NO, CANCEL",
 
   "onboarding_skip": "Skip",
-  "onboarding_next": "Next",
-  "onboarding_done": "Get Started"
+  "onboarding_next": "NEXT",
+  "onboarding_done": "GET STARTED",
+
+  "onboarding_step1_title": "Scan documents easily",
+  "onboarding_step1_desc": "Tap the SCAN button and point to your invoice, receipt or document",
+  "onboarding_step2_title": "Find them with search",
+  "onboarding_step2_desc": "Search by name or document content",
+  "onboarding_step3_title": "Add notes and reminders",
+  "onboarding_step3_desc": "Write important details on each document"
 }
