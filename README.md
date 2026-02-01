@@ -144,7 +144,6 @@ MIT © 2026
 
 ### En EscanDoc (siempre con fvm)
 ```bash
-fvm flutter run
 fvm flutter build apk
 fvm flutter test
 fvm flutter analyze

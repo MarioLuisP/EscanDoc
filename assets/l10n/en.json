@@ -76,5 +76,17 @@
   "onboarding_step2_title": "Find them with search",
   "onboarding_step2_desc": "Search by name or document content",
   "onboarding_step3_title": "Add notes and reminders",
-  "onboarding_step3_desc": "Write important details on each document"
+  "onboarding_step3_desc": "Write important details on each document",
+
+  "photo_tap_to_view": "Tap to zoom",
+  "document_preview": "Preview",
+  "document_detail": "Document detail",
+
+  "note_section_title": "Note",
+  "note_empty_hint": "No note. Tap to add one",
+
+  "ocr_section_title": "Extracted text",
+  "ocr_empty_hint": "Could not extract text",
+  "ocr_copy_button": "COPY TEXT",
+  "ocr_copied": "✓ Text copied"
 }

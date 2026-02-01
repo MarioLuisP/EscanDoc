@@ -48,6 +48,7 @@ dependencies:
   image: ^4.5.0                      # Procesamiento de imagen (thumbnails)
   pdf: ^3.11.3                       # Generación de PDFs
   printing: ^5.14.2                  # Vista previa e impresión de PDFs
+  pdfrx: ^2.2.24                     # Visualización de PDFs con zoom
 
   # ═══════════════════════════════════════════════════════════════════════════
   # VOICE SEARCH

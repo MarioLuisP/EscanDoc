@@ -1,12 +1,14 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:printing/printing.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
 import 'package:escandoc/features/documents/presentation/widgets/delete_confirmation_dialog.dart';
+import 'package:escandoc/features/documents/presentation/widgets/photo_preview_section.dart';
+import 'package:escandoc/features/documents/presentation/widgets/note_preview_section.dart';
+import 'package:escandoc/features/documents/presentation/widgets/ocr_preview_section.dart';
+import 'package:escandoc/features/documents/presentation/pages/photo_fullscreen_page.dart';
+import 'package:escandoc/features/documents/presentation/pages/ocr_fullscreen_page.dart';
 import 'package:escandoc/features/notes/presentation/providers/note_provider.dart';
-import 'package:escandoc/features/notes/presentation/widgets/note_display.dart';
 
 /// Página de detalle del documento con visualización de PDF/imagen
 /// HU-002: Ver documento en detalle
@@ -78,168 +80,65 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
 
           final document = provider.selectedDocument!;
 
-          return Column(
-            children: [
-              // Visualizador de PDF
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      // PDF/Imagen
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.5,
-                        child: _buildDocumentViewer(document.filePath),
-                      ),
-
-                      // Nota vinculada (si existe)
-                      Consumer<NoteProvider>(
-                        builder: (context, noteProvider, child) {
-                          if (noteProvider.hasNote) {
-                            return NoteDisplay(note: noteProvider.currentNote!);
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
-                    ],
+          return Consumer<NoteProvider>(
+            builder: (context, noteProvider, child) {
+              return Column(
+                children: [
+                  // Sección 1 - Foto (50%)
+                  Expanded(
+                    flex: 50,
+                    child: PhotoPreviewSection(
+                      thumbnailPath: document.thumbnailPath,
+                      onTap: () => _openPhotoFullscreen(document.filePath),
+                    ),
                   ),
-                ),
-              ),
 
-              // Botones de acción (AGREGAR NOTA, COMPARTIR)
-              _buildActionButtons(),
-            ],
+                  // Sección 2 - Nota (20%)
+                  Expanded(
+                    flex: 20,
+                    child: NotePreviewSection(
+                      noteContent: noteProvider.currentNote?.content,
+                      onTap: () => _openNoteEditor(document.id!),
+                    ),
+                  ),
+
+                  // Sección 3 - Texto OCR (30%)
+                  Expanded(
+                    flex: 30,
+                    child: OcrPreviewSection(
+                      ocrText: document.ocrText,
+                      onTap: () => _openOcrFullscreen(document.ocrText),
+                    ),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),
     );
   }
 
-  /// Visualizador de PDF/imagen con zoom
-  Widget _buildDocumentViewer(String filePath) {
-    final file = File(filePath);
-
-    // Si es PDF, usar PdfPreview
-    if (filePath.toLowerCase().endsWith('.pdf')) {
-      return PdfPreview(
-        build: (format) => file.readAsBytes(),
-        allowPrinting: true,
-        allowSharing: true,
-        canChangePageFormat: false,
-        canDebug: false,
-      );
-    }
-
-    // Si es imagen, usar InteractiveViewer con zoom
-    return InteractiveViewer(
-      minScale: 0.5,
-      maxScale: 4.0,
-      child: Center(
-        child: Image.file(
-          file,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    'error_loading'.tr(),
-                    style: const TextStyle(fontSize: 18),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+  /// Abre la vista fullscreen de la foto/PDF
+  void _openPhotoFullscreen(String filePath) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PhotoFullscreenPage(filePath: filePath),
       ),
     );
   }
 
-  /// Botones de acción grandes (AGREGAR NOTA, COMPARTIR)
-  Widget _buildActionButtons() {
-    return Consumer<NoteProvider>(
-      builder: (context, noteProvider, child) {
-        final hasNote = noteProvider.hasNote;
-        final documentId = context.read<DocumentsProvider>().selectedDocument?.id;
+  /// Abre el editor de notas
+  void _openNoteEditor(int documentId) async {
+    final hasNote = context.read<NoteProvider>().hasNote;
 
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 4,
-                offset: const Offset(0, -2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              // Botón AGREGAR NOTA / EDITAR NOTA
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: documentId != null
-                      ? () => _navigateToNoteEditor(documentId, hasNote)
-                      : null,
-                  icon: Icon(
-                    hasNote ? Icons.edit_note : Icons.note_add,
-                    size: 24,
-                  ),
-                  label: Text(
-                    hasNote ? 'note_edit_button'.tr() : 'note_add_button'.tr(),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              // Botón COMPARTIR
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _shareDocument,
-                  icon: const Icon(Icons.share, size: 24),
-                  label: Text(
-                    'share_button'.tr(),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: BorderSide(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  /// Navega al editor de notas
-  void _navigateToNoteEditor(int documentId, bool isEditing) async {
     final result = await Navigator.pushNamed(
       context,
       '/note/edit',
       arguments: {
         'documentId': documentId,
-        'isEditing': isEditing,
+        'isEditing': hasNote,
       },
     );
 
@@ -249,15 +148,12 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
     }
   }
 
-  /// Comparte el documento
-  void _shareDocument() {
-    // TODO: Implementar compartir con share_plus (futuras épicas)
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Share feature coming soon',
-          style: const TextStyle(fontSize: 16),
-        ),
+  /// Abre la vista fullscreen del texto OCR
+  void _openOcrFullscreen(String? ocrText) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OcrFullscreenPage(ocrText: ocrText),
       ),
     );
   }

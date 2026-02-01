@@ -76,5 +76,17 @@
   "onboarding_step2_title": "Encontralos con búsqueda",
   "onboarding_step2_desc": "Buscá por nombre o contenido del documento",
   "onboarding_step3_title": "Agregá notas y recordatorios",
-  "onboarding_step3_desc": "Anotá detalles importantes en cada documento"
+  "onboarding_step3_desc": "Anotá detalles importantes en cada documento",
+
+  "photo_tap_to_view": "Tocar para ampliar",
+  "document_preview": "Vista previa",
+  "document_detail": "Detalle del documento",
+
+  "note_section_title": "Nota",
+  "note_empty_hint": "Sin nota. Tocá para agregar una",
+
+  "ocr_section_title": "Texto extraído",
+  "ocr_empty_hint": "No se pudo extraer texto",
+  "ocr_copy_button": "COPIAR TEXTO",
+  "ocr_copied": "✓ Texto copiado"
 }
