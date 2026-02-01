@@ -10,9 +10,17 @@ void main() {
   late VoiceSearch useCase;
   late MockSpeechService mockSpeechService;
 
+  setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
+  });
+
   setUp(() {
     mockSpeechService = MockSpeechService();
     useCase = VoiceSearch(speechService: mockSpeechService);
+
+    // Setup default mocks para permisos e inicialización
+    when(() => mockSpeechService.initialize())
+        .thenAnswer((_) async => true);
   });
 
   group('VoiceSearch UseCase', () {
@@ -27,6 +35,7 @@ void main() {
 
       // Assert
       expect(result, expectedText);
+      verify(() => mockSpeechService.initialize()).called(1);
       verify(() => mockSpeechService.listen(timeoutSeconds: 5)).called(1);
     });
 
@@ -40,6 +49,7 @@ void main() {
 
       // Assert
       expect(result, isNull);
+      verify(() => mockSpeechService.initialize()).called(1);
       verify(() => mockSpeechService.listen(timeoutSeconds: 5)).called(1);
     });
 
@@ -53,19 +63,22 @@ void main() {
 
       // Assert
       expect(result, isNull);
+      verify(() => mockSpeechService.initialize()).called(1);
       verify(() => mockSpeechService.listen(timeoutSeconds: 5)).called(1);
     });
 
-    test('Debe manejar permiso denegado', () async {
-      // Arrange
-      when(() => mockSpeechService.listen(timeoutSeconds: 5))
-          .thenThrow(Exception('Permission denied'));
+    test('Debe retornar null si inicialización falla', () async {
+      // Arrange - Simular que initialize() retorna false
+      when(() => mockSpeechService.initialize())
+          .thenAnswer((_) async => false);
 
-      // Act & Assert
-      expect(
-        () => useCase.execute(),
-        throwsException,
-      );
+      // Act
+      final result = await useCase.execute();
+
+      // Assert
+      expect(result, isNull);
+      verify(() => mockSpeechService.initialize()).called(1);
+      verifyNever(() => mockSpeechService.listen(timeoutSeconds: any(named: 'timeoutSeconds')));
     });
 
     test('Debe usar timeout de 5 segundos por defecto', () async {
@@ -77,6 +90,7 @@ void main() {
       await useCase.execute();
 
       // Assert
+      verify(() => mockSpeechService.initialize()).called(1);
       verify(() => mockSpeechService.listen(timeoutSeconds: 5)).called(1);
     });
 
@@ -90,6 +104,7 @@ void main() {
 
       // Assert
       expect(result, '');
+      verify(() => mockSpeechService.initialize()).called(1);
       verify(() => mockSpeechService.listen(timeoutSeconds: 5)).called(1);
     });
 
@@ -104,6 +119,7 @@ void main() {
 
       // Assert
       expect(result, textWithSpaces.trim());
+      verify(() => mockSpeechService.initialize()).called(1);
       verify(() => mockSpeechService.listen(timeoutSeconds: 5)).called(1);
     });
   });

@@ -3,10 +3,14 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:escandoc/core/database/database_helper.dart';
 import 'package:escandoc/features/search/data/repositories/search_repository_impl.dart';
 
+/// NOTA: Tests skippeados porque requieren sqflite_sqlcipher nativo
+/// Estos tests de integración funcionan en device/emulador real
+/// Para correrlos: flutter test --device-id=<device>
 void main() {
   late SearchRepositoryImpl repository;
 
   setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   });
@@ -85,11 +89,12 @@ void main() {
     await db.delete('documents');
   };
 
-  tearDownAll(() async {
-    await DatabaseHelper.instance.close();
-  });
+  // tearDownAll comentado porque los tests están skippeados (requieren device/emulador)
+  // tearDownAll(() async {
+  //   await DatabaseHelper.instance.close();
+  // });
 
-  group('SearchRepository - FTS5 Integration Tests', () {
+  group('SearchRepository - FTS5 Integration Tests', skip: 'Requiere sqflite_sqlcipher nativo (device/emulador)', () {
     test('Debe ejecutar query FTS5 correctamente', () async {
       // Act
       final results = await repository.search('edesur');

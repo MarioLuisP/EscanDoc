@@ -86,3 +86,6 @@ Icon?
 
 # Project exclude paths
 /.gradle/
+
+# FVM Version Cache
+.fvm/

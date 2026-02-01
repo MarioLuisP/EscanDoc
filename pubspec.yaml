@@ -27,7 +27,8 @@ dependencies:
   # ═══════════════════════════════════════════════════════════════════════════
   # DATABASE & STORAGE
   # ═══════════════════════════════════════════════════════════════════════════
-  sqflite: ^2.4.2                    # SQLite local + FTS5
+  sqflite: ^2.4.2                    # SQLite local +
+  sqflite_sqlcipher: ^3.4.0
   path_provider: ^2.1.5              # Rutas de storage
   shared_preferences: ^2.3.2         # Preferencias (onboarding, settings)
 

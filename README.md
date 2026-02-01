@@ -140,7 +140,16 @@ flutter build apk --release --split-per-abi
 ## 📝 Licencia
 
 MIT © 2026
-flutter build apk --release --split-per-abi
+## 6. COMANDOS DIARIOS
+
+### En EscanDoc (siempre con fvm)
+```bash
+fvm flutter run
+fvm flutter build apk
+fvm flutter test
+fvm flutter analyze
+
+fvm flutter build apk --release --split-per-abi
 ---
 
 <p align="center">

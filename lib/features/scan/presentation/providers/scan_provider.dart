@@ -47,11 +47,13 @@ class ScanProvider with ChangeNotifier {
   Future<DocumentModel?> scanAndSave(String locale) async {
     try {
       _error = null;
+      debugPrint('[ScanProvider] Iniciando flujo de escaneo...');
 
       // 1. Escanear documento
       _isScanning = true;
       notifyListeners();
 
+      debugPrint('[ScanProvider] Llamando a scanner nativo...');
       final scannedImage = await _scanDocument.call();
 
       _isScanning = false;
@@ -59,8 +61,11 @@ class ScanProvider with ChangeNotifier {
 
       // Usuario canceló
       if (scannedImage == null) {
+        debugPrint('[ScanProvider] Scanner retornó null (usuario canceló o error)');
         return null;
       }
+
+      debugPrint('[ScanProvider] Imagen escaneada recibida: ${scannedImage.path}');
 
       // 2. Guardar documento
       _isSaving = true;
@@ -68,7 +73,9 @@ class ScanProvider with ChangeNotifier {
 
       // Obtener directorio de storage
       final docsDir = await getApplicationDocumentsDirectory();
+      debugPrint('[ScanProvider] Directorio de docs: ${docsDir.path}');
 
+      debugPrint('[ScanProvider] Guardando documento...');
       final document = await _saveDocument.call(
         scannedImage,
         docsDir.path,
@@ -79,15 +86,19 @@ class ScanProvider with ChangeNotifier {
       _lastScannedDocument = document;
       notifyListeners();
 
+      debugPrint('[ScanProvider] Documento guardado exitosamente. ID: ${document.id}');
+
       // 3. Procesar OCR en background (no bloquea UI)
       _processOCRInBackground(document.id!);
 
       return document;
-    } catch (e) {
+    } catch (e, stackTrace) {
       _error = e.toString();
       _isScanning = false;
       _isSaving = false;
       notifyListeners();
+      debugPrint('[ScanProvider] ERROR en scanAndSave: $e');
+      debugPrint('[ScanProvider] StackTrace: $stackTrace');
       return null;
     }
   }
