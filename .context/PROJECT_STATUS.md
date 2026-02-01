@@ -377,3 +377,48 @@ flutter pub get                      # Instalar dependencias
 - Testing con usuarios reales (target: 60-85 años)
 - Feedback y ajustes de UX
 - Optimización de thumbnails desde PDF (mejora futura)
+
+---
+
+## 🎨 REDISEÑO UI - Visualización OCR (1 Febrero 2026)
+
+### ✅ Rediseño DocumentDetailPage - 3 Secciones
+**Objetivo:** Mostrar texto OCR extraído (antes oculto) y mejorar accesibilidad.
+
+**Cambios implementados:**
+- **Layout 50/20/30:** Foto (50%) + Nota (20%) + OCR (30%)
+- **3 widgets de preview:** Sin botones, tap para abrir fullscreen
+- **PhotoFullscreenPage:** PDF con zoom usando `pdfrx` package
+- **OcrFullscreenPage:** TextField scroll + botón copiar texto
+
+**Archivos nuevos:**
+- `lib/features/documents/presentation/widgets/photo_preview_section.dart`
+- `lib/features/documents/presentation/widgets/note_preview_section.dart`
+- `lib/features/documents/presentation/widgets/ocr_preview_section.dart`
+- `lib/features/documents/presentation/pages/photo_fullscreen_page.dart`
+- `lib/features/documents/presentation/pages/ocr_fullscreen_page.dart`
+
+**Bugs resueltos:**
+- ✅ Thumbnails rotos: Ahora extrae 1ra página del PDF como PNG usando `Printing.raster()`
+- ✅ PDF sin zoom: Implementado con `pdfrx` (pinch to zoom, scroll)
+- ✅ AGP incompatible: Actualizado de 8.7.3 a 8.9.1
+
+**Tests:** 23 tests nuevos (todos pasando)
+
+**Dependencias agregadas:**
+- `pdfrx: ^2.2.24` - Visualización PDFs con zoom
+
+**Nota:** OCR no extrae texto (bug pendiente, requiere revisar ProcessOCR + ML Kit config)
+
+
+● ¡Excelente trabajo hoy! 🎉
+
+Resumen rápido:                                                                                                                                                                                                                    - ✅ Rediseño completo de visualización con 3 secciones
+- ✅ PDF viewer con zoom funcional                                                                                                                                                                                               ─
+- ✅ 23 tests pasando                                                      t
+- ✅ Thumbnails arreglados
+
+Pendiente para próxima sesión:
+- 🔧 Investigar por qué el OCR no extrae texto
+
+¡Hasta la próxima! 👋

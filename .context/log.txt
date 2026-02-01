@@ -1,0 +1,67 @@
+
+Performing hot restart...
+Restarted application in 2.249ms.
+I/flutter ( 2095): [🌎 Easy Localization] [DEBUG] Localization initialized
+I/flutter ( 2095): [🌎 Easy Localization] [DEBUG] Start
+I/flutter ( 2095): [🌎 Easy Localization] [DEBUG] Init state
+I/flutter ( 2095): [🌎 Easy Localization] [DEBUG] Build
+I/flutter ( 2095): [🌎 Easy Localization] [DEBUG] Init Localization Delegate
+I/flutter ( 2095): [🌎 Easy Localization] [DEBUG] Init provider
+I/flutter ( 2095): [🌎 Easy Localization] [DEBUG] Load Localization Delegate
+I/flutter ( 2095): [🌎 Easy Localization] [DEBUG] Load asset from assets/l10n
+I/flutter ( 2095): [🌎 Easy Localization] [DEBUG] Build
+I/flutter ( 2095): [🌎 Easy Localization] [DEBUG] Init Localization Delegate
+I/flutter ( 2095): [🌎 Easy Localization] [DEBUG] Init provider
+E/FlutterJNI( 2095): Failed to decode image
+E/FlutterJNI( 2095): android.graphics.ImageDecoder$DecodeException: Failed to create image decoder with message 'unimplemented'Input contained an error.
+E/FlutterJNI( 2095):    at android.graphics.ImageDecoder.nCreate(Native Method)
+E/FlutterJNI( 2095):    at android.graphics.ImageDecoder.-$$Nest$smnCreate(Unknown Source:0)
+E/FlutterJNI( 2095):    at android.graphics.ImageDecoder$ByteBufferSource.createImageDecoder(ImageDecoder.java:251)
+E/FlutterJNI( 2095):    at android.graphics.ImageDecoder.decodeBitmapImpl(ImageDecoder.java:1935)
+E/FlutterJNI( 2095):    at android.graphics.ImageDecoder.decodeBitmap(ImageDecoder.java:1927)
+E/FlutterJNI( 2095):    at io.flutter.embedding.engine.FlutterJNI.decodeImage(FlutterJNI.java:557)
+E/FlutterJNI( 2095): Failed to decode image
+E/FlutterJNI( 2095): android.graphics.ImageDecoder$DecodeException: Failed to create image decoder with message 'unimplemented'Input contained an error.
+E/FlutterJNI( 2095):    at android.graphics.ImageDecoder.nCreate(Native Method)
+E/FlutterJNI( 2095):    at android.graphics.ImageDecoder.-$$Nest$smnCreate(Unknown Source:0)
+E/FlutterJNI( 2095):    at android.graphics.ImageDecoder$ByteBufferSource.createImageDecoder(ImageDecoder.java:251)
+E/FlutterJNI( 2095):    at android.graphics.ImageDecoder.decodeBitmapImpl(ImageDecoder.java:1935)
+E/FlutterJNI( 2095):    at android.graphics.ImageDecoder.decodeBitmap(ImageDecoder.java:1927)
+E/FlutterJNI( 2095):    at io.flutter.embedding.engine.FlutterJNI.decodeImage(FlutterJNI.java:557)
+W/OnBackInvokedCallback( 2095): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback( 2095): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+I/flutter ( 2095): [VoiceSearch] Solicitando permisos de micrófono...
+D/permissions_handler( 2095): No permissions found in manifest for: []7
+I/flutter ( 2095): [VoiceSearch] Permiso de micrófono denegado: PermissionStatus.denied
+I/flutter ( 2095): [VoiceSearch] Solicitando permisos de micrófono...
+D/permissions_handler( 2095): No permissions found in manifest for: []7
+I/flutter ( 2095): [VoiceSearch] Permiso de micrófono denegado: PermissionStatus.denied
+D/InputMethodManager( 2095): showSoftInput() view=io.flutter.embedding.android.FlutterView{fa24931 VFE...... .F....ID 0,0-1080,2266 #1 aid=1073741824} flags=0 reason=SHOW_SOFT_INPUT
+I/AssistStructure( 2095): Flattened final assist data: 476 bytes, containing 1 windows, 3 views
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+W/OnBackInvokedCallback( 2095): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback( 2095): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+D/InsetsController( 2095): show(ime(), fromIme=true)
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+W/OnBackInvokedCallback( 2095): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback( 2095): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+D/InputMethodManager( 2095): showSoftInput() view=io.flutter.embedding.android.FlutterView{fa24931 VFE...... .F...... 0,0-1080,2266 #1 aid=1073741824} flags=0 reason=SHOW_SOFT_INPUT
+I/AssistStructure( 2095): Flattened final assist data: 476 bytes, containing 1 windows, 3 views
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+W/OnBackInvokedCallback( 2095): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback( 2095): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+D/InsetsController( 2095): show(ime(), fromIme=true)
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+E/SpannableStringBuilder( 2095): SPAN_EXCLUSIVE_EXCLUSIVE spans cannot have a zero length
+
