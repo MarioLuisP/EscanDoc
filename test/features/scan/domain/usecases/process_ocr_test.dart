@@ -4,6 +4,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:escandoc/features/scan/domain/usecases/process_ocr.dart';
 import 'package:escandoc/core/services/ocr_service.dart';
 import 'package:escandoc/core/services/document_classifier.dart';
+import 'package:escandoc/core/services/pdf_generator.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
 
@@ -11,6 +12,7 @@ import 'package:escandoc/features/documents/data/repositories/document_repositor
 class MockOCRService extends Mock implements OCRService {}
 class MockDocumentClassifier extends Mock implements DocumentClassifier {}
 class MockDocumentRepository extends Mock implements DocumentRepository {}
+class MockPDFGenerator extends Mock implements PDFGenerator {}
 
 // Fake para registerFallbackValue
 class FakeDocumentModel extends Fake implements DocumentModel {}
@@ -21,6 +23,8 @@ void main() {
   late MockOCRService mockOCRService;
   late MockDocumentClassifier mockClassifier;
   late MockDocumentRepository mockRepository;
+  late MockPDFGenerator mockPDFGenerator;
+  const scratchpadPath = '/test/scratchpad';
 
   setUpAll(() {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -32,11 +36,14 @@ void main() {
     mockOCRService = MockOCRService();
     mockClassifier = MockDocumentClassifier();
     mockRepository = MockDocumentRepository();
+    mockPDFGenerator = MockPDFGenerator();
 
     useCase = ProcessOCR(
       mockOCRService,
       mockClassifier,
       mockRepository,
+      mockPDFGenerator,
+      scratchpadPath,
     );
   });
 
@@ -55,6 +62,8 @@ void main() {
       // Arrange
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDocument);
+      when(() => mockPDFGenerator.extractFirstPageForOCR(any(), any()))
+          .thenAnswer((_) async => File('/test/scratchpad/ocr_temp.png'));
       when(() => mockOCRService.extractText(any()))
           .thenAnswer((_) async => 'Texto extraído del documento');
       when(() => mockClassifier.detectType(any())).thenReturn('documento');
@@ -74,6 +83,8 @@ void main() {
       const extractedText = 'Este es el texto extraído con OCR';
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDocument);
+      when(() => mockPDFGenerator.extractFirstPageForOCR(any(), any()))
+          .thenAnswer((_) async => File('/test/scratchpad/ocr_temp.png'));
       when(() => mockOCRService.extractText(any()))
           .thenAnswer((_) async => extractedText);
       when(() => mockClassifier.detectType(extractedText)).thenReturn('factura');
@@ -95,6 +106,8 @@ void main() {
       const extractedText = 'FACTURA número 12345';
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDocument);
+      when(() => mockPDFGenerator.extractFirstPageForOCR(any(), any()))
+          .thenAnswer((_) async => File('/test/scratchpad/ocr_temp.png'));
       when(() => mockOCRService.extractText(any()))
           .thenAnswer((_) async => extractedText);
       when(() => mockClassifier.detectType(extractedText)).thenReturn('factura');
@@ -114,6 +127,8 @@ void main() {
       const extractedText = 'RECIBO de pago mensual';
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDocument);
+      when(() => mockPDFGenerator.extractFirstPageForOCR(any(), any()))
+          .thenAnswer((_) async => File('/test/scratchpad/ocr_temp.png'));
       when(() => mockOCRService.extractText(any()))
           .thenAnswer((_) async => extractedText);
       when(() => mockClassifier.detectType(extractedText)).thenReturn('recibo');
@@ -136,6 +151,8 @@ void main() {
       final expectedDate = DateTime(2026, 2, 15);
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDocument);
+      when(() => mockPDFGenerator.extractFirstPageForOCR(any(), any()))
+          .thenAnswer((_) async => File('/test/scratchpad/ocr_temp.png'));
       when(() => mockOCRService.extractText(any()))
           .thenAnswer((_) async => extractedText);
       when(() => mockClassifier.detectType(extractedText)).thenReturn('factura');
@@ -156,6 +173,8 @@ void main() {
       final expectedDate = DateTime(2026, 12, 31);
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDocument);
+      when(() => mockPDFGenerator.extractFirstPageForOCR(any(), any()))
+          .thenAnswer((_) async => File('/test/scratchpad/ocr_temp.png'));
       when(() => mockOCRService.extractText(any()))
           .thenAnswer((_) async => extractedText);
       when(() => mockClassifier.detectType(extractedText)).thenReturn('factura');
@@ -176,6 +195,8 @@ void main() {
       // Arrange
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDocument);
+      when(() => mockPDFGenerator.extractFirstPageForOCR(any(), any()))
+          .thenAnswer((_) async => File('/test/scratchpad/ocr_temp.png'));
       when(() => mockOCRService.extractText(any()))
           .thenAnswer((_) async => ''); // OCR falló, retorna vacío
       when(() => mockClassifier.detectType('')).thenReturn('documento');
@@ -192,6 +213,8 @@ void main() {
       const extractedText = 'CONTRATO de alquiler';
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDocument);
+      when(() => mockPDFGenerator.extractFirstPageForOCR(any(), any()))
+          .thenAnswer((_) async => File('/test/scratchpad/ocr_temp.png'));
       when(() => mockOCRService.extractText(any()))
           .thenAnswer((_) async => extractedText);
       when(() => mockClassifier.detectType(extractedText)).thenReturn('contrato');
@@ -220,13 +243,15 @@ void main() {
       );
     });
 
-    test('debe usar filePath del documento para OCR', () async {
+    test('debe extraer PDF a imagen temporal para OCR', () async {
       // Arrange
       final documentWithPath = testDocument.copyWith(
         filePath: '/specific/path/document.pdf',
       );
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => documentWithPath);
+      when(() => mockPDFGenerator.extractFirstPageForOCR(any(), any()))
+          .thenAnswer((_) async => File('/test/scratchpad/ocr_temp.png'));
       when(() => mockOCRService.extractText(any()))
           .thenAnswer((_) async => 'Texto');
       when(() => mockClassifier.detectType(any())).thenReturn('documento');
@@ -238,9 +263,10 @@ void main() {
       await useCase.call(1);
 
       // Assert
-      final captured = verify(() => mockOCRService.extractText(captureAny()))
-          .captured.single as File;
-      expect(captured.path, '/specific/path/document.pdf');
+      verify(() => mockPDFGenerator.extractFirstPageForOCR(
+        any(that: isA<File>().having((f) => f.path, 'path', '/specific/path/document.pdf')),
+        any(that: contains('scratchpad')),
+      )).called(1);
     });
   });
 }

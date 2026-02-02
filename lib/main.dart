@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
+import 'package:path_provider/path_provider.dart';
 
 // Providers
 import 'features/scan/presentation/providers/scan_provider.dart';
@@ -47,6 +48,10 @@ void main() async {
   final checkOnboarding = CheckOnboardingStatus(prefs);
   final hasCompletedOnboarding = await checkOnboarding.call();
 
+  // Obtener directorio temporal para scratchpad
+  final tempDir = await getTemporaryDirectory();
+  final scratchpadPath = '${tempDir.path}/scratchpad';
+
   // Decidir ruta inicial
   final initialRoute = hasCompletedOnboarding ? '/home' : '/onboarding';
 
@@ -55,15 +60,23 @@ void main() async {
       supportedLocales: const [Locale('es'), Locale('en')],
       path: 'assets/l10n',
       fallbackLocale: const Locale('es'),
-      child: MyApp(initialRoute: initialRoute),
+      child: MyApp(
+        initialRoute: initialRoute,
+        scratchpadPath: scratchpadPath,
+      ),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
   final String initialRoute;
+  final String scratchpadPath;
 
-  const MyApp({super.key, required this.initialRoute});
+  const MyApp({
+    super.key,
+    required this.initialRoute,
+    required this.scratchpadPath,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -89,6 +102,8 @@ class MyApp extends StatelessWidget {
               ocrService,
               classifier,
               documentRepository,
+              pdfGenerator,
+              scratchpadPath,
             );
 
             return ScanProvider(

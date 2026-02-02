@@ -44,13 +44,19 @@ Botón ESCANEAR → Scanner nativo → OCR post-scan → Clasificar → Generar 
 IMPORTANTE: SOLO LEER CUANDO SE PIDE EXPRESAMENTE
 Todo en `.context/`: 
 
-- `ADDS.md` - Decisiones técnicas y ajustes
-- `FASE_1_PLAN.md` - Plan de desarrollo detallado
-- `user_stories_mvp.md` - Historias de usuario
-- `database_schema.md` - Schema SQL
-- `architecture.md` - Arquitectura detallada
+## Testing
 
-## Comando Inicial
+**IMPORTANTE:** Este proyecto usa FVM (Flutter Version Manager).
 
-Antes de codificar cualquier feature, leer:
-1. `.context/ADDS.md` (decisiones actualizadas)
+Para ejecutar tests, usar el script wrapper:
+```bash
+# Windows
+.\test.bat
+
+# Linux/Mac  
+./test.sh
+```
+
+**NO usar** `flutter test` directamente.
+
+El script ejecuta `fvm flutter test` con todos los argumentos pasados.

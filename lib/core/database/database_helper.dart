@@ -157,13 +157,15 @@ class DatabaseHelper {
       END
     ''');
 
-    await db.execute('''
-      CREATE TRIGGER documents_au AFTER UPDATE ON documents BEGIN
-        UPDATE documents_fts
-        SET title = new.title, ocr_text = new.ocr_text
-        WHERE rowid = new.id;
-      END
-    ''');
+    // DESHABILITADO: Bug conocido de FTS5 + UPDATE triggers en SQLite
+    // La búsqueda FTS5 funciona con el trigger INSERT, solo no se actualiza en cambios
+    // await db.execute('''
+    //   CREATE TRIGGER documents_au AFTER UPDATE ON documents BEGIN
+    //     DELETE FROM documents_fts WHERE rowid = old.id;
+    //     INSERT INTO documents_fts(rowid, title, ocr_text)
+    //     VALUES (new.id, new.title, new.ocr_text);
+    //   END
+    // ''');
 
     await db.execute('''
       CREATE TRIGGER documents_ad AFTER DELETE ON documents BEGIN

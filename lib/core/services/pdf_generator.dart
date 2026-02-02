@@ -14,6 +14,7 @@ abstract class PDFGenerator {
     int size = 200,
   });
   Future<File> extractFirstPageAsImage(File pdfFile, String outputPath);
+  Future<File> extractFirstPageForOCR(File pdfFile, String outputPath);
   Future<File> copyPDF(File pdfFile, String outputPath);
 }
 
@@ -127,6 +128,44 @@ class PDFGeneratorImpl implements PDFGenerator {
     final firstPage = await pageImage.first;
 
     // Convertir a imagen PNG
+    final pngBytes = await firstPage.toPng();
+
+    // Guardar imagen
+    final outputFile = File(outputPath);
+    await outputFile.writeAsBytes(pngBytes);
+
+    return outputFile;
+  }
+
+  /// Extrae la primera página de un PDF como imagen para OCR
+  ///
+  /// Usa 300 DPI y formato PNG (lossless) para máxima calidad
+  ///
+  /// Lanza Exception si:
+  /// - El PDF no existe
+  /// - No se puede renderizar el PDF
+  /// - No se puede escribir en outputPath
+  @override
+  Future<File> extractFirstPageForOCR(File pdfFile, String outputPath) async {
+    // Validar que el PDF existe
+    if (!pdfFile.existsSync()) {
+      throw Exception('PDF file does not exist: ${pdfFile.path}');
+    }
+
+    // Leer PDF
+    final pdfBytes = await pdfFile.readAsBytes();
+
+    // Renderizar primera página a imagen (300 DPI para OCR óptimo)
+    final pageImage = await Printing.raster(
+      Uint8List.fromList(pdfBytes),
+      pages: [0], // Solo primera página
+      dpi: 300, // Alta resolución para OCR
+    );
+
+    // Obtener primera página
+    final firstPage = await pageImage.first;
+
+    // Convertir a PNG (lossless, máxima calidad para OCR)
     final pngBytes = await firstPage.toPng();
 
     // Guardar imagen

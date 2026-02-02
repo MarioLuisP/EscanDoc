@@ -53,9 +53,14 @@ class DocumentRepository {
   /// Actualiza un documento existente
   Future<int> updateDocument(DocumentModel document) async {
     final db = await _dbHelper.database;
+
+    // Crear map sin el 'id' (PRIMARY KEY no debe actualizarse)
+    final map = document.toMap();
+    map.remove('id');
+
     return await db.update(
       'documents',
-      document.toMap(),
+      map,
       where: 'id = ?',
       whereArgs: [document.id],
     );

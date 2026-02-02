@@ -50,7 +50,7 @@
 
 **Sección 3 - Texto OCR (30% altura):**
 - Preview del texto extraído
-- Tap → abre vista completa para lectura/copia
+- Tap → abre vista completa para lectura/copiaestoy pensando 
 - Si OCR vacío → mostrar "No se pudo extraer texto"
 
 **Características:**
