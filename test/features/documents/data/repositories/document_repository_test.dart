@@ -4,9 +4,8 @@ import 'package:escandoc/core/database/database_helper.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
 
-/// NOTA: Tests skippeados porque requieren sqflite_sqlcipher nativo
-/// Estos tests de integración funcionan en device/emulador real
-/// Para correrlos: flutter test --device-id=<device>
+/// Tests de integración para DocumentRepository
+/// Usan sqflite_common_ffi para ejecutar en desktop
 void main() {
   late DocumentRepository repository;
 
@@ -34,7 +33,7 @@ void main() {
     await db.delete('documents');
   });
 
-  group('DocumentRepository Integration Tests', skip: 'Requiere sqflite_sqlcipher nativo (device/emulador)', () {
+  group('DocumentRepository Integration Tests', () {
     final testDocument = DocumentModel(
       title: 'factura_20_Ene_2026',
       filePath: '/test/documents/factura_20_Ene_2026.pdf',

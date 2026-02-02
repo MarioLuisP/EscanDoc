@@ -6,8 +6,8 @@ import 'package:escandoc/features/documents/domain/usecases/delete_document.dart
 /// Mock del repository para tests unitarios
 class MockDocumentRepository extends Mock implements DocumentRepository {}
 
-/// NOTA: Tests skippeados porque usan repositorio real que requiere sqflite_sqlcipher nativo
-/// Para correrlos: flutter test --device-id=<device>
+/// Tests unitarios de DeleteDocument UseCase
+/// Usan mocks, no requieren BD real
 void main() {
   late DeleteDocument useCase;
   late MockDocumentRepository mockRepository;
@@ -21,7 +21,7 @@ void main() {
     useCase = DeleteDocument(repository: mockRepository);
   });
 
-  group('DeleteDocument UseCase', skip: 'Usa repositorio real con sqflite_sqlcipher (device/emulador)', () {
+  group('DeleteDocument UseCase', () {
     test('Debe eliminar documento y archivos asociados', () async {
       // Arrange
       const documentId = 1;

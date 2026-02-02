@@ -257,3 +257,20 @@ INSERT INTO documents_fts(rowid, title, ocr_text) VALUES (new.id, new.title, new
 - `process_ocr.dart` - Lógica de extracción
 - `scan_provider.dart` - Coordinación del flujo
 - `document_detail_page.dart` - Visualización
+
+
+
+Por qué NO arreglarlo:                                                                                                                                                                                                             - OCR se escribe UNA VEZ al escanear (nunca se actualiza)
+- Título autogenerado raramente se edita
+- No existe feature de "re-procesar OCR" ni "editar título manual"
+- FTS5 INSERT funciona perfecto (búsqueda funciona 100%)
+
+Cuándo SÍ arreglarlo:
+- Si en el futuro implementás edición manual de documentos
+- Solución: Sync manual en el método updateDocument():
+  // Al actualizar documento, actualizar FTS5 manualmente
+  await db.delete('documents_fts', where: 'rowid = ?', whereArgs: [id]);
+  await db.insert('documents_fts', {...});
+
+Veredicto: Dejalo así. Es pragmático y funcional. Si algún día lo necesitás, es una feature de 5 líneas. 👍
+

@@ -7,8 +7,8 @@ import 'package:escandoc/features/documents/domain/usecases/get_document_by_id.d
 /// Mock del repository para tests unitarios
 class MockDocumentRepository extends Mock implements DocumentRepository {}
 
-/// NOTA: Tests skippeados porque usan repositorio real que requiere sqflite_sqlcipher nativo
-/// Para correrlos: flutter test --device-id=<device>
+/// Tests unitarios de GetDocumentById UseCase
+/// Usan mocks, no requieren BD real
 void main() {
   late GetDocumentById useCase;
   late MockDocumentRepository mockRepository;
@@ -22,7 +22,7 @@ void main() {
     useCase = GetDocumentById(repository: mockRepository);
   });
 
-  group('GetDocumentById UseCase', skip: 'Usa repositorio real con sqflite_sqlcipher (device/emulador)', () {
+  group('GetDocumentById UseCase', () {
     final testDocument = DocumentModel(
       id: 1,
       title: 'factura_20_Ene_2026',

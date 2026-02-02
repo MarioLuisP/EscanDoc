@@ -6,9 +6,8 @@ import 'package:escandoc/features/documents/data/repositories/document_repositor
 import 'package:escandoc/features/notes/data/models/note_model.dart';
 import 'package:escandoc/features/notes/data/repositories/note_repository.dart';
 
-/// NOTA: Tests skippeados porque requieren sqflite_sqlcipher nativo
-/// Estos tests de integración funcionan en device/emulador real
-/// Para correrlos: flutter test --device-id=<device>
+/// Tests de integración para NoteRepository
+/// Usan sqflite_common_ffi para ejecutar en desktop
 void main() {
   late NoteRepository noteRepository;
   late DocumentRepository documentRepository;
@@ -42,7 +41,7 @@ void main() {
     await db.delete('documents');
   });
 
-  group('NoteRepository Integration Tests', skip: 'Requiere sqflite_sqlcipher nativo (device/emulador)', () {
+  group('NoteRepository Integration Tests', () {
     late DocumentModel testDocument;
     late int documentId;
 

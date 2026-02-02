@@ -10,8 +10,8 @@ class MockNoteRepository extends Mock implements NoteRepository {}
 /// Fake para NoteModel (requerido por mocktail)
 class FakeNoteModel extends Fake implements NoteModel {}
 
-/// NOTA: Tests skippeados porque usan repositorio real que requiere sqflite_sqlcipher nativo
-/// Para correrlos: flutter test --device-id=<device>
+/// Tests unitarios de UpdateNote UseCase
+/// Usan mocks, no requieren BD real
 void main() {
   late UpdateNote useCase;
   late MockNoteRepository mockRepository;
@@ -26,7 +26,7 @@ void main() {
     useCase = UpdateNote(repository: mockRepository);
   });
 
-  group('UpdateNote UseCase', skip: 'Usa repositorio real con sqflite_sqlcipher (device/emulador)', () {
+  group('UpdateNote UseCase', () {
     final existingNote = NoteModel(
       id: 1,
       title: 'Título original',
