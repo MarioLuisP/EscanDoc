@@ -10,7 +10,7 @@ import 'package:path/path.dart' as path;
 ///
 /// Orquesta:
 /// 1. Obtener documento de BD
-/// 2. Si es PDF, extraer temporalmente como imagen WebP (300 DPI)
+/// 2. Si es PDF, extraer temporalmente como imagen PNG (150 DPI)
 /// 3. Extraer texto con OCR (ML Kit)
 /// 4. Re-clasificar tipo basado en texto real
 /// 5. Extraer fecha de vencimiento si existe

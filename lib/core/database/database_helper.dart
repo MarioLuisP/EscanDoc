@@ -2,7 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 /// Singleton para gestionar la base de datos SQLite local
-/// Implementa schema completo con FTS5 para búsqueda full-text
+/// Implementa schema completo con FTS4 para búsqueda full-text
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
@@ -124,61 +124,59 @@ class DatabaseHelper {
     ''');
 
     // =========================================================================
-    // FTS5: documents_fts
+    // FTS4: documents_fts
     // =========================================================================
     await db.execute('''
-      CREATE VIRTUAL TABLE documents_fts USING fts5(
+      CREATE VIRTUAL TABLE documents_fts USING fts4(
         title,
         ocr_text,
-        content=documents,
-        content_rowid=id
+        content=documents
       )
     ''');
 
     // =========================================================================
-    // FTS5: notes_fts
+    // FTS4: notes_fts
     // =========================================================================
     await db.execute('''
-      CREATE VIRTUAL TABLE notes_fts USING fts5(
+      CREATE VIRTUAL TABLE notes_fts USING fts4(
         title,
         content,
-        content=notes,
-        content_rowid=id
+        content=notes
       )
     ''');
 
     // =========================================================================
-    // TRIGGERS: FTS5 para documents
+    // TRIGGERS: FTS4 para documents
     // =========================================================================
     await db.execute('''
       CREATE TRIGGER documents_ai AFTER INSERT ON documents BEGIN
-        INSERT INTO documents_fts(rowid, title, ocr_text)
+        INSERT INTO documents_fts(docid, title, ocr_text)
         VALUES (new.id, new.title, new.ocr_text);
       END
     ''');
 
-    // DESHABILITADO: Bug conocido de FTS5 + UPDATE triggers en SQLite
-    // La búsqueda FTS5 funciona con el trigger INSERT, solo no se actualiza en cambios
+    // DESHABILITADO: Bug conocido de FTS + UPDATE triggers en SQLite
+    // La búsqueda FTS funciona con el trigger INSERT, solo no se actualiza en cambios
     // await db.execute('''
     //   CREATE TRIGGER documents_au AFTER UPDATE ON documents BEGIN
-    //     DELETE FROM documents_fts WHERE rowid = old.id;
-    //     INSERT INTO documents_fts(rowid, title, ocr_text)
+    //     DELETE FROM documents_fts WHERE docid = old.id;
+    //     INSERT INTO documents_fts(docid, title, ocr_text)
     //     VALUES (new.id, new.title, new.ocr_text);
     //   END
     // ''');
 
     await db.execute('''
       CREATE TRIGGER documents_ad AFTER DELETE ON documents BEGIN
-        DELETE FROM documents_fts WHERE rowid = old.id;
+        DELETE FROM documents_fts WHERE docid = old.id;
       END
     ''');
 
     // =========================================================================
-    // TRIGGERS: FTS5 para notes
+    // TRIGGERS: FTS4 para notes
     // =========================================================================
     await db.execute('''
       CREATE TRIGGER notes_ai AFTER INSERT ON notes BEGIN
-        INSERT INTO notes_fts(rowid, title, content)
+        INSERT INTO notes_fts(docid, title, content)
         VALUES (new.id, new.title, new.content);
       END
     ''');
@@ -187,13 +185,13 @@ class DatabaseHelper {
       CREATE TRIGGER notes_au AFTER UPDATE ON notes BEGIN
         UPDATE notes_fts
         SET title = new.title, content = new.content
-        WHERE rowid = new.id;
+        WHERE docid = new.id;
       END
     ''');
 
     await db.execute('''
       CREATE TRIGGER notes_ad AFTER DELETE ON notes BEGIN
-        DELETE FROM notes_fts WHERE rowid = old.id;
+        DELETE FROM notes_fts WHERE docid = old.id;
       END
     ''');
 

@@ -28,6 +28,7 @@ dependencies:
   # DATABASE & STORAGE
   # ═══════════════════════════════════════════════════════════════════════════
   sqflite: ^2.4.2                    # SQLite local
+  sqlite3_flutter_libs: ^0.5.41      # SQLite con FTS para tests (via sqflite_common_ffi)
   path_provider: ^2.1.5              # Rutas de storage
   shared_preferences: ^2.3.2         # Preferencias (onboarding, settings)
 
@@ -35,12 +36,14 @@ dependencies:
   # DOCUMENT SCANNING (UI Nativa - ML Kit Android / VisionKit iOS)
   # ═══════════════════════════════════════════════════════════════════════════
   flutter_doc_scanner: ^0.0.17       # Scanner nativo con detección de bordes
+  cunning_document_scanner: ^1.3.3   # SPIKE: Scanner custom con MLKit (Épica 6 - Plan B)
   
   # ═══════════════════════════════════════════════════════════════════════════
   # OCR (Post-scan processing)
   # ═══════════════════════════════════════════════════════════════════════════
   google_mlkit_text_recognition: ^0.15.0  # OCR offline después del escaneo
   google_mlkit_barcode_scanning: ^0.14.0  # Fase 1.5 - mejora detección vencimientos
+  google_mlkit_image_labeling: ^0.14.2
   # ═══════════════════════════════════════════════════════════════════════════
   # IMAGE & PDF PROCESSING
   # ═══════════════════════════════════════════════════════════════════════════
@@ -64,7 +67,7 @@ dependencies:
   # ═══════════════════════════════════════════════════════════════════════════
   path: ^1.9.1                       # Manipulación de rutas
   uuid: ^4.5.1                       # Generación de IDs únicos
-  permission_handler: ^11.3.1        # Manejo de permisos
+  permission_handler: ^12.0.1        # Manejo de permisos (actualizado para cunning)
 
 dev_dependencies:
   flutter_test:
@@ -74,7 +77,8 @@ dev_dependencies:
   # TESTING
   # ═══════════════════════════════════════════════════════════════════════════
   mocktail: ^1.0.4                   # Mocks para tests
-  sqflite_common_ffi: ^2.3.4         # SQLite para tests en desktop                   # Mocks para tests
+  sqflite_common_ffi: ^2.3.4         # SQLite para tests en desktop
+  sqlite3: ^2.4.6                    # Para configurar SQLite con FTS en tests
   
   # ═══════════════════════════════════════════════════════════════════════════
   # LINTING

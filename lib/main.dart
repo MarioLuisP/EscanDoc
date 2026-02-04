@@ -39,6 +39,13 @@ import 'features/scan/presentation/pages/crop_page.dart';
 import 'features/search/presentation/pages/search_page.dart';
 import 'features/notes/presentation/pages/note_editor_page.dart';
 
+// TEMPORAL: Diagnóstico de SQLite
+import 'core/database/diagnostics_page.dart';
+
+// SPIKE TÉCNICO: Scanner custom (Épica 6 - Etapa 0)
+import 'features/scanner_custom/spike/scanner_spike_page.dart';
+import 'features/scanner_custom/spike/scanner_native_debug_page.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
@@ -165,6 +172,13 @@ class MyApp extends StatelessWidget {
           '/document/detail': (context) => const DocumentDetailPage(),
           '/note/edit': (context) => const NoteEditorPage(),
           '/search': (context) => const SearchPage(),
+
+          // TEMPORAL: Diagnóstico de SQLite
+          '/diagnostics': (context) => const DiagnosticsPage(),
+
+          // SPIKE TÉCNICO: Scanner custom (Épica 6 - Etapa 0)
+          '/spike/scanner': (context) => const ScannerSpikePage(),
+          '/spike/native-debug': (context) => const ScannerNativeDebugPage(),
         },
       ),
     );

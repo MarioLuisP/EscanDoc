@@ -2,7 +2,7 @@ import 'package:escandoc/core/database/database_helper.dart';
 import 'package:escandoc/features/search/data/models/search_result.dart';
 import 'package:escandoc/features/search/data/repositories/search_repository.dart';
 
-/// Implementación del repositorio de búsqueda usando FTS5
+/// Implementación del repositorio de búsqueda usando FTS4
 class SearchRepositoryImpl implements SearchRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
@@ -14,14 +14,14 @@ class SearchRepositoryImpl implements SearchRepository {
 
     final db = await _dbHelper.database;
 
-    // Sanitizar query para FTS5 (escapar caracteres especiales)
+    // Sanitizar query para FTS4 (escapar caracteres especiales)
     final sanitizedQuery = _sanitizeQuery(query);
 
     if (sanitizedQuery.isEmpty) {
       return [];
     }
 
-    // Buscar en documentos usando FTS5
+    // Buscar en documentos usando FTS4
     final docResults = await db.rawQuery('''
       SELECT
         d.id,
@@ -30,13 +30,12 @@ class SearchRepositoryImpl implements SearchRepository {
         snippet(documents_fts, 1, '<b>', '</b>', '...', 32) AS snippet,
         d.created_at
       FROM documents d
-      JOIN documents_fts ON documents_fts.rowid = d.id
+      JOIN documents_fts ON documents_fts.docid = d.id
       WHERE documents_fts MATCH ?
-      ORDER BY rank
       LIMIT 20
     ''', [sanitizedQuery]);
 
-    // Buscar en notas usando FTS5
+    // Buscar en notas usando FTS4
     final noteResults = await db.rawQuery('''
       SELECT
         n.id,
@@ -45,9 +44,8 @@ class SearchRepositoryImpl implements SearchRepository {
         snippet(notes_fts, 1, '<b>', '</b>', '...', 32) AS snippet,
         n.created_at
       FROM notes n
-      JOIN notes_fts ON notes_fts.rowid = n.id
+      JOIN notes_fts ON notes_fts.docid = n.id
       WHERE notes_fts MATCH ?
-      ORDER BY rank
       LIMIT 20
     ''', [sanitizedQuery]);
 
@@ -92,10 +90,10 @@ class SearchRepositoryImpl implements SearchRepository {
     return results.take(20).toList();
   }
 
-  /// Sanitiza el query para FTS5, removiendo caracteres especiales
+  /// Sanitiza el query para FTS4, removiendo caracteres especiales
   /// que pueden causar errores de sintaxis
   String _sanitizeQuery(String query) {
-    // Remover caracteres que pueden causar problemas en FTS5
+    // Remover caracteres que pueden causar problemas en FTS4
     // Mantener solo letras, números y espacios
     String sanitized = query.trim();
 

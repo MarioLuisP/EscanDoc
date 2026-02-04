@@ -83,7 +83,7 @@ class DocumentRepository {
         await _deleteFile(document.thumbnailPath!);
       }
 
-      // 4. Eliminar registro de BD (triggers eliminan automáticamente de FTS5)
+      // 4. Eliminar registro de BD (triggers eliminan automáticamente de FTS4)
       final db = await _dbHelper.database;
       final rowsDeleted = await db.delete(
         'documents',

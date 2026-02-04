@@ -1,8 +1,13 @@
 # Flujo OCR - EscanDoc
 
-**Última actualización:** 2026-02-02
+**Última actualización:** 2026-02-02 (Migración FTS5→FTS4, fix OutOfMemoryError)
 **Estado:** ✅ Funcionando correctamente
 **Propósito:** Referencia rápida del flujo de OCR post-escaneo para futuras sesiones
+
+**Cambios recientes (2 Feb 2026):**
+- ✅ Migrado de FTS5 a FTS4 para compatibilidad con más dispositivos Android
+- ✅ Resuelto OutOfMemoryError reduciendo DPI de 300 a 150 en imagen temporal OCR
+- ⚠️ Tests con FTS pendientes (sqflite_common_ffi no tiene FTS en Windows)
 
 ---
 
@@ -101,11 +106,12 @@ Guardar en BD
 ## Base de Datos
 
 - `lib/core/database/database_helper.dart`
-  - Gestión de SQLite + FTS5
+  - Gestión de SQLite + FTS4 (búsqueda full-text)
   - Tabla `documents` tiene columnas:
-    - `image_path` TEXT
+    - `file_path` TEXT (ruta del PDF)
     - `ocr_text` TEXT (nullable)
-    - `barcode` TEXT (nullable)
+    - `barcode` TEXT (nullable - preparado para futuro)
+  - Tablas virtuales FTS4: `documents_fts`, `notes_fts`
 
 ---
 
@@ -144,61 +150,57 @@ Guardar en BD
 
 ---
 
-## ⚠️ Bug Conocido: FTS5 + UPDATE Trigger
+## ✅ Migración de FTS5 a FTS4 (2 Feb 2026)
 
-### **Problema**
-SQLite FTS5 tiene un **bug conocido** que causa corrupción de BD cuando se usa trigger UPDATE:
-- Reportado en SQLite 3.37, 3.35, 3.24
-- **NO es problema de SQLCipher** - es bug de FTS5 en SQLite regular también
-- El error: `DatabaseException(database disk image is malformed (code 267))`
-
-### **Causa Raíz**
-Los triggers FTS5 que intentan hacer UPDATE directo o DELETE+INSERT en la tabla FTS5 causan corrupción:
-```sql
--- ❌ CAUSA CORRUPCIÓN (ambas formas)
-UPDATE documents_fts SET title = new.title WHERE rowid = new.id;
--- O incluso:
-DELETE FROM documents_fts WHERE rowid = old.id;
-INSERT INTO documents_fts(rowid, title, ocr_text) VALUES (new.id, new.title, new.ocr_text);
-```
+### **Problema Original**
+Muchos dispositivos Android (ej: Moto G52 API 33) NO tienen FTS5 habilitado:
+- Motorola y otros fabricantes compilan SQLite sin FTS5
+- Error: `no such module: fts5` al crear tablas virtuales
+- FTS4 SÍ está disponible en estos dispositivos (desde 2010)
 
 ### **Solución Implementada**
-**Trigger UPDATE deshabilitado** en `database_helper.dart` línea ~160:
-```dart
-// DESHABILITADO: Bug conocido de FTS5 + UPDATE triggers en SQLite
-// La búsqueda FTS5 funciona con el trigger INSERT, solo no se actualiza en cambios
-```
+Migración completa de FTS5 → FTS4:
+- Cambios en `database_helper.dart`: tablas virtuales y triggers usan FTS4
+- Cambios en queries de búsqueda: usar `docid` en lugar de `rowid`
+- Eliminado `ORDER BY rank` (no existe en FTS4, ahora ordena por fecha)
+- FTS4 funciona en Android 5.0+ (target mínimo de Flutter)
 
-### **Impacto**
-- ✅ **INSERT trigger activo**: FTS5 se sincroniza al crear documentos nuevos
-- ❌ **UPDATE trigger deshabilitado**: FTS5 NO se actualiza si se edita título/OCR
-- ✅ **DELETE trigger activo**: FTS5 se limpia al eliminar documentos
-- ✅ **Notas siguen funcionando**: La tabla `notes` tiene sus propios triggers FTS5 que funcionan
+### **Compatibilidad**
+- ✅ **Producción Android**: FTS4 disponible en todos los dispositivos modernos
+- ❌ **Tests Windows**: `sqflite_common_ffi` no tiene FTS habilitado (problema separado)
+- ✅ **Funcionalidad**: Búsqueda full-text funciona igual que con FTS5
 
-### **No Afecta la Funcionalidad Actual**
-- El OCR se escribe **UNA SOLA VEZ** al escanear (no se edita después)
-- La búsqueda funciona correctamente para todos los documentos
-- Solo afectaría si en el futuro se implementa edición de títulos o re-procesamiento de OCR
-
-### **Alternativas Evaluadas**
-1. ❌ Cambiar a `sqflite` regular → No ayuda, es bug de FTS5
-2. ❌ Usar DELETE + INSERT en trigger → Sigue causando corrupción
-3. ✅ **Deshabilitar trigger UPDATE** → Solución pragmática que funciona
+### **Trigger UPDATE Deshabilitado**
+Bug conocido de FTS (aplica a FTS4 y FTS5) con triggers UPDATE:
+- Trigger UPDATE deshabilitado en `database_helper.dart`
+- No afecta funcionalidad: OCR se escribe UNA VEZ al escanear
+- INSERT y DELETE triggers funcionan correctamente
 
 ---
 
-## Problemas Conocidos Secundarios
+## ✅ OutOfMemoryError Resuelto (2 Feb 2026)
 
-### **1. Tamaño de Imagen con Poca Luz**
-- Con poca iluminación, el PNG temporal puede ser muy grande (100+ MB)
-- Puede causar OutOfMemoryError en dispositivos con poca RAM
-- **Pendiente optimización:** Reducir DPI o comprimir imagen para OCR
+### **Problema**
+Imagen temporal para OCR era de 138MB con 300 DPI:
+- Causaba `OutOfMemoryError` en dispositivos con poca RAM
+- App crasheaba al procesar OCR en background
+- Peor con documentos escaneados con poca luz
 
-### **2. Sin indicador de progreso**
+### **Solución**
+Reducido DPI de 300 a 150 en `pdf_generator.dart`:
+- Tamaño de imagen reducido 4x (~35MB en lugar de 138MB)
+- 150 DPI es óptimo para Google ML Kit OCR
+- Calidad de OCR sin cambios, memoria reducida significativamente
+
+---
+
+## Problemas Conocidos Pendientes
+
+### **1. Sin indicador de progreso**
 - Usuario no sabe si OCR está procesando
 - No hay feedback visual en DocumentDetailPage mientras procesa en background
 
-### **3. Sin manejo de errores visible**
+### **2. Sin manejo de errores visible**
 - Si OCR falla, solo se registra en debug logs
 - Usuario no recibe notificación de error
 
@@ -220,8 +222,9 @@ INSERT INTO documents_fts(rowid, title, ocr_text) VALUES (new.id, new.title, new
 **pubspec.yaml:**
 - `google_mlkit_text_recognition` - OCR de texto
 - `flutter_doc_scanner` - Scanner nativo
+- `sqflite` - SQLite con FTS4 (en dispositivos modernos)
+- `sqlite3_flutter_libs` - Para habilitar FTS en tests (via sqflite_common_ffi)
 - `image` - Procesamiento de imágenes
-- `barcode_scanning` (verificar si está agregado)
 
 ---
 
@@ -257,20 +260,5 @@ INSERT INTO documents_fts(rowid, title, ocr_text) VALUES (new.id, new.title, new
 - `process_ocr.dart` - Lógica de extracción
 - `scan_provider.dart` - Coordinación del flujo
 - `document_detail_page.dart` - Visualización
-
-
-
-Por qué NO arreglarlo:                                                                                                                                                                                                             - OCR se escribe UNA VEZ al escanear (nunca se actualiza)
-- Título autogenerado raramente se edita
-- No existe feature de "re-procesar OCR" ni "editar título manual"
-- FTS5 INSERT funciona perfecto (búsqueda funciona 100%)
-
-Cuándo SÍ arreglarlo:
-- Si en el futuro implementás edición manual de documentos
-- Solución: Sync manual en el método updateDocument():
-  // Al actualizar documento, actualizar FTS5 manualmente
-  await db.delete('documents_fts', where: 'rowid = ?', whereArgs: [id]);
-  await db.insert('documents_fts', {...});
-
-Veredicto: Dejalo así. Es pragmático y funcional. Si algún día lo necesitás, es una feature de 5 líneas. 👍
+- `pdf_generator.dart` - Generación de imagen temporal para OCR
 

@@ -3,8 +3,8 @@ import 'package:escandoc/features/search/data/repositories/search_repository.dar
 
 /// UseCase para buscar documentos y notas
 ///
-/// Orquesta la búsqueda utilizando FTS5 en documentos y notas,
-/// retornando resultados combinados ordenados por relevancia.
+/// Orquesta la búsqueda utilizando FTS4 en documentos y notas,
+/// retornando resultados combinados ordenados por fecha.
 class SearchDocuments {
   final SearchRepository repository;
 
@@ -17,7 +17,7 @@ class SearchDocuments {
   /// - Texto OCR de documentos
   /// - Contenido de notas vinculadas
   ///
-  /// Retorna lista de resultados ordenados por relevancia (rank),
+  /// Retorna lista de resultados ordenados por fecha,
   /// limitados a 20 items, con snippets destacando el query.
   Future<List<SearchResult>> execute(String query) async {
     return await repository.search(query);

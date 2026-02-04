@@ -139,7 +139,7 @@ class PDFGeneratorImpl implements PDFGenerator {
 
   /// Extrae la primera página de un PDF como imagen para OCR
   ///
-  /// Usa 300 DPI y formato PNG (lossless) para máxima calidad
+  /// Usa 150 DPI y formato PNG (lossless) - balance entre calidad y memoria
   ///
   /// Lanza Exception si:
   /// - El PDF no existe
@@ -155,11 +155,11 @@ class PDFGeneratorImpl implements PDFGenerator {
     // Leer PDF
     final pdfBytes = await pdfFile.readAsBytes();
 
-    // Renderizar primera página a imagen (300 DPI para OCR óptimo)
+    // Renderizar primera página a imagen (150 DPI óptimo para OCR sin OutOfMemory)
     final pageImage = await Printing.raster(
       Uint8List.fromList(pdfBytes),
       pages: [0], // Solo primera página
-      dpi: 300, // Alta resolución para OCR
+      dpi: 150, // Resolución óptima para ML Kit OCR (evita OutOfMemoryError)
     );
 
     // Obtener primera página

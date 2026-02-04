@@ -5,7 +5,7 @@ import 'package:escandoc/features/documents/data/repositories/document_repositor
 /// Reglas de negocio:
 /// - Elimina archivo PDF del filesystem
 /// - Elimina thumbnail si existe
-/// - Elimina registro de BD (triggers automáticos eliminan de FTS5)
+/// - Elimina registro de BD (triggers automáticos eliminan de FTS4)
 /// - Si el documento no existe, retorna false
 /// - Si falla la eliminación de archivos, retorna false (fail-safe)
 class DeleteDocument {

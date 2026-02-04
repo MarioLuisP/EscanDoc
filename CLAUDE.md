@@ -47,16 +47,3 @@ Todo en `.context/`:
 ## Testing
 
 **IMPORTANTE:** Este proyecto usa FVM (Flutter Version Manager).
-
-Para ejecutar tests, usar el script wrapper:
-```bash
-# Windows
-.\test.bat
-
-# Linux/Mac  
-./test.sh
-```
-
-**NO usar** `flutter test` directamente.
-
-El script ejecuta `fvm flutter test` con todos los argumentos pasados.

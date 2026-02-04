@@ -1,15 +1,28 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqlite3/open.dart';
+import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
 import 'package:escandoc/core/database/database_helper.dart';
 import 'package:escandoc/features/search/data/repositories/search_repository_impl.dart';
 
-/// Tests de integración para SearchRepository (FTS5)
-/// Usan sqflite_common_ffi para ejecutar en desktop
+/// Tests de integración para SearchRepository (FTS4)
+/// Usan sqflite_common_ffi + sqlite3_flutter_libs para FTS en desktop
 void main() {
   late SearchRepositoryImpl repository;
 
-  setUpAll(() {
+  setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
+
+    // Configurar sqlite3 para usar la librería con FTS habilitado
+    if (Platform.isWindows) {
+      open.overrideFor(OperatingSystem.windows, openSqlite3);
+    } else if (Platform.isLinux) {
+      open.overrideFor(OperatingSystem.linux, openSqlite3);
+    } else if (Platform.isMacOS) {
+      open.overrideFor(OperatingSystem.macOS, openSqlite3);
+    }
+
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   });
@@ -93,8 +106,8 @@ void main() {
   //   await DatabaseHelper.instance.close();
   // });
 
-  group('SearchRepository - FTS5 Integration Tests', () {
-    test('Debe ejecutar query FTS5 correctamente', () async {
+  group('SearchRepository - FTS4 Integration Tests', () {
+    test('Debe ejecutar query FTS4 correctamente', () async {
       // Act
       final results = await repository.search('edesur');
 
@@ -154,7 +167,7 @@ void main() {
 
       // El snippet debe contener tags <b></b> para destacar
       expect(firstResult.snippet, isNotEmpty);
-      // FTS5 snippet puede usar diferentes tags dependiendo de configuración
+      // FTS4 snippet puede usar diferentes tags dependiendo de configuración
       // Verificamos que tenga contenido relevante
       expect(
         firstResult.snippet.toLowerCase(),
@@ -211,7 +224,7 @@ void main() {
 
       // Assert
       expect(results, isNotEmpty);
-      // FTS5 ordena por rank automáticamente
+      // FTS4 retorna resultados ordenados por fecha
       // Verificamos que todos los resultados sean válidos
       for (final result in results) {
         expect(result.id, greaterThan(0));

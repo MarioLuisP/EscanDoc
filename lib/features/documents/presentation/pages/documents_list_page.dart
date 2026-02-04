@@ -38,6 +38,30 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
           ),
         ),
         actions: [
+          // TEMPORAL: Botón de diagnóstico SQLite
+          IconButton(
+            icon: const Icon(Icons.bug_report, size: 28),
+            onPressed: () {
+              Navigator.pushNamed(context, '/diagnostics');
+            },
+            tooltip: 'SQLite Diagnostics',
+          ),
+          // SPIKE TÉCNICO: Scanner custom (Épica 6)
+          IconButton(
+            icon: const Icon(Icons.science, size: 28, color: Colors.orange),
+            onPressed: () {
+              Navigator.pushNamed(context, '/spike/scanner');
+            },
+            tooltip: '🧪 SPIKE: Cunning Scanner',
+          ),
+          // DEBUG: Scanner nativo actual
+          IconButton(
+            icon: const Icon(Icons.bug_report_outlined, size: 28, color: Colors.blue),
+            onPressed: () {
+              Navigator.pushNamed(context, '/spike/native-debug');
+            },
+            tooltip: '🔍 DEBUG: Scanner Nativo',
+          ),
           // Botón de búsqueda
           IconButton(
             icon: const Icon(Icons.search, size: 28),
