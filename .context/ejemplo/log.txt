@@ -1,0 +1,49 @@
+I/flutter (32478):
+I/flutter (32478): ═══════════════════════════════════════════════════
+I/flutter (32478): ANÁLISIS PROFUNDO JPG - COPIAR DESDE AQUÍ
+I/flutter (32478): ═══════════════════════════════════════════════════
+I/flutter (32478):
+I/flutter (32478): 📸 URI Original: file:///data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/261787841901767.jpg
+I/flutter (32478): 📸 URI Original: file:///data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/261787841901767.jpg
+I/flutter (32478): 📂 Path (sin file://): /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/261787841901767.jpg
+I/flutter (32478): 📂 Path (sin file://): /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/261787841901767.jpg
+E/OpenGLRenderer(32478): Unable to match the desired swap behavior.
+E/qdgralloc(32478): GetGpuPixelFormat: No map for format: 0x38
+E/AdrenoUtils(32478): <validate_memory_layout_input_parmas:1984>: Unknown Format 0
+E/AdrenoUtils(32478): <adreno_init_memory_layout:4723>: Memory Layout input parameter validation failed!
+E/qdgralloc(32478): GetGpuResourceSizeAndDimensions Graphics metadata init failed
+E/Gralloc4(32478): isSupported(1, 1, 56, 1, ...) failed with 1
+E/GraphicBufferAllocator(32478): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 1
+E/AHardwareBuffer(32478): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -1), handle=0x0
+E/qdgralloc(32478): GetGpuPixelFormat: No map for format: 0x38
+E/AdrenoUtils(32478): <validate_memory_layout_input_parmas:1984>: Unknown Format 0
+E/AdrenoUtils(32478): <adreno_init_memory_layout:4723>: Memory Layout input parameter validation failed!
+E/qdgralloc(32478): GetGpuResourceSizeAndDimensions Graphics metadata init failed
+E/Gralloc4(32478): isSupported(1, 1, 56, 1, ...) failed with 1
+E/GraphicBufferAllocator(32478): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 1
+E/AHardwareBuffer(32478): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -1), handle=0x0
+D/Surface (32478): Surface::disconnect
+D/BufferQueueProducer(32478): [SurfaceView[com.example.escandoc/com.example.escandoc.MainActivity]#17(BLAST Consumer)17](id:7ede00000011,api:1,p:32478,c:32478) disconnect: api 1
+I/flutter (32478): ✅ ¿Archivo existe?: true
+I/flutter (32478): ✅ ¿Archivo existe?: true
+I/flutter (32478):
+I/flutter (32478): 📊 INFORMACIÓN DEL ARCHIVO:
+I/flutter (32478): ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+I/flutter (32478): Tamaño: 0.33 MB (338.38 KB)
+I/flutter (32478): Bytes: 346496
+I/flutter (32478): 📊 Tamaño: 0.33 MB
+I/flutter (32478): 📊 Bytes: 346496
+I/flutter (32478): Primeros 10 bytes (hex): ff d8 ff e0 00 10 4a 46 49 46
+I/flutter (32478): 📊 Primeros bytes: ff d8 ff e0 00 10 4a 46 49 46
+I/flutter (32478): ✅ CONFIRMADO: Es un archivo JPG válido
+I/flutter (32478): ✅ CONFIRMADO: JPG válido
+I/flutter (32478):
+I/flutter (32478): 🎯 CONCLUSIÓN PARA OCR:
+I/flutter (32478): ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+I/flutter (32478): ! Tamaño pequeño - verificar calidad
+I/flutter (32478): ✅ Archivo accesible para procesamiento
+I/flutter (32478): ✅ Listo para usar con ML Kit OCR
+I/flutter (32478):
+I/flutter (32478): ═══════════════════════════════════════════════════
+I/flutter (32478): FIN ANÁLISIS - COPIAR HASTA AQUÍ
+I/flutter (32478): ═══════════════════════════════════════════════════

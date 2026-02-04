@@ -1,104 +1,119 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:escandoc/core/services/ocr_service.dart';
 import 'package:escandoc/core/services/document_classifier.dart';
-import 'package:escandoc/core/services/pdf_generator.dart';
+import 'package:escandoc/core/services/pdf_converter_service.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
 import 'package:path/path.dart' as path;
 
-/// UseCase para procesar OCR en documento escaneado
+/// UseCase para procesar OCR en documento escaneado (Épica 6: OCR-first)
 ///
-/// Orquesta:
-/// 1. Obtener documento de BD
-/// 2. Si es PDF, extraer temporalmente como imagen PNG (150 DPI)
-/// 3. Extraer texto con OCR (ML Kit)
-/// 4. Re-clasificar tipo basado en texto real
-/// 5. Extraer fecha de vencimiento si existe
-/// 6. Actualizar documento en BD
-/// 7. Limpiar archivo temporal si se creó
+/// FLUJO NUEVO (OCR-first):
+/// 1. Obtener documento de BD (filePath apunta al JPG normalizado)
+/// 2. Extraer texto con OCR desde JPG
+/// 3. Re-clasificar tipo basado en texto real
+/// 4. Extraer fecha de vencimiento si existe
+/// 5. Actualizar documento en BD con texto OCR
+/// 6. Convertir JPG → PDF (función separada)
+/// 7. Actualizar filePath con PDF en BD
+/// 8. Eliminar JPG (o dejarlo para próximo scan)
 ///
 /// Se ejecuta en background después de SaveScannedDocument
 class ProcessOCR {
   final OCRService _ocrService;
   final DocumentClassifier _classifier;
   final DocumentRepository _repository;
-  final PDFGenerator _pdfGenerator;
-  final String _scratchpadPath;
+  final PdfConverterService _pdfConverter;
+  final String _outputDirectory;
 
   ProcessOCR(
     this._ocrService,
     this._classifier,
     this._repository,
-    this._pdfGenerator,
-    this._scratchpadPath,
+    this._pdfConverter,
+    this._outputDirectory,
   );
 
   /// Procesa OCR para documento y retorna documento actualizado
   ///
+  /// ÉPICA 6: OCR-first
+  /// - OCR desde JPG normalizado
+  /// - JPG → PDF
+  /// - Actualizar filePath con PDF
+  /// - Eliminar JPG
+  ///
   /// Lanza Exception si documento no existe
   Future<DocumentModel> call(int documentId) async {
-    File? tempImageFile;
-
     try {
-      // 1. Obtener documento
+      debugPrint('[ProcessOCR] Iniciando procesamiento OCR para documento $documentId');
+
+      // 1. Obtener documento (filePath apunta al JPG normalizado)
       final document = await _repository.getDocumentById(documentId);
       if (document == null) {
         throw Exception('Document not found: $documentId');
       }
 
-      // 2. Determinar archivo de imagen para OCR
-      final isPDF = document.filePath.toLowerCase().endsWith('.pdf');
+      final jpgPath = document.filePath;
+      debugPrint('[ProcessOCR] JPG path: $jpgPath');
 
-      File imageFileForOCR;
-
-      if (isPDF) {
-        // 2a. Crear directorio scratchpad si no existe
-        final scratchpadDir = Directory(_scratchpadPath);
-        if (!scratchpadDir.existsSync()) {
-          scratchpadDir.createSync(recursive: true);
-        }
-
-        // 2b. Extraer temporalmente PDF como imagen PNG en scratchpad
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final tempImagePath = path.join(_scratchpadPath, 'ocr_temp_$timestamp.png');
-
-        tempImageFile = await _pdfGenerator.extractFirstPageForOCR(
-          File(document.filePath),
-          tempImagePath,
-        );
-
-        imageFileForOCR = tempImageFile;
-      } else {
-        // 2b. Es una imagen directa
-        imageFileForOCR = File(document.filePath);
+      final jpgFile = File(jpgPath);
+      if (!jpgFile.existsSync()) {
+        throw Exception('JPG file not found: $jpgPath');
       }
 
-      // 3. Extraer texto con OCR
-      final extractedText = await _ocrService.extractText(imageFileForOCR);
+      // 2. OCR desde JPG normalizado
+      debugPrint('[ProcessOCR] Extrayendo texto con OCR...');
+      final extractedText = await _ocrService.extractText(jpgFile);
+      debugPrint('[ProcessOCR] Texto extraído: ${extractedText.length} caracteres');
 
-      // 4. Re-clasificar tipo basado en texto real
+      // 3. Re-clasificar tipo basado en texto real
       final detectedType = _classifier.detectType(extractedText);
+      debugPrint('[ProcessOCR] Tipo detectado: $detectedType');
 
-      // 5. Extraer fecha de vencimiento si existe
+      // 4. Extraer fecha de vencimiento si existe
       final extractedDate = _classifier.extractDueDate(extractedText);
+      debugPrint('[ProcessOCR] Fecha extraída: $extractedDate');
 
-      // 6. Actualizar documento
-      final updatedDocument = document.copyWith(
+      // 5. Actualizar documento con texto OCR
+      var updatedDocument = document.copyWith(
         ocrText: extractedText,
         docType: detectedType,
         extractedDate: extractedDate,
       );
 
-      // 7. Guardar en BD
+      debugPrint('[ProcessOCR] Guardando texto OCR en BD...');
       await _repository.updateDocument(updatedDocument);
+      debugPrint('[ProcessOCR] Texto OCR guardado');
 
-      // 8. Retornar documento actualizado
-      return updatedDocument;
-    } finally {
-      // 9. Limpiar archivo temporal si se creó
-      if (tempImageFile != null && tempImageFile.existsSync()) {
-        await tempImageFile.delete();
+      // 6. Convertir JPG → PDF (función separada)
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final pdfPath = path.join(_outputDirectory, 'pdf_$timestamp.pdf');
+
+      debugPrint('[ProcessOCR] Convirtiendo JPG a PDF...');
+      final pdfFile = await _pdfConverter.convertJpgToPdf(jpgPath, pdfPath);
+      debugPrint('[ProcessOCR] PDF generado: ${pdfFile.path}');
+
+      // 7. Actualizar filePath con PDF en BD
+      updatedDocument = updatedDocument.copyWith(filePath: pdfFile.path);
+
+      debugPrint('[ProcessOCR] Actualizando filePath en BD con PDF...');
+      await _repository.updateDocument(updatedDocument);
+      debugPrint('[ProcessOCR] filePath actualizado con PDF');
+
+      // 8. Eliminar JPG (ya no se necesita)
+      debugPrint('[ProcessOCR] Eliminando JPG temporal...');
+      if (jpgFile.existsSync()) {
+        await jpgFile.delete();
+        debugPrint('[ProcessOCR] JPG eliminado');
       }
+
+      debugPrint('[ProcessOCR] Procesamiento completo para documento $documentId');
+      return updatedDocument;
+    } catch (e, stackTrace) {
+      debugPrint('[ProcessOCR] ERROR: $e');
+      debugPrint('[ProcessOCR] StackTrace: $stackTrace');
+      rethrow;
     }
   }
 }

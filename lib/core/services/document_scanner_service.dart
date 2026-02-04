@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:escandoc/features/image_processing/normalize_image/domain/normalize_image_use_case.dart';
 
 /// Interface para servicio de escaneo de documentos
 abstract class DocumentScannerService {
@@ -11,11 +12,14 @@ abstract class DocumentScannerService {
 /// Implementación usando flutter_doc_scanner
 ///
 /// Usa scanner nativo (ML Kit en Android, VisionKit en iOS)
-/// para detección automática de bordes
+/// para detección automática de bordes y normalización OCR-first
 class DocumentScannerServiceImpl implements DocumentScannerService {
   final FlutterDocScanner _scanner = FlutterDocScanner();
+  final NormalizeImageUseCase _normalizeImage;
 
-  /// Abre scanner nativo y retorna imagen escaneada
+  DocumentScannerServiceImpl(this._normalizeImage);
+
+  /// Abre scanner nativo y retorna imagen JPG normalizada (850 KB)
   ///
   /// Retorna null si:
   /// - Usuario cancela el scan
@@ -35,8 +39,8 @@ class DocumentScannerServiceImpl implements DocumentScannerService {
 
       debugPrint('[DocumentScanner] Permiso de cámara otorgado, abriendo scanner...');
 
-      // 2. Abrir scanner nativo
-      final scannedResult = await _scanner.getScanDocuments();
+      // 2. Abrir scanner nativo (OCR-first: retorna JPG, no PDF)
+      final scannedResult = await _scanner.getScannedDocumentAsImages();
 
       debugPrint('[DocumentScanner] Scanner cerrado. Resultado: $scannedResult');
 
@@ -45,22 +49,20 @@ class DocumentScannerServiceImpl implements DocumentScannerService {
         return null;
       }
 
-      // flutter_doc_scanner puede retornar List<String> o Map dependiendo de la versión
+      // getScannedDocumentAsImages() retorna Map con: images, count, Uri, Count
       String? filePath;
 
-      if (scannedResult is List) {
-        // API antigua: Lista de paths
-        if (scannedResult.isEmpty) {
-          debugPrint('[DocumentScanner] Lista vacía');
+      if (scannedResult is Map) {
+        // Extraer path del JPG (Android: JPG, iOS: PNG)
+        final images = scannedResult['images'] as List?;
+        if (images == null || images.isEmpty) {
+          debugPrint('[DocumentScanner] ERROR: images está vacío o null');
           return null;
         }
-        filePath = scannedResult.first.toString();
-        debugPrint('[DocumentScanner] Path desde lista: $filePath');
-      } else if (scannedResult is Map) {
-        // API nueva: Map con pdfUri y pageCount
-        filePath = scannedResult['pdfUri']?.toString();
-        debugPrint('[DocumentScanner] Path desde map (pdfUri): $filePath');
-        debugPrint('[DocumentScanner] pageCount: ${scannedResult['pageCount']}');
+
+        filePath = images.first.toString();
+        debugPrint('[DocumentScanner] Path JPG desde map (images): $filePath');
+        debugPrint('[DocumentScanner] count: ${scannedResult['count']}');
       } else {
         debugPrint('[DocumentScanner] ERROR: Tipo de resultado desconocido: ${scannedResult.runtimeType}');
         return null;
@@ -87,7 +89,21 @@ class DocumentScannerServiceImpl implements DocumentScannerService {
         return null;
       }
 
-      return file;
+      // 3. Normalizar imagen (OCR-first: reducir a 850 KB)
+      debugPrint('[DocumentScanner] Normalizando imagen a 850 KB...');
+      final normalizedPath = await _normalizeImage.execute(filePath);
+      debugPrint('[DocumentScanner] Imagen normalizada: $normalizedPath');
+
+      final normalizedFile = File(normalizedPath);
+      if (!normalizedFile.existsSync()) {
+        debugPrint('[DocumentScanner] ERROR: Imagen normalizada no existe');
+        return null;
+      }
+
+      final normalizedSize = normalizedFile.lengthSync();
+      debugPrint('[DocumentScanner] Tamaño normalizado: ${(normalizedSize / 1024).toStringAsFixed(2)} KB');
+
+      return normalizedFile;
     } catch (e, stackTrace) {
       // Error de permisos, cancelación, o cualquier otro error
       debugPrint('[DocumentScanner] ERROR: $e');

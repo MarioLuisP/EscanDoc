@@ -20,6 +20,11 @@ import 'core/services/document_classifier.dart';
 import 'core/services/ocr_service.dart';
 import 'features/documents/data/repositories/document_repository.dart';
 
+// Image processing dependencies (Épica 6 - OCR-first)
+import 'features/image_processing/normalize_image/domain/normalize_image_use_case.dart';
+import 'features/image_processing/normalize_image/data/image_normalizer_service_impl.dart';
+import 'core/services/pdf_converter_service.dart';
+
 // Search dependencies
 import 'features/search/data/repositories/search_repository_impl.dart';
 import 'features/search/domain/usecases/search_documents.dart';
@@ -59,6 +64,10 @@ void main() async {
   final tempDir = await getTemporaryDirectory();
   final scratchpadPath = '${tempDir.path}/scratchpad';
 
+  // Obtener directorio de documentos para guardar PDFs (Épica 6)
+  final docsDir = await getApplicationDocumentsDirectory();
+  final outputDirectory = docsDir.path;
+
   // Decidir ruta inicial
   final initialRoute = hasCompletedOnboarding ? '/home' : '/onboarding';
 
@@ -70,6 +79,7 @@ void main() async {
       child: MyApp(
         initialRoute: initialRoute,
         scratchpadPath: scratchpadPath,
+        outputDirectory: outputDirectory,
       ),
     ),
   );
@@ -78,11 +88,13 @@ void main() async {
 class MyApp extends StatelessWidget {
   final String initialRoute;
   final String scratchpadPath;
+  final String outputDirectory;
 
   const MyApp({
     super.key,
     required this.initialRoute,
     required this.scratchpadPath,
+    required this.outputDirectory,
   });
 
   @override
@@ -92,8 +104,11 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) {
             // Crear servicios para Scan
-            final scannerService = DocumentScannerServiceImpl();
+            final imageNormalizerService = ImageNormalizerServiceImpl();
+            final normalizeImageUseCase = NormalizeImageUseCase(imageNormalizerService);
+            final scannerService = DocumentScannerServiceImpl(normalizeImageUseCase);
             final pdfGenerator = PDFGeneratorImpl();
+            final pdfConverter = PdfConverterServiceImpl();
             final classifier = DocumentClassifier();
             final ocrService = OCRServiceImpl();
             final documentRepository = DocumentRepository();
@@ -109,8 +124,8 @@ class MyApp extends StatelessWidget {
               ocrService,
               classifier,
               documentRepository,
-              pdfGenerator,
-              scratchpadPath,
+              pdfConverter,
+              outputDirectory,
             );
 
             return ScanProvider(

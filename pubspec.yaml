@@ -43,11 +43,11 @@ dependencies:
   # ═══════════════════════════════════════════════════════════════════════════
   google_mlkit_text_recognition: ^0.15.0  # OCR offline después del escaneo
   google_mlkit_barcode_scanning: ^0.14.0  # Fase 1.5 - mejora detección vencimientos
-  google_mlkit_image_labeling: ^0.14.2
+
   # ═══════════════════════════════════════════════════════════════════════════
   # IMAGE & PDF PROCESSING
   # ═══════════════════════════════════════════════════════════════════════════
-  image: ^4.5.0                      # Procesamiento de imagen (thumbnails)
+  image: ^4.5.4                     # Procesamiento de imagen (thumbnails)
   pdf: ^3.11.3                       # Generación de PDFs
   printing: ^5.14.2                  # Vista previa e impresión de PDFs
   pdfrx: ^2.2.24                     # Visualización de PDFs con zoom

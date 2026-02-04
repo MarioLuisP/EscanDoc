@@ -6,16 +6,20 @@ import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
 import 'package:path/path.dart' as path;
 
-/// UseCase para guardar documento escaneado
+/// UseCase para guardar documento escaneado (Épica 6: OCR-first)
 ///
-/// Orquesta:
-/// 1. Generar PDF desde imagen
-/// 2. Generar thumbnail
+/// FLUJO NUEVO (OCR-first):
+/// 1. Guardar JPG normalizado temporalmente en filePath
+/// 2. Generar thumbnail desde JPG
 /// 3. Detectar tipo automáticamente (sin OCR inicial)
 /// 4. Generar nombre localizado
 /// 5. Guardar en BD
 ///
-/// OCR se ejecutará en background después (ProcessOCR UseCase)
+/// ProcessOCR (background) hará:
+/// - OCR desde JPG
+/// - JPG → PDF
+/// - Actualizar filePath con PDF
+/// - Eliminar JPG
 ///
 /// CLEAN ARCHITECTURE: Este UseCase NO conoce path_provider.
 /// El storage path debe ser inyectado desde Data/Presentation layer.
@@ -50,53 +54,23 @@ class SaveScannedDocument {
     debugPrint('[SaveScannedDocument] Archivo: ${scannedFile.path}');
     debugPrint('[SaveScannedDocument] Output dir: $outputDirectory');
 
-    // Detectar si el archivo es PDF o imagen
-    final isPDF = scannedFile.path.toLowerCase().endsWith('.pdf');
-    debugPrint('[SaveScannedDocument] ¿Es PDF? $isPDF');
+    // ÉPICA 6: OCR-first - No generamos PDF aún
+    // Scanner ahora retorna JPG normalizado (850 KB)
+    // PDF se generará en ProcessOCR después del OCR
 
-    File pdfFile;
-    File thumbnailFile;
+    debugPrint('[SaveScannedDocument] Guardando JPG normalizado temporalmente...');
 
-    if (isPDF) {
-      // 1a. El scanner ya generó un PDF, copiarlo a nuestro directorio
-      final pdfPath = path.join(outputDirectory, 'pdf_$timestamp.pdf');
-      debugPrint('[SaveScannedDocument] Copiando PDF a: $pdfPath');
-      pdfFile = await _pdfGenerator.copyPDF(scannedFile, pdfPath);
-      debugPrint('[SaveScannedDocument] PDF copiado: ${pdfFile.path}');
+    // 1. Generar thumbnail desde JPG normalizado
+    final thumbnailPath = path.join(outputDirectory, 'thumb_$timestamp.jpg');
+    debugPrint('[SaveScannedDocument] Generando thumbnail desde JPG...');
+    final thumbnailFile = await _pdfGenerator.generateThumbnail(
+      scannedFile,
+      thumbnailPath,
+    );
+    debugPrint('[SaveScannedDocument] Thumbnail generado: ${thumbnailFile.path}');
 
-      // 2a. Extraer primera página del PDF como imagen
-      final imageFromPdfPath = path.join(outputDirectory, 'page_$timestamp.png');
-      debugPrint('[SaveScannedDocument] Extrayendo primera página del PDF como imagen...');
-      final imageFromPdf = await _pdfGenerator.extractFirstPageAsImage(
-        pdfFile,
-        imageFromPdfPath,
-      );
-      debugPrint('[SaveScannedDocument] Imagen extraída: ${imageFromPdf.path}');
-
-      // 2b. Generar thumbnail desde la imagen extraída
-      final thumbnailPath = path.join(outputDirectory, 'thumb_$timestamp.jpg');
-      debugPrint('[SaveScannedDocument] Generando thumbnail desde imagen extraída...');
-      thumbnailFile = await _pdfGenerator.generateThumbnail(
-        imageFromPdf,
-        thumbnailPath,
-      );
-      debugPrint('[SaveScannedDocument] Thumbnail generado: ${thumbnailFile.path}');
-    } else {
-      // 1b. Archivo es imagen, crear PDF desde imagen
-      final pdfPath = path.join(outputDirectory, 'pdf_$timestamp.pdf');
-      debugPrint('[SaveScannedDocument] Generando PDF desde imagen en: $pdfPath');
-      pdfFile = await _pdfGenerator.createPDF(scannedFile, pdfPath);
-      debugPrint('[SaveScannedDocument] PDF generado: ${pdfFile.path}');
-
-      // 2b. Generar thumbnail desde imagen
-      final thumbnailPath = path.join(outputDirectory, 'thumb_$timestamp.jpg');
-      debugPrint('[SaveScannedDocument] Generando thumbnail desde imagen...');
-      thumbnailFile = await _pdfGenerator.generateThumbnail(
-        scannedFile,
-        thumbnailPath,
-      );
-      debugPrint('[SaveScannedDocument] Thumbnail generado: ${thumbnailFile.path}');
-    }
+    // 2. El JPG se guardará temporalmente en filePath
+    // ProcessOCR lo reemplazará con el PDF después
 
     // 3. Detectar tipo (sin OCR inicial, usamos string vacío)
     final detectedType = _classifier.detectType('');
@@ -110,10 +84,10 @@ class SaveScannedDocument {
     );
     debugPrint('[SaveScannedDocument] Nombre generado: $documentName');
 
-    // 5. Crear modelo de documento
+    // 5. Crear modelo de documento (con JPG temporal en filePath)
     final document = DocumentModel(
       title: documentName,
-      filePath: pdfFile.path,
+      filePath: scannedFile.path, // JPG temporal (ProcessOCR lo reemplazará con PDF)
       thumbnailPath: thumbnailFile.path,
       docType: detectedType,
       ocrText: null, // Se llenará después con ProcessOCR

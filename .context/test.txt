@@ -1,0 +1,165 @@
+
+Performing hot restart...
+Restarted application in 4.390ms.
+I/flutter ( 4855): [🌎 Easy Localization] [DEBUG] Localization initialized
+I/flutter ( 4855): [🌎 Easy Localization] [DEBUG] Start
+I/flutter ( 4855): [🌎 Easy Localization] [DEBUG] Init state
+I/flutter ( 4855): [🌎 Easy Localization] [DEBUG] Build
+I/flutter ( 4855): [🌎 Easy Localization] [DEBUG] Init Localization Delegate
+I/flutter ( 4855): [🌎 Easy Localization] [DEBUG] Init provider
+I/flutter ( 4855): [🌎 Easy Localization] [DEBUG] Load Localization Delegate
+I/flutter ( 4855): [🌎 Easy Localization] [DEBUG] Load asset from assets/l10n
+I/flutter ( 4855): [🌎 Easy Localization] [DEBUG] Build
+I/flutter ( 4855): [🌎 Easy Localization] [DEBUG] Init Localization Delegate
+I/flutter ( 4855): [🌎 Easy Localization] [DEBUG] Init provider
+D/VRI[MainActivity]( 4855): update {(0,0)(fillxfill) sim={adjust=resize forwardNavigation} ty=BASE_APPLICATION fmt=TRANSLUCENT wanim=0x1030001
+D/VRI[MainActivity]( 4855):   fl=LAYOUT_IN_SCREEN LAYOUT_INSET_DECOR SPLIT_TOUCH HARDWARE_ACCELERATED DRAWS_SYSTEM_BAR_BACKGROUNDS
+D/VRI[MainActivity]( 4855):   pfl=NO_MOVE_ANIMATION FORCE_DRAW_STATUS_BAR_BACKGROUND USE_BLAST APPEARANCE_CONTROLLED FIT_INSETS_CONTROLLED
+D/VRI[MainActivity]( 4855):   vsysui=LAYOUT_STABLE LAYOUT_FULLSCREEN LIGHT_STATUS_BAR
+D/VRI[MainActivity]( 4855):   apr=LIGHT_STATUS_BARS
+D/VRI[MainActivity]( 4855):   bhv=DEFAULT
+D/VRI[MainActivity]( 4855):   fitSides=} by setLayoutParams
+E/OpenGLRenderer( 4855): Unable to match the desired swap behavior.
+E/qdgralloc( 4855): GetGpuPixelFormat: No map for format: 0x38
+E/AdrenoUtils( 4855): <validate_memory_layout_input_parmas:1984>: Unknown Format 0
+E/AdrenoUtils( 4855): <adreno_init_memory_layout:4723>: Memory Layout input parameter validation failed!
+E/qdgralloc( 4855): GetGpuResourceSizeAndDimensions Graphics metadata init failed
+E/Gralloc4( 4855): isSupported(1, 1, 56, 1, ...) failed with 1
+E/GraphicBufferAllocator( 4855): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 1
+E/AHardwareBuffer( 4855): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -1), handle=0x0
+E/qdgralloc( 4855): GetGpuPixelFormat: No map for format: 0x38
+E/AdrenoUtils( 4855): <validate_memory_layout_input_parmas:1984>: Unknown Format 0
+E/AdrenoUtils( 4855): <adreno_init_memory_layout:4723>: Memory Layout input parameter validation failed!
+E/qdgralloc( 4855): GetGpuResourceSizeAndDimensions Graphics metadata init failed
+E/Gralloc4( 4855): isSupported(1, 1, 56, 1, ...) failed with 1
+E/GraphicBufferAllocator( 4855): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 1
+E/AHardwareBuffer( 4855): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -1), handle=0x0
+D/Surface ( 4855): Surface::disconnect
+D/BufferQueueProducer( 4855): [SurfaceView[com.example.escandoc/com.example.escandoc.MainActivity]#7(BLAST Consumer)7](id:12f700000007,api:1,p:4855,c:4855) disconnect: api 1
+I/Choreographer( 4855): Skipped 64 frames!  The application may be doing too much work on its main thread.
+I/OpenGLRenderer( 4855): Davey! duration=745ms; Flags=0, FrameTimelineVsyncId=38455486, IntendedVsync=91036861613333, Vsync=91037572724437, InputEventId=0, HandleInputStart=91037582030077, AnimationStart=91037582034139, Perform
+TraversalsStart=91037582037004, DrawStart=91037582822993, FrameDeadline=91037007978520, FrameInterval=91037581816066, FrameStartTime=11111111, SyncQueued=91037582942316, SyncStart=91037585719765, IssueDrawCommandsStart=91037585
+864348, SwapBuffers=91037597182578, FrameCompleted=91037610203204, DequeueBufferDuration=9076251, QueueBufferDuration=383698, GpuCompleted=91037610203204, SwapBuffersCompleted=91037598488464, DisplayPresentTime=0, CommandSubmissionCompleted=91037597182578,
+I/flutter ( 4855): [ScanProvider] Iniciando flujo de escaneo...
+I/flutter ( 4855): [ScanProvider] Llamando a scanner nativo...
+I/flutter ( 4855): [DocumentScanner] Solicitando permisos de cámara...
+I/flutter ( 4855): [DocumentScanner] Permiso de cámara otorgado, abriendo scanner...
+D/TransportRuntime.SQLiteEventStore( 4855): Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+D/TransportRuntime.JobInfoScheduler( 4855): Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+D/TransportRuntime.SQLiteEventStore( 4855): Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+D/ViewRootImpl( 4855): update {(0,0)(fillxfill) sim={forwardNavigation} ty=BASE_APPLICATION wanim=0x1030001
+D/ViewRootImpl( 4855):   fl=LAYOUT_IN_SCREEN FULLSCREEN LAYOUT_INSET_DECOR SPLIT_TOUCH HARDWARE_ACCELERATED
+D/ViewRootImpl( 4855):   pfl=NO_MOVE_ANIMATION FORCE_DRAW_STATUS_BAR_BACKGROUND FIT_INSETS_CONTROLLED
+D/ViewRootImpl( 4855):   bhv=DEFAULT
+D/ViewRootImpl( 4855):   fitSides=} by setView
+D/TransportRuntime.JobInfoScheduler( 4855): Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+E/OpenGLRenderer( 4855): Unable to match the desired swap behavior.
+W/Parcel  ( 4855): Expecting binder but got null!
+D/Surface ( 4855): Surface::disconnect
+D/BufferQueueProducer( 4855): [VRI[GmsDocumentScanningDelegateActivity]#8(BLAST Consumer)8](id:12f700000008,api:1,p:4855,c:4855) disconnect: api 1
+D/Surface ( 4855): Surface::disconnect
+D/BufferQueueProducer( 4855): [SurfaceView[com.example.escandoc/com.example.escandoc.MainActivity]#7(BLAST Consumer)7](id:12f700000007,api:1,p:4855,c:4855) disconnect: api 1
+D/Surface ( 4855): Surface::disconnect
+D/BufferQueueProducer( 4855): [SurfaceView[com.example.escandoc/com.example.escandoc.MainActivity]#7(BLAST Consumer)7](id:12f700000007,api:0,p:-1,c:4855) disconnect: api -1
+D/Surface ( 4855): Surface::disconnect
+D/BufferQueueProducer( 4855): [VRI[MainActivity]#6(BLAST Consumer)6](id:12f700000006,api:1,p:4855,c:4855) disconnect: api 1
+D/VRI[GmsDocumentScanningDelegateActivity]( 4855): update {(0,0)(fillxfill) sim={adjust=pan} ty=BASE_APPLICATION wanim=0x1030001
+D/VRI[GmsDocumentScanningDelegateActivity]( 4855):   fl=LAYOUT_IN_SCREEN FULLSCREEN LAYOUT_INSET_DECOR SPLIT_TOUCH HARDWARE_ACCELERATED
+D/VRI[GmsDocumentScanningDelegateActivity]( 4855):   pfl=NO_MOVE_ANIMATION FORCE_DRAW_STATUS_BAR_BACKGROUND USE_BLAST FIT_INSETS_CONTROLLED
+D/VRI[GmsDocumentScanningDelegateActivity]( 4855):   bhv=SHOW_TRANSIENT_BARS_BY_SWIPE
+D/VRI[GmsDocumentScanningDelegateActivity]( 4855):   fitSides=} by setLayoutParams
+E/OpenGLRenderer( 4855): Unable to match the desired swap behavior.
+I/flutter ( 4855): [DocumentScanner] Scanner cerrado. Resultado: {images: [file:///data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/355148504560884.jpg], count: 1, Uri: [file:///data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/355148504560884.jpg], Count: 1}
+I/flutter ( 4855): [DocumentScanner] Path JPG desde map (images): file:///data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/355148504560884.jpg
+I/flutter ( 4855): [DocumentScanner] count: 1
+I/flutter ( 4855): [DocumentScanner] Path limpio: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/355148504560884.jpg
+E/OpenGLRenderer( 4855): Unable to match the desired swap behavior.
+E/qdgralloc( 4855): GetGpuPixelFormat: No map for format: 0x38
+E/AdrenoUtils( 4855): <validate_memory_layout_input_parmas:1984>: Unknown Format 0
+E/AdrenoUtils( 4855): <adreno_init_memory_layout:4723>: Memory Layout input parameter validation failed!
+E/qdgralloc( 4855): GetGpuResourceSizeAndDimensions Graphics metadata init failed
+E/Gralloc4( 4855): isSupported(1, 1, 56, 1, ...) failed with 1
+E/GraphicBufferAllocator( 4855): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 1
+E/AHardwareBuffer( 4855): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -1), handle=0x0
+E/qdgralloc( 4855): GetGpuPixelFormat: No map for format: 0x38
+E/AdrenoUtils( 4855): <validate_memory_layout_input_parmas:1984>: Unknown Format 0
+E/AdrenoUtils( 4855): <adreno_init_memory_layout:4723>: Memory Layout input parameter validation failed!
+E/qdgralloc( 4855): GetGpuResourceSizeAndDimensions Graphics metadata init failed
+E/Gralloc4( 4855): isSupported(1, 1, 56, 1, ...) failed with 1
+E/GraphicBufferAllocator( 4855): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 1
+E/AHardwareBuffer( 4855): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -1), handle=0x0
+D/Surface ( 4855): Surface::disconnect
+D/BufferQueueProducer( 4855): [SurfaceView[com.example.escandoc/com.example.escandoc.MainActivity]#11(BLAST Consumer)11](id:12f70000000b,api:1,p:4855,c:4855) disconnect: api 1
+I/flutter ( 4855): [DocumentScanner] ¿Archivo existe? true
+I/flutter ( 4855): [DocumentScanner] Normalizando imagen a 850 KB...
+I/flutter ( 4855): [DocumentScanner] Imagen normalizada: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/355148504560884.jpg
+I/flutter ( 4855): [DocumentScanner] Tamaño normalizado: 669.69 KB
+I/flutter ( 4855): [ScanProvider] Imagen escaneada recibida: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/355148504560884.jpg
+I/flutter ( 4855): [ScanProvider] Directorio de docs: /data/user/0/com.example.escandoc/app_flutter
+I/flutter ( 4855): [ScanProvider] Guardando documento...
+I/flutter ( 4855): [SaveScannedDocument] Iniciando guardado...
+I/flutter ( 4855): [SaveScannedDocument] Archivo: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/355148504560884.jpg
+I/flutter ( 4855): [SaveScannedDocument] Output dir: /data/user/0/com.example.escandoc/app_flutter
+I/flutter ( 4855): [SaveScannedDocument] Guardando JPG normalizado temporalmente...
+I/flutter ( 4855): [SaveScannedDocument] Generando thumbnail desde JPG...
+I/flutter ( 4855): [SaveScannedDocument] Thumbnail generado: /data/user/0/com.example.escandoc/app_flutter/thumb_1770233594906.jpg
+I/flutter ( 4855): [SaveScannedDocument] Tipo detectado: documento
+I/flutter ( 4855): [SaveScannedDocument] Nombre generado: documento_4_Feb_2026
+I/flutter ( 4855): [SaveScannedDocument] Insertando en BD...
+I/flutter ( 4855): [SaveScannedDocument] Documento insertado con ID: 2
+I/flutter ( 4855): [ScanProvider] Documento guardado exitosamente. ID: 2
+I/flutter ( 4855): [ProcessOCR] Iniciando procesamiento OCR para documento 2
+I/flutter ( 4855): [ProcessOCR] JPG path: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/355148504560884.jpg
+I/flutter ( 4855): [ProcessOCR] Extrayendo texto con OCR...
+D/TransportRuntime.SQLiteEventStore( 4855): Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+D/TransportRuntime.JobInfoScheduler( 4855): Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+I/Choreographer( 4855): Skipped 205 frames!  The application may be doing too much work on its main thread.
+I/OpenGLRenderer( 4855): Davey! duration=2313ms; Flags=0, FrameTimelineVsyncId=38464031, IntendedVsync=91050828601933, Vsync=91053108716278, InputEventId=0, HandleInputStart=91053119608499, AnimationStart=91053119612093, Perfor
+mTraversalsStart=91053119614489, DrawStart=91053121541625, FrameDeadline=91050844824156, FrameInterval=91053119505947, FrameStartTime=11122509, SyncQueued=91053121671104, SyncStart=91053121776677, IssueDrawCommandsStart=9105312
+1957823, SwapBuffers=91053127780219, FrameCompleted=91053141817148, DequeueBufferDuration=2514219, QueueBufferDuration=1211042, GpuCompleted=91053141817148, SwapBuffersCompleted=91053129774334, DisplayPresentTime=491210938072, CommandSubmissionCompleted=91053127780219,
+D/PipelineManager( 4855): Start process bitmap
+D/TransportRuntime.SQLiteEventStore( 4855): Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+D/TransportRuntime.JobInfoScheduler( 4855): Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+D/Surface ( 4855): Surface::disconnect
+D/BufferQueueProducer( 4855): [VRI[GmsDocumentScanningDelegateActivity]#9(BLAST Consumer)9](id:12f700000009,api:1,p:4855,c:4855) disconnect: api 1
+D/TransportRuntime.SQLiteEventStore( 4855): Storing event with priority=DEFAULT, name=FIREBASE_ML_SDK for destination cct
+D/TransportRuntime.JobInfoScheduler( 4855): Scheduling upload for context TransportContext(cct, DEFAULT, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) with jobId=1319183661 in 362721ms(Backend next call timestamp 1770233960206). Attempt 1
+I/tflite  ( 4855): Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+I/tflite  ( 4855): Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+I/tflite  ( 4855): Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+I/tflite  ( 4855): Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+I/tflite  ( 4855): Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+I/tflite  ( 4855): Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+D/PipelineManager( 4855): OCR process succeeded via visionkit pipeline.
+D/TransportRuntime.SQLiteEventStore( 4855): Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+D/TransportRuntime.JobInfoScheduler( 4855): Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+D/TransportRuntime.SQLiteEventStore( 4855): Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+D/TransportRuntime.JobInfoScheduler( 4855): Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+W/xample.escandoc( 4855): Cleared Reference was only reachable from finalizer (only reported once)
+I/xample.escandoc( 4855): Background concurrent copying GC freed 1538KB AllocSpace bytes, 5(500KB) LOS objects, 49% free, 11MB/23MB, paused 327us,63us total 169.961ms
+I/flutter ( 4855): [ProcessOCR] Texto extraído: 2420 caracteres
+I/flutter ( 4855): [ProcessOCR] Tipo detectado: documento
+I/flutter ( 4855): [ProcessOCR] Fecha extraída: null
+I/flutter ( 4855): [ProcessOCR] Guardando texto OCR en BD...
+I/flutter ( 4855): [ProcessOCR] Texto OCR guardado
+I/flutter ( 4855): [ProcessOCR] Convirtiendo JPG a PDF...
+I/flutter ( 4855): [PdfConverter] Convirtiendo JPG a PDF...
+I/flutter ( 4855): [PdfConverter] Input: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/355148504560884.jpg
+I/flutter ( 4855): [PdfConverter] Output: /data/user/0/com.example.escandoc/app_flutter/pdf_1770233601221.pdf
+I/flutter ( 4855): [PdfConverter] JPG decodificado: 1847x2506
+I/flutter ( 4855): [PdfConverter] PDF creado con 1 página
+I/flutter ( 4855): [PdfConverter] PDF guardado: /data/user/0/com.example.escandoc/app_flutter/pdf_1770233601221.pdf
+I/flutter ( 4855): [PdfConverter] Tamaño PDF: 6315.61 KB
+I/flutter ( 4855): [ProcessOCR] PDF generado: /data/user/0/com.example.escandoc/app_flutter/pdf_1770233601221.pdf
+I/flutter ( 4855): [ProcessOCR] Actualizando filePath en BD con PDF...
+I/flutter ( 4855): [ProcessOCR] filePath actualizado con PDF
+I/flutter ( 4855): [ProcessOCR] Eliminando JPG temporal...
+I/flutter ( 4855): [ProcessOCR] JPG eliminado
+I/flutter ( 4855): [ProcessOCR] Procesamiento completo para documento 2
+W/OnBackInvokedCallback( 4855): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback( 4855): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+I/flutter ( 4855): PdfDocument initial load: PdfDocumentRefKey(/data/user/0/com.example.escandoc/app_flutter/pdf_1770233601221.pdf) (576 ms)
+W/OnBackInvokedCallback( 4855): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback( 4855): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+W/OnBackInvokedCallback( 4855): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback( 4855): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.

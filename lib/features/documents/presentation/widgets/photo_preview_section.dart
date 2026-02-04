@@ -101,7 +101,7 @@ class PhotoPreviewSection extends StatelessWidget {
 
     return Image.file(
       file,
-      fit: BoxFit.cover,
+      fit: BoxFit.contain,
       errorBuilder: (context, error, stackTrace) {
         return Center(
           child: Column(

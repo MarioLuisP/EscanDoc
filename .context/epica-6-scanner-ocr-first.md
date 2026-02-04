@@ -144,7 +144,7 @@ Resultado:
 #### Parámetros
 
 ```
-Target: 650 KB (margen de seguridad)
+Target: 850 KB (margen de seguridad)
 Límite mínimo calidad: 70
 Step iteración: 5 puntos
 Calidades: [90, 85, 80, 75, 70]
@@ -153,25 +153,25 @@ Calidades: [90, 85, 80, 75, 70]
 #### Algoritmo Android (JPG)
 
 ```
-Si tamaño > 650 KB:
+Si tamaño > 850 KB:
   Comprimir JPG con calidad 90
-  Si aún > 650 KB → calidad 85
-  Si aún > 650 KB → calidad 80
-  Si aún > 650 KB → calidad 75
-  Si aún > 650 KB → calidad 70
-  Si aún > 650 KB → FALLBACK (redimensionar 80% + calidad 85)
+  Si aún > 850 KB → calidad 85
+  Si aún > 850 KB → calidad 80
+  Si aún > 850 KB → calidad 75
+  Si aún > 850 KB → calidad 70
+  Si aún > 850 KB → FALLBACK (redimensionar 80% + calidad 85)
 ```
 
 #### Algoritmo iOS (PNG)
 
 ```
 Convertir PNG → JPG con calidad 90
-Si tamaño > 650 KB:
+Si tamaño > 850 KB:
   Comprimir JPG con calidad 85
-  Si aún > 650 KB → calidad 80
-  Si aún > 650 KB → calidad 75
-  Si aún > 650 KB → calidad 70
-  Si aún > 650 KB → FALLBACK (redimensionar 80% + calidad 85)
+  Si aún > 850 KB → calidad 80
+  Si aún > 850 KB → calidad 75
+  Si aún > 850 KB → calidad 70
+  Si aún > 850 KB → FALLBACK (redimensionar 80% + calidad 85)
 ```
 
 ### Ventajas del Enfoque
@@ -185,7 +185,7 @@ Si tamaño > 650 KB:
 
 ### Fallback para Edge Cases
 
-Si con calidad 70 aún supera 650 KB:
+Si con calidad 70 aún supera 850 KB:
 1. Redimensionar a 80% del ancho original
 2. Comprimir con calidad 85
 3. Guardar resultado
