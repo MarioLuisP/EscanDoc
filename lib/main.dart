@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 // Providers
 import 'features/scan/presentation/providers/scan_provider.dart';
 import 'features/documents/presentation/providers/documents_provider.dart';
+import 'features/documents/presentation/providers/import_provider.dart';
 import 'features/search/presentation/providers/search_provider.dart';
 import 'features/notes/presentation/providers/note_provider.dart';
 
@@ -23,6 +24,11 @@ import 'features/documents/data/repositories/document_repository.dart';
 // Image processing dependencies (Épica 6 - OCR-first)
 import 'features/image_processing/normalize_image/domain/normalize_image_use_case.dart';
 import 'features/image_processing/normalize_image/data/image_normalizer_service_impl.dart';
+import 'features/image_processing/format_converter/domain/image_format_converter.dart';
+import 'features/image_processing/format_converter/data/image_format_converter_impl.dart';
+import 'features/image_processing/classification/domain/image_classifier.dart';
+import 'features/image_processing/classification/data/image_classifier_impl.dart';
+import 'features/documents/domain/usecases/import_document.dart';
 import 'core/services/pdf_converter_service.dart';
 
 // Search dependencies
@@ -126,6 +132,40 @@ class MyApp extends StatelessWidget {
 
             return ScanProvider(
               scanDocument: scanDocument,
+              saveDocument: saveDocument,
+              processOCR: processOCR,
+            );
+          },
+        ),
+        ChangeNotifierProvider(
+          create: (_) {
+            // Crear servicios compartidos para Import
+            final imageNormalizerService = ImageNormalizerServiceImpl();
+            final normalizeImageUseCase = NormalizeImageUseCase(imageNormalizerService);
+            final formatConverter = ImageFormatConverterImpl();
+            final imageClassifier = ImageClassifierImpl();
+            final classifier = DocumentClassifier();
+            final ocrService = OCRServiceImpl();
+            final documentRepository = DocumentRepository();
+
+            // Crear UseCases
+            final importDocument = ImportDocument(
+              formatConverter,
+              normalizeImageUseCase,
+            );
+            final saveDocument = SaveScannedDocument(
+              classifier,
+              documentRepository,
+            );
+            final processOCR = ProcessOCR(
+              ocrService,
+              classifier,
+              documentRepository,
+            );
+
+            return ImportProvider(
+              importDocument: importDocument,
+              imageClassifier: imageClassifier,
               saveDocument: saveDocument,
               processOCR: processOCR,
             );

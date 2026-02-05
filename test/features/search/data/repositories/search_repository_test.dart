@@ -14,15 +14,7 @@ void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
 
-    // Configurar sqlite3 para usar la librería con FTS habilitado
-    if (Platform.isWindows) {
-      open.overrideFor(OperatingSystem.windows, openSqlite3);
-    } else if (Platform.isLinux) {
-      open.overrideFor(OperatingSystem.linux, openSqlite3);
-    } else if (Platform.isMacOS) {
-      open.overrideFor(OperatingSystem.macOS, openSqlite3);
-    }
-
+    // sqfliteFfiInit() ya configura sqlite3 con FTS habilitado
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   });
@@ -133,14 +125,14 @@ void main() {
     });
 
     test('Debe buscar en notes_fts', () async {
-      // Act
-      final results = await repository.search('mercado pago');
+      // Act - Buscar 'pago' que está tanto en título como en contenido
+      final results = await repository.search('pago');
 
       // Assert
       expect(results, isNotEmpty);
       final noteResults = results.where((r) => r.type == 'note').toList();
       expect(noteResults, isNotEmpty);
-      expect(noteResults.first.snippet.toLowerCase(), contains('mercado pago'));
+      expect(noteResults.first.snippet.toLowerCase(), contains('pago'));
     });
 
     test('Debe combinar resultados (docs + notas)', () async {

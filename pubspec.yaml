@@ -31,6 +31,7 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.41      # SQLite con FTS para tests (via sqflite_common_ffi)
   path_provider: ^2.1.5              # Rutas de storage
   shared_preferences: ^2.3.2         # Preferencias (onboarding, settings)
+  file_picker: ^10.3.10              # Seleccionar archivos/imágenes de galería (importar)
 
   # ═══════════════════════════════════════════════════════════════════════════
   # DOCUMENT SCANNING (UI Nativa - ML Kit Android / VisionKit iOS)
@@ -50,6 +51,7 @@ dependencies:
   image: ^4.5.4                     # Procesamiento de imagen (normalización)
   flutter_image_compress: ^2.4.0    # Compresión nativa (thumbnails optimizados)
   pdf: ^3.11.3                       # Generación de PDFs
+  pdf_to_image_converter: ^0.0.5    # Conversión PDF→imagen (importar)
   printing: ^5.14.2                  # Vista previa e impresión de PDFs
   pdfrx: ^2.2.24                     # Visualización de PDFs con zoom
 

@@ -1,11 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
+import 'package:escandoc/features/documents/presentation/providers/import_provider.dart';
 import 'package:escandoc/features/scan/presentation/providers/scan_provider.dart';
 import 'package:escandoc/features/documents/presentation/widgets/document_card.dart';
 import 'package:escandoc/features/documents/presentation/widgets/empty_state.dart';
 import 'package:escandoc/features/documents/presentation/widgets/delete_confirmation_dialog.dart';
+import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 
 /// Página principal que muestra la lista de documentos guardados
 /// HU-001: Ver lista de documentos guardados
@@ -61,6 +65,12 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
               Navigator.pushNamed(context, '/spike/native-debug');
             },
             tooltip: '🔍 DEBUG: Scanner Nativo',
+          ),
+          // Botón IMPORTAR documento
+          IconButton(
+            icon: const Icon(Icons.upload_file, size: 28),
+            onPressed: () => _handleImport(context),
+            tooltip: 'Importar documento',
           ),
           // Botón de búsqueda
           IconButton(
@@ -219,5 +229,222 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
         );
       }
     }
+  }
+
+  /// Ejecuta flujo de importación de documento
+  Future<void> _handleImport(BuildContext context) async {
+    try {
+      // 1. Seleccionar archivo con FilePicker
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'webp'],
+        allowMultiple: false,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        // Usuario canceló
+        return;
+      }
+
+      final filePath = result.files.first.path;
+      if (filePath == null) {
+        throw Exception('No se pudo obtener la ruta del archivo');
+      }
+
+      final importedFile = File(filePath);
+      if (!importedFile.existsSync()) {
+        throw Exception('El archivo seleccionado no existe');
+      }
+
+      if (!mounted) return;
+
+      final importProvider = context.read<ImportProvider>();
+      final documentsProvider = context.read<DocumentsProvider>();
+      final locale = context.locale.languageCode;
+
+      // 2. Preparar importación (convertir + clasificar + normalizar solo si es documento)
+      final preparation = await importProvider.prepareImport(importedFile);
+
+      if (preparation == null) {
+        // Error en preparación
+        if (mounted && importProvider.error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Error al preparar documento: ${importProvider.error}',
+                style: const TextStyle(fontSize: 16),
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+        return;
+      }
+
+      if (!mounted) return;
+
+      // 3. Si detectó FOTO → Confirmar con usuario
+      if (preparation.classification.type == DocumentType.photo) {
+        final confirmed = await _showPhotoConfirmationDialog(
+          context,
+          preparation.classification,
+        );
+
+        if (confirmed != true) {
+          // Usuario canceló
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                  'Importación cancelada',
+                  style: TextStyle(fontSize: 16),
+                ),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+          return;
+        }
+      }
+
+      if (!mounted) return;
+
+      // 4. Completar importación (normalizar si es foto + guardar + OCR)
+      final document = await importProvider.completeImport(
+        preparation,
+        locale,
+      );
+
+      if (document == null) {
+        // Error al guardar
+        if (mounted && importProvider.error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Error al guardar documento: ${importProvider.error}',
+                style: const TextStyle(fontSize: 16),
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+        return;
+      }
+
+      // 5. Recargar lista y mostrar confirmación
+      if (mounted) {
+        documentsProvider.loadDocuments();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Documento importado exitosamente',
+              style: TextStyle(fontSize: 16),
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('[DocumentsListPage] ERROR en _handleImport: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error al importar: $e',
+              style: const TextStyle(fontSize: 16),
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Muestra diálogo de confirmación cuando se detecta una FOTO
+  Future<bool?> _showPhotoConfirmationDialog(
+    BuildContext context,
+    ClassificationResult classification,
+  ) async {
+    final uniqueColors = classification.metadata['uniqueColors'] as int? ?? 0;
+    final topTenCoverage = classification.metadata['topTenCoverage'] as double? ?? 0;
+    final confidence = (classification.confidence * 100).toStringAsFixed(0);
+
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.photo_camera, size: 32, color: Colors.orange),
+              SizedBox(width: 12),
+              Text('Foto detectada'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '🖼️ Creo que tratas de importar una foto',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '¿Aún así quieres continuar?',
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              // Detalles de detección (para debugging - puedes comentar después)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Confianza: $confidence%',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Colores únicos: ${uniqueColors.toString()}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Cobertura top 10: ${(topTenCoverage * 100).toStringAsFixed(1)}%',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                'Continuar de todas formas',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
