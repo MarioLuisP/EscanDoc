@@ -89,10 +89,16 @@ class DocumentScannerServiceImpl implements DocumentScannerService {
         return null;
       }
 
+      final originalSize = file.lengthSync();
+      debugPrint('[DocumentScanner] Tamaño original: ${(originalSize / 1024).toStringAsFixed(2)} KB');
+
       // 3. Normalizar imagen (OCR-first: reducir a 850 KB)
-      debugPrint('[DocumentScanner] Normalizando imagen a 850 KB...');
+      final startNormalize = DateTime.now();
+      debugPrint('[DocumentScanner] 🟢 START: Normalización - ${startNormalize.millisecondsSinceEpoch}');
       final normalizedPath = await _normalizeImage.execute(filePath);
-      debugPrint('[DocumentScanner] Imagen normalizada: $normalizedPath');
+      final endNormalize = DateTime.now();
+      final normalizeDuration = endNormalize.difference(startNormalize).inMilliseconds;
+      debugPrint('[DocumentScanner] 🔴 END: Normalización - Duración: ${normalizeDuration}ms');
 
       final normalizedFile = File(normalizedPath);
       if (!normalizedFile.existsSync()) {
@@ -101,7 +107,7 @@ class DocumentScannerServiceImpl implements DocumentScannerService {
       }
 
       final normalizedSize = normalizedFile.lengthSync();
-      debugPrint('[DocumentScanner] Tamaño normalizado: ${(normalizedSize / 1024).toStringAsFixed(2)} KB');
+      debugPrint('[DocumentScanner] Tamaño final: ${(normalizedSize / 1024).toStringAsFixed(2)} KB');
 
       return normalizedFile;
     } catch (e, stackTrace) {

@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:image/image.dart' as img;
 import 'package:printing/printing.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'dart:typed_data';
 
 /// Interface para generador de PDFs y thumbnails
@@ -73,30 +75,39 @@ class PDFGeneratorImpl implements PDFGenerator {
     String outputPath, {
     int size = 200,
   }) async {
+    final startThumb = DateTime.now();
+    debugPrint('[PDFGenerator] 🟢 START: generateThumbnail (NATIVO) - ${startThumb.millisecondsSinceEpoch}');
+
     // Validar que la imagen existe
     if (!imageFile.existsSync()) {
       throw Exception('Image file does not exist: ${imageFile.path}');
     }
 
-    // Decodificar imagen
-    final imageBytes = await imageFile.readAsBytes();
-    final image = img.decodeImage(imageBytes);
+    // Comprimir y redimensionar con flutter_image_compress (NATIVO)
+    final startCompress = DateTime.now();
+    final result = await FlutterImageCompress.compressWithFile(
+      imageFile.absolute.path,
+      minWidth: size,
+      quality: 60,  // Reducido de 70 a 60
+      format: CompressFormat.jpeg,  // JPEG más rápido que WebP en este device
+    );
+    final endCompress = DateTime.now();
+    debugPrint('[PDFGenerator]   → compressWithFile JPEG q60 (nativo): ${endCompress.difference(startCompress).inMilliseconds}ms');
 
-    if (image == null) {
-      throw Exception('Failed to decode image: ${imageFile.path}');
+    if (result == null || result.isEmpty) {
+      throw Exception('Failed to compress image: ${imageFile.path}');
     }
 
-    // Redimensionar manteniendo aspect ratio
-    final thumbnail = img.copyResize(
-      image,
-      width: size,
-      height: size,
-      interpolation: img.Interpolation.average,
-    );
-
-    // Guardar thumbnail
+    // Escribir resultado
+    final startWrite = DateTime.now();
     final outputFile = File(outputPath);
-    await outputFile.writeAsBytes(img.encodeJpg(thumbnail, quality: 85));
+    await outputFile.writeAsBytes(result);
+    final endWrite = DateTime.now();
+    debugPrint('[PDFGenerator]   → writeAsBytes: ${endWrite.difference(startWrite).inMilliseconds}ms');
+
+    final endThumb = DateTime.now();
+    final totalDuration = endThumb.difference(startThumb).inMilliseconds;
+    debugPrint('[PDFGenerator] 🔴 END: generateThumbnail (NATIVO) - Duración TOTAL: ${totalDuration}ms');
 
     return outputFile;
   }

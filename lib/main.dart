@@ -107,8 +107,7 @@ class MyApp extends StatelessWidget {
             final imageNormalizerService = ImageNormalizerServiceImpl();
             final normalizeImageUseCase = NormalizeImageUseCase(imageNormalizerService);
             final scannerService = DocumentScannerServiceImpl(normalizeImageUseCase);
-            final pdfGenerator = PDFGeneratorImpl();
-            final pdfConverter = PdfConverterServiceImpl();
+            // SIMPLIFICADO: Solo necesitamos classifier, OCR y repository
             final classifier = DocumentClassifier();
             final ocrService = OCRServiceImpl();
             final documentRepository = DocumentRepository();
@@ -116,7 +115,6 @@ class MyApp extends StatelessWidget {
             // Crear UseCases
             final scanDocument = ScanDocument(scannerService);
             final saveDocument = SaveScannedDocument(
-              pdfGenerator,
               classifier,
               documentRepository,
             );
@@ -124,8 +122,6 @@ class MyApp extends StatelessWidget {
               ocrService,
               classifier,
               documentRepository,
-              pdfConverter,
-              outputDirectory,
             );
 
             return ScanProvider(

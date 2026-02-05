@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:pdfrx/pdfrx.dart';
 
-/// Página fullscreen para visualizar foto/PDF con zoom
+/// Página fullscreen para visualizar documento (JPG o PDF) con zoom
+///
+/// NOTA: Ahora los documentos se almacenan como JPG por defecto.
+/// PDF solo se genera on-demand para compartir/imprimir.
+///
 /// Botones: compartir, imprimir, cerrar
 class PhotoFullscreenPage extends StatelessWidget {
   final String filePath;
@@ -94,12 +98,15 @@ class PhotoFullscreenPage extends StatelessWidget {
   }
 
   /// Comparte el documento
+  /// TODO: Si es JPG, convertir a PDF on-demand antes de compartir
   void _shareDocument(BuildContext context) {
     // TODO: Implementar con share_plus package
+    // Si filePath es JPG: convertir a PDF on-demand, luego compartir
+    // Si filePath es PDF: compartir directamente
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Compartir disponible próximamente',
+          'Compartir disponible próximamente (convertirá JPG→PDF on-demand)',
           style: const TextStyle(fontSize: 16),
         ),
         backgroundColor: Colors.grey[800],
@@ -108,12 +115,15 @@ class PhotoFullscreenPage extends StatelessWidget {
   }
 
   /// Imprime el documento
+  /// TODO: Si es JPG, convertir a PDF on-demand antes de imprimir
   void _printDocument(BuildContext context) {
     // TODO: Implementar impresión con printing package
+    // Si filePath es JPG: convertir a PDF on-demand, luego imprimir
+    // Si filePath es PDF: imprimir directamente
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Imprimir disponible próximamente',
+          'Imprimir disponible próximamente (convertirá JPG→PDF on-demand)',
           style: const TextStyle(fontSize: 16),
         ),
         backgroundColor: Colors.grey[800],

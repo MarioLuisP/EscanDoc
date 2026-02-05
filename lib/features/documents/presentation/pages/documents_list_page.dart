@@ -171,7 +171,7 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
 
     // Éxito - recargar lista y mostrar confirmación
     if (mounted) {
-      await documentsProvider.loadDocuments();
+      documentsProvider.loadDocuments(); // Sin await - carga en background
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

@@ -1,0 +1,193 @@
+ fvm flutter run
+
+┌─────────────────────────────────────────────────────────┐
+│ A new version of Flutter is available!                  │
+│                                                         │
+│ To update to the latest version, run "flutter upgrade". │
+└─────────────────────────────────────────────────────────┘
+Launching lib\main.dart on moto g52 in debug mode...
+Running Gradle task 'assembleDebug'...                             42,8s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+Installing build\app\outputs\flutter-apk\app-debug.apk...           8,3s
+D/FlutterJNI( 8483): Beginning load of flutter...
+D/FlutterJNI( 8483): flutter (null) was loaded normally!
+I/flutter ( 8483): [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
+I/flutter ( 8483): [🌎 Easy Localization] [DEBUG] Localization initialized
+I/flutter ( 8483): [🌎 Easy Localization] [DEBUG] Start
+I/flutter ( 8483): [🌎 Easy Localization] [DEBUG] Init state
+I/flutter ( 8483): [🌎 Easy Localization] [DEBUG] Build
+I/flutter ( 8483): [🌎 Easy Localization] [DEBUG] Init Localization Delegate
+I/flutter ( 8483): [🌎 Easy Localization] [DEBUG] Init provider
+I/xample.escandoc( 8483): Compiler allocated 4312KB to compile void android.view.ViewRootImpl.performTraversals()
+I/flutter ( 8483): [🌎 Easy Localization] [DEBUG] Load Localization Delegate
+I/flutter ( 8483): [🌎 Easy Localization] [DEBUG] Load asset from assets/l10n
+I/flutter ( 8483): [🌎 Easy Localization] [DEBUG] Build
+I/flutter ( 8483): [🌎 Easy Localization] [DEBUG] Init Localization Delegate
+I/flutter ( 8483): [🌎 Easy Localization] [DEBUG] Init provider
+Syncing files to device moto g52...                              2.533ms
+
+Flutter run key commands.
+r Hot reload.
+R Hot restart.
+h List all available interactive commands.
+d Detach (terminate "flutter run" but leave application running).
+c Clear the screen
+q Quit (terminate the application on the device).
+
+A Dart VM Service on moto g52 is available at: http://127.0.0.1:53948/n9mcKaea2bg=/
+The Flutter DevTools debugger and profiler on moto g52 is available at: http://127.0.0.1:53948/n9mcKaea2bg=/devtools/?uri=ws://127.0.0.1:53948/n9mcKaea2bg=/ws
+I/Choreographer( 8483): Skipped 543 frames!  The application may be doing too much work on its main thread.
+W/Parcel  ( 8483): Expecting binder but got null!
+I/OpenGLRenderer( 8483): Davey! duration=6072ms; Flags=1, FrameTimelineVsyncId=44969866, IntendedVsync=116459830258833, Vsync=116465860568139, InputEventId=0, HandleInputStart=116465863962321, AnimationStart=116465863968154, Pe
+rformTraversalsStart=116465863971957, DrawStart=116465865067061, FrameDeadline=116459846481056, FrameInterval=116465863800238, FrameStartTime=11105542, SyncQueued=116465867748259, SyncStart=116465867902009, IssueDrawCommandsSta
+rt=116465868819613, SwapBuffers=116465892565709, FrameCompleted=116465902414512, DequeueBufferDuration=977031, QueueBufferDuration=365417, GpuCompleted=116465902414512, SwapBuffersCompleted=116465894090553, DisplayPresentTime=-6189348892055108614, CommandSubmissionCompleted=116465892565709,
+D/ProfileInstaller( 8483): Installing profile for com.example.escandoc
+I/flutter ( 8483): [ScanProvider] 🟢 START: Flujo completo de escaneo - 1770307220009
+I/flutter ( 8483): [ScanProvider] 🟢 START: Scanner nativo - 1770307220017
+I/flutter ( 8483): [DocumentScanner] Solicitando permisos de cámara...
+I/flutter ( 8483): [DocumentScanner] Permiso de cámara otorgado, abriendo scanner...
+D/TransportRuntime.JobInfoScheduler( 8483): Scheduling upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) with jobId=1324164398 in 86400000ms(Backend next call timestamp 0). Attempt 1
+D/CompatibilityChangeReporter( 8483): Compat change id reported: 194532703; UID 10478; state: ENABLED
+D/CompatibilityChangeReporter( 8483): Compat change id reported: 160794467; UID 10478; state: ENABLED
+W/xample.escandoc( 8483): Suspending all threads took: 7.027ms
+I/xample.escandoc( 8483): Background concurrent copying GC freed 2518KB AllocSpace bytes, 8(200KB) LOS objects, 49% free, 3825KB/7650KB, paused 124us,7.218ms total 156.111ms
+W/xample.escandoc( 8483): Verification of void com.google.android.gms.internal.mlkit_vision_document_scanner.zzlo.configure(com.google.firebase.encoders.config.EncoderConfig) took 169.318ms (9679.97 bytecodes/s) (0B arena alloc)
+D/ViewRootImpl( 8483): update {(0,0)(fillxfill) sim={forwardNavigation} ty=BASE_APPLICATION wanim=0x1030001
+D/ViewRootImpl( 8483):   fl=LAYOUT_IN_SCREEN FULLSCREEN LAYOUT_INSET_DECOR SPLIT_TOUCH HARDWARE_ACCELERATED
+D/ViewRootImpl( 8483):   pfl=NO_MOVE_ANIMATION FORCE_DRAW_STATUS_BAR_BACKGROUND FIT_INSETS_CONTROLLED
+D/ViewRootImpl( 8483):   bhv=DEFAULT
+D/ViewRootImpl( 8483):   fitSides=} by setView
+E/OpenGLRenderer( 8483): Unable to match the desired swap behavior.
+W/Parcel  ( 8483): Expecting binder but got null!
+D/Surface ( 8483): Surface::disconnect
+D/BufferQueueProducer( 8483): [VRI[GmsDocumentScanningDelegateActivity]#2(BLAST Consumer)2](id:212300000002,api:1,p:8483,c:8483) disconnect: api 1
+D/TransportRuntime.SQLiteEventStore( 8483): Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+D/TransportRuntime.JobInfoScheduler( 8483): Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+D/TransportRuntime.SQLiteEventStore( 8483): Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+D/TransportRuntime.JobInfoScheduler( 8483): Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+D/Surface ( 8483): Surface::disconnect
+D/BufferQueueProducer( 8483): [SurfaceView[com.example.escandoc/com.example.escandoc.MainActivity]#1(BLAST Consumer)1](id:212300000001,api:1,p:8483,c:8483) disconnect: api 1
+D/Surface ( 8483): Surface::disconnect
+D/BufferQueueProducer( 8483): [SurfaceView[com.example.escandoc/com.example.escandoc.MainActivity]#1(BLAST Consumer)1](id:212300000001,api:0,p:-1,c:8483) disconnect: api -1
+D/Surface ( 8483): Surface::disconnect
+D/BufferQueueProducer( 8483): [VRI[MainActivity]#0(BLAST Consumer)0](id:212300000000,api:1,p:8483,c:8483) disconnect: api 1
+D/CompatibilityChangeReporter( 8483): Compat change id reported: 78294732; UID 10478; state: ENABLED
+D/VRI[GmsDocumentScanningDelegateActivity]( 8483): update {(0,0)(fillxfill) sim={adjust=pan} ty=BASE_APPLICATION wanim=0x1030001
+D/VRI[GmsDocumentScanningDelegateActivity]( 8483):   fl=LAYOUT_IN_SCREEN FULLSCREEN LAYOUT_INSET_DECOR SPLIT_TOUCH HARDWARE_ACCELERATED
+D/VRI[GmsDocumentScanningDelegateActivity]( 8483):   pfl=NO_MOVE_ANIMATION FORCE_DRAW_STATUS_BAR_BACKGROUND USE_BLAST FIT_INSETS_CONTROLLED
+D/VRI[GmsDocumentScanningDelegateActivity]( 8483):   bhv=SHOW_TRANSIENT_BARS_BY_SWIPE
+D/VRI[GmsDocumentScanningDelegateActivity]( 8483):   fitSides=} by setLayoutParams
+E/OpenGLRenderer( 8483): Unable to match the desired swap behavior.
+I/flutter ( 8483): [DocumentScanner] Scanner cerrado. Resultado: {images: [file:///data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/428790436160972.jpg], count: 1, Uri: [file:///data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/428790436160972.jpg], Count: 1}
+I/flutter ( 8483): [DocumentScanner] Path JPG desde map (images): file:///data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/428790436160972.jpg
+I/flutter ( 8483): [DocumentScanner] count: 1
+I/flutter ( 8483): [DocumentScanner] Path limpio: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/428790436160972.jpg
+E/OpenGLRenderer( 8483): Unable to match the desired swap behavior.
+E/qdgralloc( 8483): GetGpuPixelFormat: No map for format: 0x38
+E/AdrenoUtils( 8483): <validate_memory_layout_input_parmas:1984>: Unknown Format 0
+E/AdrenoUtils( 8483): <adreno_init_memory_layout:4723>: Memory Layout input parameter validation failed!
+E/qdgralloc( 8483): GetGpuResourceSizeAndDimensions Graphics metadata init failed
+E/Gralloc4( 8483): isSupported(1, 1, 56, 1, ...) failed with 1
+E/GraphicBufferAllocator( 8483): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 1
+E/AHardwareBuffer( 8483): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -1), handle=0x0
+E/qdgralloc( 8483): GetGpuPixelFormat: No map for format: 0x38
+E/AdrenoUtils( 8483): <validate_memory_layout_input_parmas:1984>: Unknown Format 0
+E/AdrenoUtils( 8483): <adreno_init_memory_layout:4723>: Memory Layout input parameter validation failed!
+E/qdgralloc( 8483): GetGpuResourceSizeAndDimensions Graphics metadata init failed
+E/Gralloc4( 8483): isSupported(1, 1, 56, 1, ...) failed with 1
+E/GraphicBufferAllocator( 8483): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 1
+E/AHardwareBuffer( 8483): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -1), handle=0x0
+D/Surface ( 8483): Surface::disconnect
+D/BufferQueueProducer( 8483): [SurfaceView[com.example.escandoc/com.example.escandoc.MainActivity]#5(BLAST Consumer)5](id:212300000005,api:1,p:8483,c:8483) disconnect: api 1
+I/flutter ( 8483): [DocumentScanner] ¿Archivo existe? true
+I/flutter ( 8483): [DocumentScanner] Tamaño original: 680.40 KB
+I/flutter ( 8483): [DocumentScanner] 🟢 START: Normalización - 1770307237220
+I/flutter ( 8483): [DocumentScanner] 🔴 END: Normalización - Duración: 20ms
+I/flutter ( 8483): [DocumentScanner] Tamaño final: 680.40 KB
+I/flutter ( 8483): [ScanProvider] 🔴 END: Scanner nativo - Duración: 17240ms
+I/flutter ( 8483): [ScanProvider] Imagen escaneada recibida: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/428790436160972.jpg
+I/flutter ( 8483): [ScanProvider] Directorio de docs: /data/user/0/com.example.escandoc/app_flutter
+I/flutter ( 8483): [ScanProvider] 🟢 START: Guardar documento - 1770307237291
+I/flutter ( 8483): [SaveScannedDocument] 🟢 START: Guardado (JPG only) - 1770307237315
+I/flutter ( 8483): [SaveScannedDocument] JPG: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/428790436160972.jpg
+I/flutter ( 8483): [SaveScannedDocument] Tipo detectado: documento
+I/flutter ( 8483): [SaveScannedDocument] Nombre generado: documento_5_Feb_2026
+I/flutter ( 8483): [SaveScannedDocument] 🟢 START: Insertar en BD - 1770307237336
+I/flutter ( 8483): [SaveScannedDocument] 🔴 END: Insertar en BD - Duración: 136ms - ID: 13
+I/flutter ( 8483): [SaveScannedDocument] 🔴 END: Guardado (JPG only) - Duración TOTAL: 159ms
+I/flutter ( 8483): [ScanProvider] 🔴 END: Guardar documento - Duración: 186ms
+I/flutter ( 8483): [ScanProvider] Documento guardado exitosamente. ID: 13
+I/flutter ( 8483): [ScanProvider] 🔴 END: Flujo completo (hasta guardar) - Duración TOTAL: 17471ms
+I/flutter ( 8483): [ScanProvider] 🟢 START: Procesamiento OCR background - 1770307237484
+I/flutter ( 8483): [ProcessOCR] 🟢 START: OCR (JPG only) - 1770307237492
+I/Choreographer( 8483): Skipped 38 frames!  The application may be doing too much work on its main thread.
+I/flutter ( 8483): [ProcessOCR] JPG path: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/428790436160972.jpg
+I/flutter ( 8483): [ProcessOCR] 🟢 START: OCR extractText - 1770307237761
+D/TransportRuntime.SQLiteEventStore( 8483): Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+D/TransportRuntime.JobInfoScheduler( 8483): Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+D/Surface ( 8483): Surface::disconnect
+D/BufferQueueProducer( 8483): [VRI[GmsDocumentScanningDelegateActivity]#3(BLAST Consumer)3](id:212300000003,api:1,p:8483,c:8483) disconnect: api 1
+D/DecoupledTextDelegate( 8483): Start loading thick OCR module.
+I/DynamiteModule( 8483): Considering local module com.google.mlkit.dynamite.text.latin:10000 and remote module com.google.mlkit.dynamite.text.latin:0
+I/DynamiteModule( 8483): Selected local version of com.google.mlkit.dynamite.text.latin
+I/Choreographer( 8483): Skipped 34 frames!  The application may be doing too much work on its main thread.
+D/nativeloader( 8483): Load /data/app/~~ad6pz7X_GsNc4AZ_cT01WQ==/com.example.escandoc-E4XhHF_TdV2FHaT8_37PMw==/base.apk!/lib/arm64-v8a/libmlkit_google_ocr_pipeline.so using class loader ns clns-4 (caller=/data/app/~~ad6pz7X_GsNc4AZ_cT01WQ==/com.example.escandoc-E4XhHF_TdV2FHaT8_37PMw==/base.apk!classes20.dex): ok
+I/native  ( 8483): I0000 00:00:1770307239.268073    8925 asset_manager_util.cc:61] Created global reference to asset manager.
+I/Manager ( 8483): DeviceManager::DeviceManager
+W/ServerFlag( 8483): Failed to parse result of GetServerConfigurableFlag, errno=34
+I/Manager ( 8483): findAvailableDevices
+W/xample.escandoc( 8483): Verification of void com.google.android.gms.internal.mlkit_vision_common.zzhe.configure(com.google.firebase.encoders.config.EncoderConfig) took 276.022ms (3579.42 bytecodes/s) (0B arena alloc)
+D/TransportRuntime.SQLiteEventStore( 8483): Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+D/TransportRuntime.JobInfoScheduler( 8483): Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+W/xample.escandoc( 8483): Verification of void com.google.android.gms.internal.mlkit_vision_text_common.zzmq.configure(com.google.firebase.encoders.config.EncoderConfig) took 203.016ms (6900.91 bytecodes/s) (0B arena alloc)
+W/libc    ( 8483): Access denied finding property "ro.hardware.chipname"
+I/native  ( 8483): I0000 00:00:1770307239.802516    8930 resource_manager.cc:23] Number of optimal threads: 4
+I/native  ( 8483): I0000 00:00:1770307239.803378    8929 text_classifier.cc:32] Creating classifier TfliteTextClassifier
+I/native  ( 8483): I0000 00:00:1770307239.809861    8930 text_detector_thread_pool_context.cc:38] Compute manager max in flight region detector overwrite: 1
+I/native  ( 8483): I0000 00:00:1770307239.810859    8930 common_util.h:41] Resizing Thread Pool: ocr_det_0 to 3
+I/native  ( 8483): I0000 00:00:1770307239.813170    8930 tflite_detector_client_with_shape_cache.cc:76] Interpreter threads: 4
+I/tflite  ( 8483): Initialized TensorFlow Lite runtime.
+I/native  ( 8483): I0000 00:00:1770307239.827380    8929 common_util.h:41] Resizing Thread Pool: ocr_segm to 3
+I/tflite  ( 8483): Created TensorFlow Lite XNNPACK delegate for CPU.
+I/tflite  ( 8483): Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+I/native  ( 8483): I0000 00:00:1770307239.845987    8930 tflite_detector_client_with_shape_cache.cc:105] Caching size: 10
+I/native  ( 8483): I0000 00:00:1770307239.849385    8930 multi_pass_line_recognition_mutator.cc:342] Preloading recognizers.
+I/native  ( 8483): I0000 00:00:1770307239.850068    8929 tflite_lstm_client_base.cc:371] Resizing interpreter pool to 4
+I/native  ( 8483): I0000 00:00:1770307239.857544    8940 tflite_model_pooled_runner.cc:625] Loading mlkit-google-ocr-models/gocr/gocr_models/line_recognition_legacy_mobile/Latn_ctc/optical/conv_model.fb
+D/TransportRuntime.SQLiteEventStore( 8483): Storing event with priority=DEFAULT, name=FIREBASE_ML_SDK for destination cct
+I/native  ( 8483): I0000 00:00:1770307239.890029    8940 tflite_model_pooled_runner.cc:636] Loading mlkit-google-ocr-models/gocr/gocr_models/line_recognition_legacy_mobile/Latn_ctc/optical/lstm_model.fb
+I/native  ( 8483): I0000 00:00:1770307239.890571    8929 tflite_model_pooled_runner.cc:625] Loading mlkit-google-ocr-models/gocr/layout/line_splitting_custom_ops/model.tflite
+I/native  ( 8483): I0000 00:00:1770307239.893788    8929 tflite_model_pooled_runner.cc:836] Resizing interpreter pool to 1
+I/native  ( 8483): I0000 00:00:1770307239.894549    8929 tflite_model_pooled_runner.cc:625] Loading mlkit-google-ocr-models/gocr/layout/line_clustering_custom_ops/model.tflite
+I/native  ( 8483): I0000 00:00:1770307239.895037    8929 tflite_model_pooled_runner.cc:836] Resizing interpreter pool to 1
+I/native  ( 8483): I0000 00:00:1770307239.925075    8940 tflite_model_pooled_runner.cc:836] Resizing interpreter pool to 4
+I/native  ( 8483): I0000 00:00:1770307239.937139    8940 mobile_langid_v2.cc:58] MobileLangID V2 initialized.
+I/native  ( 8483): I0000 00:00:1770307239.939736    8940 multi_pass_line_recognition_mutator.cc:364] Finished preloading a recognizer for "Latn"
+I/native  ( 8483): I0000 00:00:1770307239.941962    8930 multi_pass_line_recognition_mutator.cc:398] Finished preloading recognizers.
+D/TransportRuntime.JobInfoScheduler( 8483): Scheduling upload for context TransportContext(cct, DEFAULT, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) with jobId=1319183661 in 402048ms(Backend next call timestamp 1770307642021). Attempt 1
+D/PipelineManager( 8483): Start process bitmap
+I/native  ( 8483): I0000 00:00:1770307240.118793    8925 scheduler.cc:693] ImageMetadata: 1978x2670
+D/TransportRuntime.SQLiteEventStore( 8483): Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+D/TransportRuntime.JobInfoScheduler( 8483): Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+I/xample.escandoc( 8483): NativeAlloc concurrent copying GC freed 1432KB AllocSpace bytes, 1(20KB) LOS objects, 49% free, 4481KB/8962KB, paused 198us,100us total 604.066ms
+I/tflite  ( 8483): Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+I/tflite  ( 8483): Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+I/tflite  ( 8483): Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+I/tflite  ( 8483): Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+I/tflite  ( 8483): Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+I/tflite  ( 8483): Replacing 44 out of 46 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 3 partitions for the whole graph.
+D/PipelineManager( 8483): OCR process succeeded via visionkit pipeline.
+D/TransportRuntime.SQLiteEventStore( 8483): Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+D/TransportRuntime.JobInfoScheduler( 8483): Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+D/TransportRuntime.SQLiteEventStore( 8483): Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+D/TransportRuntime.JobInfoScheduler( 8483): Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+I/xample.escandoc( 8483): Background concurrent copying GC freed 475KB AllocSpace bytes, 2(56KB) LOS objects, 49% free, 9573KB/18MB, paused 272us,66us total 162.895ms
+I/flutter ( 8483): [ProcessOCR] 🔴 END: OCR extractText - Duración: 10420ms - 2422 caracteres
+I/flutter ( 8483): [ProcessOCR] Tipo detectado: médico
+I/flutter ( 8483): [ProcessOCR] Fecha extraída: null
+I/flutter ( 8483): [ProcessOCR] 🟢 START: Update DB con OCR - 1770307248195
+I/flutter ( 8483): [ProcessOCR] 🔴 END: Update DB con OCR - Duración: 50ms
+I/flutter ( 8483): [ProcessOCR] 🔴 END: OCR (JPG only) - Duración TOTAL: 10753ms
+I/flutter ( 8483): [ScanProvider] 🔴 END: Procesamiento OCR background - Duración: 10762ms
+
+

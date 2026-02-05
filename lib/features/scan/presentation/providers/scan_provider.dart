@@ -47,14 +47,19 @@ class ScanProvider with ChangeNotifier {
   Future<DocumentModel?> scanAndSave(String locale) async {
     try {
       _error = null;
-      debugPrint('[ScanProvider] Iniciando flujo de escaneo...');
+      final startTotal = DateTime.now();
+      debugPrint('[ScanProvider] 🟢 START: Flujo completo de escaneo - ${startTotal.millisecondsSinceEpoch}');
 
       // 1. Escanear documento
       _isScanning = true;
       notifyListeners();
 
-      debugPrint('[ScanProvider] Llamando a scanner nativo...');
+      final startScan = DateTime.now();
+      debugPrint('[ScanProvider] 🟢 START: Scanner nativo - ${startScan.millisecondsSinceEpoch}');
       final scannedImage = await _scanDocument.call();
+      final endScan = DateTime.now();
+      final scanDuration = endScan.difference(startScan).inMilliseconds;
+      debugPrint('[ScanProvider] 🔴 END: Scanner nativo - Duración: ${scanDuration}ms');
 
       _isScanning = false;
       notifyListeners();
@@ -75,18 +80,26 @@ class ScanProvider with ChangeNotifier {
       final docsDir = await getApplicationDocumentsDirectory();
       debugPrint('[ScanProvider] Directorio de docs: ${docsDir.path}');
 
-      debugPrint('[ScanProvider] Guardando documento...');
+      final startSave = DateTime.now();
+      debugPrint('[ScanProvider] 🟢 START: Guardar documento - ${startSave.millisecondsSinceEpoch}');
       final document = await _saveDocument.call(
         scannedImage,
         docsDir.path,
         locale,
       );
+      final endSave = DateTime.now();
+      final saveDuration = endSave.difference(startSave).inMilliseconds;
+      debugPrint('[ScanProvider] 🔴 END: Guardar documento - Duración: ${saveDuration}ms');
 
       _isSaving = false;
       _lastScannedDocument = document;
       notifyListeners();
 
       debugPrint('[ScanProvider] Documento guardado exitosamente. ID: ${document.id}');
+
+      final endTotal = DateTime.now();
+      final totalDuration = endTotal.difference(startTotal).inMilliseconds;
+      debugPrint('[ScanProvider] 🔴 END: Flujo completo (hasta guardar) - Duración TOTAL: ${totalDuration}ms');
 
       // 3. Procesar OCR en background (no bloquea UI)
       _processOCRInBackground(document.id!);
@@ -108,11 +121,17 @@ class ScanProvider with ChangeNotifier {
     _isProcessingOCR = true;
     notifyListeners();
 
+    final startBackground = DateTime.now();
+    debugPrint('[ScanProvider] 🟢 START: Procesamiento OCR background - ${startBackground.millisecondsSinceEpoch}');
+
     try {
       await _processOCR.call(documentId);
+      final endBackground = DateTime.now();
+      final backgroundDuration = endBackground.difference(startBackground).inMilliseconds;
+      debugPrint('[ScanProvider] 🔴 END: Procesamiento OCR background - Duración: ${backgroundDuration}ms');
     } catch (e) {
       // OCR falla silenciosamente en background
-      debugPrint('OCR background error: $e');
+      debugPrint('[ScanProvider] ❌ OCR background error: $e');
     } finally {
       _isProcessingOCR = false;
       notifyListeners();

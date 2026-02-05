@@ -1,35 +1,31 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:escandoc/core/services/pdf_generator.dart';
 import 'package:escandoc/core/services/document_classifier.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
-import 'package:path/path.dart' as path;
 
-/// UseCase para guardar documento escaneado (Épica 6: OCR-first)
+/// UseCase para guardar documento escaneado (SIMPLIFICADO - JPG only)
 ///
-/// FLUJO NUEVO (OCR-first):
-/// 1. Guardar JPG normalizado temporalmente en filePath
-/// 2. Generar thumbnail desde JPG
+/// FLUJO SIMPLIFICADO:
+/// 1. Guardar JPG normalizado en filePath
+/// 2. Usar mismo JPG como thumbnail (sin comprimir)
 /// 3. Detectar tipo automáticamente (sin OCR inicial)
 /// 4. Generar nombre localizado
 /// 5. Guardar en BD
 ///
 /// ProcessOCR (background) hará:
 /// - OCR desde JPG
-/// - JPG → PDF
-/// - Actualizar filePath con PDF
-/// - Eliminar JPG
+/// - Actualizar BD con texto OCR
+///
+/// NOTA: PDF se generará on-demand solo cuando se necesite compartir/imprimir.
 ///
 /// CLEAN ARCHITECTURE: Este UseCase NO conoce path_provider.
 /// El storage path debe ser inyectado desde Data/Presentation layer.
 class SaveScannedDocument {
-  final PDFGenerator _pdfGenerator;
   final DocumentClassifier _classifier;
   final DocumentRepository _repository;
 
   SaveScannedDocument(
-    this._pdfGenerator,
     this._classifier,
     this._repository,
   );
@@ -50,33 +46,17 @@ class SaveScannedDocument {
     final date = currentDate ?? DateTime.now();
     final timestamp = date.millisecondsSinceEpoch;
 
-    debugPrint('[SaveScannedDocument] Iniciando guardado...');
-    debugPrint('[SaveScannedDocument] Archivo: ${scannedFile.path}');
-    debugPrint('[SaveScannedDocument] Output dir: $outputDirectory');
+    final startSave = DateTime.now();
+    debugPrint('[SaveScannedDocument] 🟢 START: Guardado (JPG only) - ${startSave.millisecondsSinceEpoch}');
+    debugPrint('[SaveScannedDocument] JPG: ${scannedFile.path}');
 
-    // ÉPICA 6: OCR-first - No generamos PDF aún
-    // Scanner ahora retorna JPG normalizado (850 KB)
-    // PDF se generará en ProcessOCR después del OCR
+    // FLUJO SIMPLIFICADO: Solo guardar JPG, sin thumbnail ni PDF
 
-    debugPrint('[SaveScannedDocument] Guardando JPG normalizado temporalmente...');
-
-    // 1. Generar thumbnail desde JPG normalizado
-    final thumbnailPath = path.join(outputDirectory, 'thumb_$timestamp.jpg');
-    debugPrint('[SaveScannedDocument] Generando thumbnail desde JPG...');
-    final thumbnailFile = await _pdfGenerator.generateThumbnail(
-      scannedFile,
-      thumbnailPath,
-    );
-    debugPrint('[SaveScannedDocument] Thumbnail generado: ${thumbnailFile.path}');
-
-    // 2. El JPG se guardará temporalmente en filePath
-    // ProcessOCR lo reemplazará con el PDF después
-
-    // 3. Detectar tipo (sin OCR inicial, usamos string vacío)
+    // 1. Detectar tipo (sin OCR inicial, usamos string vacío)
     final detectedType = _classifier.detectType('');
     debugPrint('[SaveScannedDocument] Tipo detectado: $detectedType');
 
-    // 4. Generar nombre localizado
+    // 2. Generar nombre localizado
     final documentName = _classifier.generateDocumentName(
       detectedType,
       date,
@@ -84,11 +64,12 @@ class SaveScannedDocument {
     );
     debugPrint('[SaveScannedDocument] Nombre generado: $documentName');
 
-    // 5. Crear modelo de documento (con JPG temporal en filePath)
+    // 3. Crear modelo de documento
+    // filePath y thumbnailPath apuntan al MISMO JPG
     final document = DocumentModel(
       title: documentName,
-      filePath: scannedFile.path, // JPG temporal (ProcessOCR lo reemplazará con PDF)
-      thumbnailPath: thumbnailFile.path,
+      filePath: scannedFile.path, // JPG permanente (no se eliminará)
+      thumbnailPath: scannedFile.path, // Mismo JPG (UI usará cacheWidth)
       docType: detectedType,
       ocrText: null, // Se llenará después con ProcessOCR
       extractedDate: null,
@@ -96,12 +77,19 @@ class SaveScannedDocument {
       updatedAt: date,
     );
 
-    // 6. Insertar en BD y obtener ID
-    debugPrint('[SaveScannedDocument] Insertando en BD...');
+    // 4. Insertar en BD y obtener ID
+    final startDB = DateTime.now();
+    debugPrint('[SaveScannedDocument] 🟢 START: Insertar en BD - ${startDB.millisecondsSinceEpoch}');
     final insertedId = await _repository.insertDocument(document);
-    debugPrint('[SaveScannedDocument] Documento insertado con ID: $insertedId');
+    final endDB = DateTime.now();
+    final dbDuration = endDB.difference(startDB).inMilliseconds;
+    debugPrint('[SaveScannedDocument] 🔴 END: Insertar en BD - Duración: ${dbDuration}ms - ID: $insertedId');
 
-    // 7. Retornar documento con ID
+    final endSave = DateTime.now();
+    final saveDuration = endSave.difference(startSave).inMilliseconds;
+    debugPrint('[SaveScannedDocument] 🔴 END: Guardado (JPG only) - Duración TOTAL: ${saveDuration}ms');
+
+    // 5. Retornar documento con ID
     return document.copyWith(id: insertedId);
   }
 }

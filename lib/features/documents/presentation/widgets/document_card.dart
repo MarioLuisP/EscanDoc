@@ -94,6 +94,7 @@ class DocumentCard extends StatelessWidget {
             thumbnailFile,
             width: 80,
             height: 80,
+            cacheWidth: 200, // Decode at 200px for efficiency (80dp * 2.5x max DPI)
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) {
               // Si falla cargar imagen, mostrar ícono
