@@ -19,8 +19,9 @@ enum DocumentType {
   // /// Criterios: Detección de escritura manual
   // manuscrito,
   //
-  // /// Documento con código de barras
-  // /// Criterios: Barcode detectado
+  // /// Documento con código de barras (facturas, recibos, productos)
+  // /// Criterios: Barcode o QR code detectado (usar BarcodeDetectorService)
+  // /// NOTA: ML Kit es lento (2-4s), no usar en cascade de clasificación
   // barcode,
 }
 

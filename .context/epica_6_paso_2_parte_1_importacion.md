@@ -734,10 +734,329 @@ Clasificar ANTES de normalizar permite:
 
 ---
 
-**Fin del documento - PASO 2 Parte 1 COMPLETADO con optimizaciones. 🎉**
+---
 
-**Última actualización:** 2026-02-05 (post-optimizaciones)
+## 📅 ACTUALIZACIÓN 2026-02-06: Reemplazo por OpenCV Laplacian Variance
 
-**Tiempo total desarrollo:** 1 sesión intensiva
-**Performance ganada:** 69% más rápido en preparación de fotos
-**Próximo trabajo:** Optimización de normalización + feedback UI
+**Estado:** ✅ COMPLETADO - Clasificador simplificado y ultra rápido
+**Cambio mayor:** Reemplazar análisis de colores + gradientes por OpenCV nativo
+
+### Motivación del Cambio
+
+**Problemas con análisis de colores (implementación anterior):**
+- Clasificación tardaba ~2.5 segundos
+- Redimensión temporal necesaria (~1.2s)
+- Análisis de colores en Dart (~200ms)
+- Análisis de gradientes (~180ms)
+- Alta complejidad: TOP 1 color + gradientes + sampling
+
+**Soluciones investigadas:**
+1. OCR parcial/optimizado para detección rápida
+2. OpenCV Laplacian variance para detección de texto
+
+### Pruebas con OCR Parcial (Descartado)
+
+**Hipótesis inicial:** Usar ML Kit Text Recognition con imágenes redimensionadas para clasificación rápida.
+
+**Estrategias probadas:**
+
+**1. OCR en imagen de baja calidad (para velocidad):**
+- Redimensionar imagen antes de OCR
+- Esperanza: menos píxeles = procesamiento más rápido
+
+**2. Early exit (detección temprana):**
+- Intentar que OCR termine apenas detecte "suficiente texto"
+- Esperanza: no procesar imagen completa
+
+**Resultados medidos:**
+
+**Performance de ML Kit OCR:**
+- Imagen completa (alta resolución): 2000-4000ms
+- Imagen redimensionada (baja calidad): 2000-3500ms
+- **NO hubo mejora significativa**
+
+**Razón del fracaso:**
+- ML Kit Text Recognition procesa TODA la imagen internamente
+- No existe API de "early exit" o detección parcial
+- Redimensionar no acelera lo suficiente
+- Inicialización del modelo agrega overhead
+
+**Comparación:**
+- OCR (cualquier tamaño): 2000-4000ms
+- Análisis de colores: ~2500ms
+- OpenCV Laplacian: ~1000ms
+
+**Decisión:** Descartar OCR para clasificación
+- Demasiado lento
+- No mejorable con redimensionado
+- OpenCV es 2-4x más rápido
+
+**Conclusión clave:** OCR es para EXTRACCIÓN de texto, no para DETECCIÓN rápida de texto. Para clasificación, mejor usar métodos visuales (OpenCV).
+
+### Implementación OpenCV
+
+**Archivos creados:**
+
+**Services:**
+- `lib/core/services/text_detector_service.dart` - Interface + implementación Dart
+- `android/app/src/main/kotlin/com/example/escandoc/TextDetectorPlugin.kt` - Plugin nativo Kotlin
+
+**Archivos modificados:**
+- `lib/features/image_processing/classification/data/image_classifier_impl.dart` - Reemplazado completamente
+- `lib/main.dart` - Inyección de TextDetectorService
+- `android/app/src/main/kotlin/com/example/escandoc/MainActivity.kt` - Registro de MethodChannel
+- `android/app/build.gradle.kts` - Agregado OpenCV 4.9.0
+
+**Tests creados:**
+- `test/core/services/text_detector_service_test.dart` - 8 tests (todos pasando)
+- `test/features/image_processing/classification/data/image_classifier_impl_test.dart` - 14 tests actualizados (todos pasando)
+
+**Tests eliminados:**
+- `test/features/image_processing/classification/domain/image_classifier_test.dart` - Obsoleto (análisis de colores)
+
+### Algoritmo OpenCV Laplacian Variance
+
+**Método:**
+1. Cargar imagen desde disco
+2. Redimensionar a 640px (mantiene aspect ratio)
+3. Convertir a escala de grises
+4. Aplicar operador Laplaciano (detecta bordes de segundo orden)
+5. Calcular varianza de la respuesta Laplaciana
+6. Comparar con threshold
+
+**Interpretación:**
+- Varianza alta → muchos bordes finos (texto) → DOCUMENTO
+- Varianza baja → pocos bordes (fondo uniforme) → FOTO
+
+**Threshold calibrado:** 600.0
+
+### Calibración con Imágenes Reales
+
+**Mediciones de varianza obtenidas:**
+
+**Fotos (sin texto):**
+- Rostros y fondo: 168.13
+- Panes: 350.18
+- Cicatriz en piel: 406.xx
+
+**Documentos (con texto):**
+- Texto en pantalla: 668.xx
+- Envoltorio con texto: 681.xx
+- Documento papel amarillo: 1449.xx
+- Documento A4 blanco: 4806.xx
+
+**Threshold inicial probado:** 120.0 (de documentación)
+**Resultado:** Desastre - clasificó incorrectamente folletos, radiografías, documentos oscuros
+
+**Threshold ajustado:** 600.0
+**Resultado:** "Clasificó todo prácticamente perfecto" - Separación clara entre fotos y documentos
+
+**Casos extremos esperados:**
+- Texturas complejas (césped, pasto): ~3680 - falso positivo aceptable
+
+### Performance Medida
+
+**OpenCV Laplacian (dispositivo real):**
+- Primera ejecución: ~1000-1100ms
+- Ejecuciones siguientes: ~1000ms (consistente)
+
+**Comparación con análisis de colores:**
+- Anterior: ~2500ms (redimensión + colores + gradientes)
+- OpenCV: ~1000ms
+- **Mejora: 60% más rápido**
+
+**Optimización clave:** Una sola llamada nativa `detect()` que retorna:
+- `variance`: double
+- `hasText`: bool
+
+**Versión anterior:** Dos llamadas separadas tardaban ~3000ms
+**Versión optimizada:** Una sola llamada ~1000ms (65% más rápido)
+
+### Investigación de Barcode Detection
+
+**Motivación:** Probar ML Kit Barcode Scanning como Nivel 1 del cascade (documentación prometía 50-200ms)
+
+**Archivos creados durante investigación:**
+- `lib/core/services/barcode_detector_service.dart` - Implementación ML Kit
+- `test/core/services/barcode_detector_service_test.dart` - Tests de integración (skippeados)
+
+**Archivos temporalmente modificados (luego revertidos):**
+- `lib/features/image_processing/classification/domain/classification_result.dart` - DocumentType.barcode agregado
+- `lib/features/image_processing/classification/data/image_classifier_impl.dart` - Cascade con barcode
+- `lib/main.dart` - Inyección de BarcodeDetectorService
+- Tests del classifier actualizados para cascade
+
+**Performance real medida (dispositivo Motorola):**
+
+**Detección de códigos en facturas:**
+- Ejecución 1: 3189ms (~3.2 segundos)
+- Ejecución 2: 1769ms (~1.8 segundos)
+- Ejecución 3: 4246ms (~4.2 segundos)
+
+**Comparación con OpenCV:**
+- OpenCV: ~1000ms (fijo y predecible)
+- Barcode: 1800-4200ms (variable e impredecible)
+- **Barcode es 2-4x MÁS LENTO** que OpenCV
+
+**Conclusión:** Documentación de ML Kit exagerada o solo aplica a hardware premium. En dispositivos reales típicos, barcode detection es MÁS LENTO que OpenCV.
+
+**Códigos detectados exitosamente:**
+- QR_CODE (factura EPEC - empresa de luz de Córdoba)
+- ITF (código de barras de pago)
+- Funcionalidad correcta, pero performance inaceptable para cascade
+
+**Decisión:** NO usar barcode en cascade de clasificación
+
+### Decisión Final: Solo OpenCV (Etapa 1)
+
+**Razones:**
+1. OpenCV es 2-4x más rápido que barcode
+2. OpenCV tiene tiempo fijo y predecible (~1s)
+3. Barcode es variable (1.8-4.2s) y poco confiable en dispositivos típicos
+4. Barcode puede ser 60% más lento que documentación promete
+5. No tiene sentido usar método lento como "filtro rápido"
+
+**Implementación final:**
+- Solo OpenCV Laplacian variance
+- Threshold 600.0 (calibrado con datos reales)
+- ~1000ms de clasificación
+- FOTO vs DOCUMENTO (binario simple)
+
+**Archivos revertidos a estado solo-OpenCV:**
+- `ImageClassifierImpl` - Sin barcode, solo OpenCV
+- `classification_result.dart` - DocumentType.barcode comentado
+- `main.dart` - Sin BarcodeDetectorService
+- Tests del classifier - 14 tests originales (sin barcode)
+
+**Archivos preservados para futuro:**
+- `BarcodeDetectorService` - Código funcional guardado
+- Comentario en DocumentType.barcode: "NOTA: ML Kit es lento (2-4s), no usar en cascade"
+
+### Código Guardado para Uso Futuro
+
+**BarcodeDetectorService NO eliminado:**
+- Implementación completa y funcional
+- Detecta todos los formatos: QR, EAN-13, CODE-128, ITF, PDF417, etc.
+- Funcionó correctamente en pruebas
+
+**Usos futuros propuestos:**
+1. Feature separada "Escanear código de barras" on-demand
+2. Detección de vencimientos en facturas (Fase 1.5)
+3. Lectura de códigos en productos
+4. NO en cascade de clasificación de importación
+
+### Tests Finales
+
+**Estado de tests:**
+
+**ImageClassifierImpl:**
+- Total: 14 tests
+- Estado: Todos pasando ✅
+- Cobertura: Clasificación OpenCV, confianza, errores, metadata
+
+**TextDetectorService:**
+- Total: 8 tests
+- Estado: Todos pasando ✅
+- Cobertura: detect(), threshold default/custom, errores, fallbacks
+
+**BarcodeDetectorService:**
+- Total: 3 tests
+- Estado: Skippeados (requieren plataforma nativa)
+- Nota: Tests de integración, ejecutar en dispositivo real
+
+**Total tests pasando:** 22 tests ✅
+
+### Arquitectura Final de Clasificación
+
+**Componentes:**
+- `TextDetectorService` (Dart) → MethodChannel → `TextDetectorPlugin` (Kotlin + OpenCV)
+- `ImageClassifierImpl` usa TextDetectorService
+- Una sola llamada nativa optimizada
+- Sin dependencias de ML Kit en cascade
+
+**Estrategia:**
+- Etapa 1 (ACTUAL): OpenCV Laplacian - FOTO vs DOCUMENTO (~1s)
+- Etapa 2 (FUTURO): Clasificación avanzada - folleto, manuscrito, formulario
+- Barcode: Feature separada, NO en cascade
+
+**OpenCV SDK:**
+- Versión: 4.9.0
+- Agregado en: `android/app/build.gradle.kts`
+- Primera vez usando OpenCV en el proyecto
+
+### Lecciones Aprendidas
+
+**1. Documentación vs Realidad:**
+- ML Kit documentación: "50-200ms"
+- Realidad en dispositivo típico: 1800-4200ms
+- Diferencia: 9-21x más lento que prometido
+- Lección: Siempre medir en hardware target real
+
+**2. OpenCV vs ML Kit:**
+- OpenCV nativo es más rápido para detección simple
+- ML Kit tiene overhead de inicialización de modelo
+- ML Kit variable en tiempo, OpenCV consistente
+- Para clasificación binaria simple, OpenCV gana
+
+**3. Calibración empírica:**
+- Threshold de documentación (120) no funcionó
+- Threshold calibrado con imágenes reales (600) perfecto
+- Necesario medir con datos reales del dominio
+
+**4. Hot reload con código nativo:**
+- Cambios en Kotlin requieren cold restart completo
+- Hot reload NO funciona con MethodChannel changes
+- Debe cerrarse y reiniciarse app completamente
+
+**5. Tests de plataforma nativa:**
+- ML Kit no se puede mockear fácilmente en tests unitarios
+- OpenCV tampoco (requiere plataforma)
+- Solución: mockear servicios completos (no implementaciones nativas)
+- Tests de integración separados con skip
+
+### Performance Final Comparada
+
+**Clasificación de imagen (12 MP):**
+
+| Método | Tiempo | Notas |
+|--------|--------|-------|
+| Análisis de colores (2026-02-05) | ~2500ms | Complejo, muchos pasos |
+| OpenCV Laplacian (2026-02-06) | ~1000ms | Simple, un solo paso |
+| Barcode ML Kit (descartado) | 1800-4200ms | Variable, lento |
+
+**Mejora total desde Fase 1:** 60% más rápido
+
+**Flujo completo de importación (FOTO que usuario cancela):**
+- Antes (colores): Convertir (20ms) + Clasificar (2500ms) = 2520ms
+- Ahora (OpenCV): Convertir (20ms) + Clasificar (1000ms) = 1020ms
+- **Mejora: 59% más rápido**
+
+**Flujo completo de importación (DOCUMENTO):**
+- Antes: Convertir (20ms) + Clasificar (2500ms) + Normalizar (6000ms) = 8520ms
+- Ahora: Convertir (20ms) + Clasificar (1000ms) + Normalizar (6000ms) = 7020ms
+- **Mejora: 18% más rápido**
+
+### Próximos Pasos Post-OpenCV
+
+**Pendiente para Etapa 2:**
+1. Clasificación avanzada (folleto, manuscrito, formulario) - con OpenCV adicional
+2. Feature separada de barcode scanning - usar BarcodeDetectorService
+3. Optimización de normalización (pendiente de Parte 1)
+4. Feedback UI durante operaciones largas
+
+**Barcode guardado para:**
+- Lectura de vencimientos en facturas (Fase 1.5)
+- Feature "Escanear código" manual
+- NO en flujo automático de importación
+
+---
+
+**Fin del documento - PASO 2 Parte 1 COMPLETADO con OpenCV. 🎉**
+
+**Última actualización:** 2026-02-06 (post-OpenCV implementation)
+
+**Tiempo total desarrollo:** 2 sesiones intensivas
+**Performance ganada (vs colores):** 60% más rápido en clasificación
+**Performance ganada (vs inicio Fase 1):** 59-69% más rápido overall
+**Clasificador final:** OpenCV Laplacian variance (threshold 600)
+**Próximo trabajo:** Clasificación avanzada + Barcode como feature separada

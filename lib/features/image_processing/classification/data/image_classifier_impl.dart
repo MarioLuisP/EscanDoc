@@ -5,22 +5,19 @@ import 'package:escandoc/features/image_processing/classification/domain/classif
 
 /// Implementación del clasificador de imágenes usando OpenCV Laplacian variance.
 ///
-/// **ESTRATEGIA NUEVA (2026-02-06):**
-/// - Detección ultra-rápida (10-50ms) con OpenCV nativo
-/// - Sin análisis de colores pesado (TOP 1, gradientes, etc.)
+/// **ESTRATEGIA (2026-02-06 - Etapa 1):**
 /// - Clasificación binaria simple: FOTO vs DOCUMENTO
-///
-/// **Método:**
-/// - Laplacian variance > threshold → DOCUMENTO (tiene texto)
-/// - Laplacian variance < threshold → FOTO (sin texto)
+/// - Método: OpenCV Laplacian variance
+/// - Threshold 600: varianza > 600 → DOCUMENTO, < 600 → FOTO
 ///
 /// **Performance:**
+/// - ~1s fijo y predecible
 /// - 50-100x más rápido que OCR completo
-/// - 10-15x más rápido que análisis visual anterior
+/// - Probado con imágenes reales y calibrado
 ///
-/// **Threshold por defecto:** 120.0
-/// - Ajustar según pruebas con imágenes reales
-/// - Usar `getVariance()` para calibrar
+/// **FUTURO (Etapa 2+):**
+/// - Barcode detection (para feature separada, no cascade)
+/// - Clasificación avanzada: folleto, manuscrito, formulario
 class ImageClassifierImpl implements ImageClassifier {
   final TextDetectorService _textDetector;
 
@@ -58,7 +55,7 @@ class ImageClassifierImpl implements ImageClassifier {
       debugPrint('[ImageClassifier] Varianza Laplaciana: ${variance.toStringAsFixed(2)}');
       debugPrint('[ImageClassifier] Threshold: $threshold');
       debugPrint('[ImageClassifier] Tiene texto: $hasText');
-      debugPrint('[ImageClassifier] 🔴 END: Clasificación completa - Duración: ${duration}ms');
+      debugPrint('[ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: ${duration}ms');
 
       // Clasificar según resultado
       final type = hasText ? DocumentType.document : DocumentType.photo;
