@@ -30,6 +30,7 @@ import 'features/image_processing/classification/domain/image_classifier.dart';
 import 'features/image_processing/classification/data/image_classifier_impl.dart';
 import 'features/documents/domain/usecases/import_document.dart';
 import 'core/services/pdf_converter_service.dart';
+import 'core/services/text_detector_service.dart';
 
 // Search dependencies
 import 'features/search/data/repositories/search_repository_impl.dart';
@@ -143,7 +144,8 @@ class MyApp extends StatelessWidget {
             final imageNormalizerService = ImageNormalizerServiceImpl();
             final normalizeImageUseCase = NormalizeImageUseCase(imageNormalizerService);
             final formatConverter = ImageFormatConverterImpl();
-            final imageClassifier = ImageClassifierImpl();
+            final textDetector = TextDetectorServiceImpl();
+            final imageClassifier = ImageClassifierImpl(textDetector: textDetector);
             final classifier = DocumentClassifier();
             final ocrService = OCRServiceImpl();
             final documentRepository = DocumentRepository();

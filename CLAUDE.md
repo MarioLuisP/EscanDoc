@@ -47,3 +47,6 @@ Todo en `.context/`:
 ## Testing
 
 **IMPORTANTE:** Este proyecto usa FVM (Flutter Version Manager).
+
+Tu no puedes correr 'fvm test ....' asi que me tienes que pedir a mi 
+que los corra en otra terminal y te pase los resultados

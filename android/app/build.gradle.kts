@@ -57,4 +57,6 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
     // ML Kit Text Recognition (solo latino)
     implementation("com.google.mlkit:text-recognition:16.0.0")
+    // OpenCV para detección rápida de texto (Laplacian variance)
+    implementation("org.opencv:opencv:4.9.0")
 }
