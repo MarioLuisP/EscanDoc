@@ -46,4 +46,14 @@ class NormalizeImageUseCase {
 
     return normalizedPath;
   }
+
+  /// Redimensiona imagen a A4 (2480×3508) si excede.
+  ///
+  /// Operación rápida (~100-300ms) ideal para ejecutar ANTES de clasificación.
+  /// Solo ajusta geometría, NO comprime (eso lo hace execute()).
+  ///
+  /// Retorna el path de la imagen redimensionada (o la original si no excede A4).
+  Future<String> resizeToA4IfNeeded(String imagePath) async {
+    return await _service.resizeToA4IfNeeded(imagePath);
+  }
 }

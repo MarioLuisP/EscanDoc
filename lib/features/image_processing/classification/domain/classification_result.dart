@@ -2,8 +2,7 @@
 enum DocumentType {
   /// Fotografía real (personas, lugares, objetos)
   /// Criterios actuales:
-  /// - Colores únicos > 12,000
-  /// - Cobertura top 10 colores < 25%
+  /// - Varianza Laplaciana < 600 (OpenCV)
   photo,
 
   /// Documento escaneado (facturas, contratos, recibos, etc.)
@@ -40,15 +39,16 @@ class ClassificationResult {
 
   /// Metadata del análisis (varía según el tipo)
   ///
-  /// Para PHOTO:
-  /// - 'uniqueColors': int - Cantidad de colores únicos
-  /// - 'topTenCoverage': double - % de cobertura de top 10 colores
-  /// - 'totalPixels': int - Total de píxeles analizados
+  /// Para clasificación OpenCV (actual):
+  /// - 'method': String - Método usado ('opencv_laplacian')
+  /// - 'variance': double - Varianza Laplaciana calculada
+  /// - 'threshold': double - Umbral usado para clasificación (600.0)
+  /// - 'hasText': bool - Si detectó texto (variance > threshold)
+  /// - 'durationMs': int - Tiempo de análisis en milisegundos
   ///
-  /// Para FOLLETO (futuro):
-  /// - 'wordCount': int - Cantidad de palabras detectadas
-  ///
-  /// Para otros tipos se pueden agregar más campos según necesidad.
+  /// Para clasificación futura:
+  /// - 'wordCount': int - Cantidad de palabras detectadas (OCR)
+  /// - Otros campos según necesidad
   final Map<String, dynamic> metadata;
 
   ClassificationResult({

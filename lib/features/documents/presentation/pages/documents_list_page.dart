@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:gal/gal.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
 import 'package:escandoc/features/documents/presentation/providers/import_provider.dart';
 import 'package:escandoc/features/scan/presentation/providers/scan_provider.dart';
 import 'package:escandoc/features/documents/presentation/widgets/document_card.dart';
 import 'package:escandoc/features/documents/presentation/widgets/empty_state.dart';
 import 'package:escandoc/features/documents/presentation/widgets/delete_confirmation_dialog.dart';
-import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
+import 'package:escandoc/features/scan/presentation/widgets/photo_detected_dialog.dart';
 
 /// Página principal que muestra la lista de documentos guardados
 /// HU-001: Ver lista de documentos guardados
@@ -42,30 +43,6 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
           ),
         ),
         actions: [
-          // TEMPORAL: Botón de diagnóstico SQLite
-          IconButton(
-            icon: const Icon(Icons.bug_report, size: 28),
-            onPressed: () {
-              Navigator.pushNamed(context, '/diagnostics');
-            },
-            tooltip: 'SQLite Diagnostics',
-          ),
-          // SPIKE TÉCNICO: Scanner custom (Épica 6)
-          IconButton(
-            icon: const Icon(Icons.science, size: 28, color: Colors.orange),
-            onPressed: () {
-              Navigator.pushNamed(context, '/spike/scanner');
-            },
-            tooltip: '🧪 SPIKE: Cunning Scanner',
-          ),
-          // DEBUG: Scanner nativo actual
-          IconButton(
-            icon: const Icon(Icons.bug_report_outlined, size: 28, color: Colors.blue),
-            onPressed: () {
-              Navigator.pushNamed(context, '/spike/native-debug');
-            },
-            tooltip: '🔍 DEBUG: Scanner Nativo',
-          ),
           // Botón IMPORTAR documento
           IconButton(
             icon: const Icon(Icons.upload_file, size: 28),
@@ -153,18 +130,18 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
     );
   }
 
-  /// Ejecuta flujo de escaneo completo
+  /// Ejecuta flujo de escaneo completo con clasificación
   Future<void> _handleScan(BuildContext context) async {
     final scanProvider = context.read<ScanProvider>();
     final documentsProvider = context.read<DocumentsProvider>();
     final locale = context.locale.languageCode;
 
-    // Ejecutar scan and save
-    final document = await scanProvider.scanAndSave(locale);
+    // 1. Preparar escaneo (scanner + convertir + clasificar + normalizar solo si es documento)
+    final preparation = await scanProvider.prepareScan();
 
-    // Usuario canceló o falló
-    if (document == null && mounted) {
-      if (scanProvider.error != null) {
+    if (preparation == null) {
+      // Usuario canceló o error
+      if (mounted && scanProvider.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -179,7 +156,66 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
       return;
     }
 
-    // Éxito - recargar lista y mostrar confirmación
+    if (!mounted) return;
+
+    // 2. Si detectó FOTO → Mostrar diálogo especial (guardar en galería O app)
+    if (preparation.classification.type == DocumentType.photo) {
+      final action = await PhotoDetectedDialog.show(
+        context,
+        preparation.processedFile,
+      );
+
+      if (action == PhotoAction.cancel || action == null) {
+        // Usuario canceló
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Escaneo cancelado',
+                style: TextStyle(fontSize: 16),
+              ),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Guardar en galería (feature oculta)
+      if (action == PhotoAction.saveToGallery) {
+        await _savePhotoToGallery(preparation.processedFile);
+        return;
+      }
+
+      // Si eligió "Guardar en App" → continuar flujo normal
+    }
+
+    if (!mounted) return;
+
+    // 3. Completar escaneo (normalizar si es foto + guardar + OCR)
+    final document = await scanProvider.completeScan(
+      preparation,
+      locale,
+    );
+
+    if (document == null) {
+      // Error al guardar
+      if (mounted && scanProvider.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error al guardar: ${scanProvider.error}',
+              style: const TextStyle(fontSize: 16),
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+      return;
+    }
+
+    // 4. Éxito - recargar lista y mostrar confirmación
     if (mounted) {
       documentsProvider.loadDocuments(); // Sin await - carga en background
       ScaffoldMessenger.of(context).showSnackBar(
@@ -192,6 +228,51 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
           duration: const Duration(seconds: 3),
         ),
       );
+    }
+  }
+
+  /// Guarda una foto en la galería del teléfono (feature oculta)
+  Future<void> _savePhotoToGallery(File photoFile) async {
+    try {
+      debugPrint('[DocumentsListPage] Guardando foto en galería: ${photoFile.path}');
+
+      // Guardar en galería usando gal
+      await Gal.putImage(photoFile.path);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Foto guardada en tu galería ✅',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Color(0xFF2D5016), // Verde bosque
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('[DocumentsListPage] ERROR al guardar en galería: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error al guardar en galería: ${e.toString()}',
+              style: const TextStyle(fontSize: 16),
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     }
   }
 
@@ -284,28 +365,32 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
 
       if (!mounted) return;
 
-      // 3. Si detectó FOTO → Confirmar con usuario
+      // 3. Si detectó FOTO → Mostrar diálogo (sin opción galería, ya está en galería)
       if (preparation.classification.type == DocumentType.photo) {
-        final confirmed = await _showPhotoConfirmationDialog(
+        final action = await PhotoDetectedDialog.show(
           context,
-          preparation.classification,
+          preparation.processedFile,
+          showGalleryOption: false, // Import: solo App o Cancelar
         );
 
-        if (confirmed != true) {
+        if (action == PhotoAction.cancel || action == null) {
           // Usuario canceló
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text(
+              const SnackBar(
+                content: Text(
                   'Importación cancelada',
                   style: TextStyle(fontSize: 16),
                 ),
-                duration: const Duration(seconds: 2),
+                duration: Duration(seconds: 2),
               ),
             );
           }
           return;
         }
+
+        // Si eligió "Guardar en App" → continuar flujo normal
+        // (PhotoAction.saveToGallery no debería aparecer aquí por showGalleryOption=false)
       }
 
       if (!mounted) return;
@@ -364,87 +449,4 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
     }
   }
 
-  /// Muestra diálogo de confirmación cuando se detecta una FOTO
-  Future<bool?> _showPhotoConfirmationDialog(
-    BuildContext context,
-    ClassificationResult classification,
-  ) async {
-    final uniqueColors = classification.metadata['uniqueColors'] as int? ?? 0;
-    final topTenCoverage = classification.metadata['topTenCoverage'] as double? ?? 0;
-    final confidence = (classification.confidence * 100).toStringAsFixed(0);
-
-    return showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.photo_camera, size: 32, color: Colors.orange),
-              SizedBox(width: 12),
-              Text('Foto detectada'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '🖼️ Creo que tratas de importar una foto',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                '¿Aún así quieres continuar?',
-                style: TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 16),
-              // Detalles de detección (para debugging - puedes comentar después)
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Confianza: $confidence%',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Colores únicos: ${uniqueColors.toString()}',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Cobertura top 10: ${(topTenCoverage * 100).toStringAsFixed(1)}%',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text(
-                'Cancelar',
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                'Continuar de todas formas',
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }

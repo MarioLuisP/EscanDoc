@@ -22,19 +22,26 @@ class ImportDocument {
     this._normalizeImage,
   );
 
-  /// Convierte archivo a JPG sin normalizar (para clasificación rápida).
+  /// Convierte archivo a JPG y redimensiona a A4 si excede (sin comprimir).
+  ///
+  /// FLUJO OPTIMIZADO:
+  /// 1. Convertir a JPG (formato)
+  /// 2. Redimensionar a A4 si excede (geometría - rápido)
+  /// 3. Retorna listo para clasificación Laplacian
+  ///
+  /// NO comprime (eso se hace después de clasificar en `normalize()`).
   ///
   /// Parámetros:
   /// - [importedFile]: Archivo importado (cualquier formato soportado)
   ///
-  /// Retorna: File JPG (sin normalizar)
+  /// Retorna: File JPG redimensionado a A4 (sin comprimir)
   ///
   /// Lanza:
   /// - [UnsupportedImageFormatException] si el formato no es soportado
   /// - [ImageConversionException] si la conversión falla
   Future<File> convertOnly(File importedFile) async {
     try {
-      debugPrint('[ImportDocument] 🟢 Convertir a JPG (sin normalizar)');
+      debugPrint('[ImportDocument] 🟢 Convertir a JPG y redimensionar A4');
       debugPrint('[ImportDocument] Archivo: ${importedFile.path}');
 
       // Verificar que existe
@@ -42,9 +49,13 @@ class ImportDocument {
         throw Exception('Imported file does not exist: ${importedFile.path}');
       }
 
-      // Convertir a JPG
+      // 1. Convertir a JPG
       final jpgPath = await _formatConverter.convertToJpg(importedFile.path);
-      return File(jpgPath);
+
+      // 2. Redimensionar a A4 si excede (rápido, antes de clasificar)
+      final resizedPath = await _normalizeImage.resizeToA4IfNeeded(jpgPath);
+
+      return File(resizedPath);
     } catch (e) {
       debugPrint('[ImportDocument] ERROR en convertOnly: $e');
       rethrow;

@@ -11,8 +11,8 @@ import 'package:escandoc/features/image_processing/classification/domain/classif
 /// Resultado de la preparación de importación.
 ///
 /// Contiene la imagen procesada y su clasificación.
-/// - Fotos: solo convertidas (sin normalizar) para ahorrar tiempo
-/// - Documentos: convertidas Y normalizadas
+/// - Fotos: convertidas JPG + redimensionadas A4 (sin comprimir) para ahorrar tiempo
+/// - Documentos: convertidas JPG + redimensionadas A4 + comprimidas <850KB
 ///
 /// El UI puede decidir si continuar o cancelar basado en la clasificación.
 class ImportPreparationResult {
@@ -30,8 +30,8 @@ class ImportPreparationResult {
 /// Provider para manejar el flujo de importación de documentos.
 ///
 /// Flujo optimizado dividido en 2 fases:
-/// 1. PREPARACIÓN: Convertir + Clasificar (+ Normalizar solo si es documento)
-/// 2. GUARDADO: Normalizar si es foto + Guardar en BD + OCR background
+/// 1. PREPARACIÓN: Convertir JPG + Resize A4 + Clasificar (+ Comprimir solo si es documento)
+/// 2. GUARDADO: Comprimir si es foto + Guardar en BD + OCR background
 ///
 /// Ahorro de tiempo: Si usuario cancela una foto, evitamos normalización (~6s)
 ///
@@ -73,10 +73,10 @@ class ImportProvider with ChangeNotifier {
   DocumentModel? get lastImportedDocument => _lastImportedDocument;
   ClassificationResult? get lastClassification => _lastClassification;
 
-  /// FASE 1: Prepara documento importado (convierte, clasifica, normaliza si es documento).
+  /// FASE 1: Prepara documento importado (convierte JPG + resize A4 + clasifica + comprime si es documento).
   ///
-  /// OPTIMIZACIÓN: Solo normaliza si es DOCUMENTO. Las fotos se normalizan
-  /// en FASE 2 solo si el usuario confirma (ahorro ~6s si cancela).
+  /// OPTIMIZACIÓN: Resize A4 ANTES de clasificar (más rápido). Solo comprime si es DOCUMENTO.
+  /// Las fotos se comprimen en FASE 2 solo si el usuario confirma (ahorro ~6s si cancela).
   ///
   /// NO guarda en BD todavía. Retorna resultado con clasificación
   /// para que el UI pueda decidir si continuar o cancelar.
@@ -96,15 +96,15 @@ class ImportProvider with ChangeNotifier {
       final startTotal = DateTime.now();
       debugPrint('[ImportProvider] 🟢 START: Preparación de importación - ${startTotal.millisecondsSinceEpoch}');
 
-      // 1. Convertir a JPG (sin normalizar aún)
+      // 1. Convertir a JPG + Redimensionar A4 (geometría, sin comprimir)
       final startConvert = DateTime.now();
-      debugPrint('[ImportProvider] 🟢 START: Convertir a JPG - ${startConvert.millisecondsSinceEpoch}');
+      debugPrint('[ImportProvider] 🟢 START: Convertir JPG + Resize A4 - ${startConvert.millisecondsSinceEpoch}');
       final jpgFile = await _importDocument.convertOnly(importedFile);
       final endConvert = DateTime.now();
       final convertDuration = endConvert.difference(startConvert).inMilliseconds;
-      debugPrint('[ImportProvider] 🔴 END: Convertir a JPG - Duración: ${convertDuration}ms');
+      debugPrint('[ImportProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: ${convertDuration}ms');
 
-      // 2. Clasificar (antes de normalizar)
+      // 2. Clasificar Laplacian (sobre imagen A4, más rápido)
       final startClassify = DateTime.now();
       debugPrint('[ImportProvider] 🟢 START: Clasificar imagen - ${startClassify.millisecondsSinceEpoch}');
       final classification = await _imageClassifier.classify(jpgFile.path);
@@ -118,17 +118,17 @@ class ImportProvider with ChangeNotifier {
       File processedFile;
       bool isNormalized;
 
-      // 3. Normalizar solo si es DOCUMENTO
+      // 3. Comprimir solo si es DOCUMENTO (ya está redimensionado a A4)
       if (classification.type == DocumentType.document) {
-        debugPrint('[ImportProvider] Es documento → normalizando ahora');
-        final startNormalize = DateTime.now();
+        debugPrint('[ImportProvider] Es documento → comprimiendo a <850KB ahora');
+        final startCompress = DateTime.now();
         processedFile = await _importDocument.normalize(jpgFile);
-        final endNormalize = DateTime.now();
-        final normalizeDuration = endNormalize.difference(startNormalize).inMilliseconds;
-        debugPrint('[ImportProvider] Normalizado en ${normalizeDuration}ms');
+        final endCompress = DateTime.now();
+        final compressDuration = endCompress.difference(startCompress).inMilliseconds;
+        debugPrint('[ImportProvider] Comprimido en ${compressDuration}ms');
         isNormalized = true;
       } else {
-        debugPrint('[ImportProvider] Es foto → saltando normalización (se hará si usuario acepta)');
+        debugPrint('[ImportProvider] Es foto → saltando compresión (se hará si usuario acepta)');
         processedFile = jpgFile;
         isNormalized = false;
       }
@@ -155,11 +155,11 @@ class ImportProvider with ChangeNotifier {
     }
   }
 
-  /// FASE 2: Completa la importación (normaliza si es foto + guarda en BD + OCR background).
+  /// FASE 2: Completa la importación (comprime si es foto + guarda en BD + OCR background).
   ///
   /// Debe llamarse después de prepareImport() y confirmación del usuario.
   ///
-  /// Si es foto (no normalizada), normaliza ahora. Si es documento, ya está normalizado.
+  /// Si es foto (no comprimida), comprime ahora. Si es documento, ya está comprimido.
   ///
   /// Parámetros:
   /// - [preparation]: Resultado de prepareImport con imagen procesada
@@ -182,14 +182,14 @@ class ImportProvider with ChangeNotifier {
 
       File finalFile = preparation.processedFile;
 
-      // Normalizar si es foto (no normalizada en FASE 1)
+      // Comprimir si es foto (no comprimida en FASE 1, pero ya redimensionada a A4)
       if (!preparation.isNormalized) {
-        debugPrint('[ImportProvider] Foto confirmada → normalizando ahora');
-        final startNormalize = DateTime.now();
+        debugPrint('[ImportProvider] Foto confirmada → comprimiendo a <850KB ahora');
+        final startCompress = DateTime.now();
         finalFile = await _importDocument.normalize(preparation.processedFile);
-        final endNormalize = DateTime.now();
-        final normalizeDuration = endNormalize.difference(startNormalize).inMilliseconds;
-        debugPrint('[ImportProvider] Normalizado en ${normalizeDuration}ms');
+        final endCompress = DateTime.now();
+        final compressDuration = endCompress.difference(startCompress).inMilliseconds;
+        debugPrint('[ImportProvider] Comprimido en ${compressDuration}ms');
       }
 
       // Obtener directorio de storage

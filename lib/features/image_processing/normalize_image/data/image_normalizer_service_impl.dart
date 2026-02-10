@@ -10,15 +10,28 @@ import 'package:escandoc/features/image_processing/normalize_image/domain/image_
 /// - Usa aceleración hardware cuando disponible
 /// - Menos consumo de batería (crítico para usuarios mayores)
 /// - Conversión PNG→JPG automática
+///
+/// **ESTRATEGIA OPTIMIZADA (Probe Compression):**
+/// 1. Redimensionar a A4 (2480×3508) si excede
+/// 2. Probe a quality 85 → medir tamaño
+/// 3. Si 800-900KB → listo (zona óptima)
+/// 4. Si < 800KB → subir calidad | Si > 900KB → bajar calidad
+/// 5. Performance: ~2s vs 10-12s con iteraciones
 class ImageNormalizerServiceImpl implements ImageNormalizerService {
-  /// Calidades de compresión a intentar (de mayor a menor).
-  static const List<int> qualityLevels = [90, 85, 80, 75, 70];
+  /// Dimensiones A4 a 300 DPI
+  static const int a4Width = 2480;
+  static const int a4Height = 3508;
 
-  /// Porcentaje de redimensionamiento para fallback.
-  static const double fallbackScalePercent = 0.8;
+  /// Calidad para probe inicial
+  static const int probeQuality = 85;
 
-  /// Calidad usada después del redimensionamiento fallback.
-  static const int fallbackQuality = 85;
+  /// Rango óptimo de tamaño (no requiere segunda compresión)
+  static const int optimalMinBytes = 800 * 1024; // 800 KB
+  static const int optimalMaxBytes = 900 * 1024; // 900 KB
+
+  /// Límites de calidad JPEG
+  static const int minQuality = 30;
+  static const int maxQuality = 90; // No pasar de 90 (retornos decrecientes)
 
   @override
   int getFileSize(String imagePath) {
@@ -31,29 +44,172 @@ class ImageNormalizerServiceImpl implements ImageNormalizerService {
 
   @override
   Future<String> normalizeImage(String imagePath, int targetSizeBytes) async {
-    // 1. Intentar compresión iterativa con diferentes calidades
-    for (final quality in qualityLevels) {
-      final compressedPath = await _compressImageNative(
-        imagePath,
-        quality,
-        suffix: '_q$quality',
-      );
+    final startTime = DateTime.now();
 
-      if (compressedPath != null) {
-        final compressedSize = getFileSize(compressedPath);
+    // 📊 PESO ORIGINAL
+    final originalSize = getFileSize(imagePath);
+    final originalKB = (originalSize / 1024).toStringAsFixed(1);
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    print('📦 COMPRESIÓN INTELIGENTE - INICIO');
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    print('📊 Peso original: $originalKB KB');
 
-        // Si cumple el objetivo, retornar
-        if (compressedSize <= targetSizeBytes) {
-          return compressedPath;
-        }
+    // 1️⃣ REDIMENSIONAR A A4 SI EXCEDE
+    final resizedPath = await resizeToA4IfNeeded(imagePath);
+    final resizedSize = getFileSize(resizedPath);
+    final resizedKB = (resizedSize / 1024).toStringAsFixed(1);
+    final resizeReduction = ((1 - resizedSize / originalSize) * 100).toStringAsFixed(1);
+    print('📐 Redimensionado: $resizedKB KB (${resizeReduction}% reducción)');
 
-        // Si no cumple, eliminar y continuar
-        await File(compressedPath).delete();
-      }
+    // 2️⃣ PROBE: Comprimir a quality 85
+    final directory = path.dirname(resizedPath);
+    final filename = path.basenameWithoutExtension(resizedPath);
+    final probePath = path.join(directory, '${filename}_probe85.jpg');
+
+    final probeResult = await FlutterImageCompress.compressWithFile(
+      resizedPath,
+      quality: probeQuality,
+      format: CompressFormat.jpeg,
+    );
+
+    if (probeResult == null) {
+      throw Exception('Probe compression failed');
     }
 
-    // 2. Fallback: Redimensionar + comprimir
-    return await _applyFallbackNative(imagePath, targetSizeBytes);
+    await File(probePath).writeAsBytes(probeResult);
+    final probeSize = getFileSize(probePath);
+    final probeKB = (probeSize / 1024).toStringAsFixed(1);
+    final probePercent = ((probeSize / originalSize) * 100).toStringAsFixed(1);
+    print('🔍 Probe (Q85): $probeKB KB ($probePercent% del original)');
+
+    // 3️⃣ DECISIÓN: ¿Necesitamos ajustar?
+    if (probeSize >= optimalMinBytes && probeSize <= optimalMaxBytes) {
+      // ✅ Zona óptima: 800-900 KB
+      print('✅ En zona óptima (800-900 KB) - SIN segunda compresión');
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      print('🎯 Peso final: $probeKB KB');
+      final duration = DateTime.now().difference(startTime).inMilliseconds;
+      print('⏱️  Duración total: ${duration}ms');
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+      // Limpiar archivo redimensionado si es diferente del original
+      if (resizedPath != imagePath) {
+        await File(resizedPath).delete();
+      }
+
+      return probePath;
+    }
+
+    // 4️⃣ CALCULAR QUALITY TARGET
+    final targetQuality = probeSize < targetSizeBytes
+        ? _calculateQualityForUpscaling(probeSize, targetSizeBytes)
+        : _calculateTargetQuality(probeSize, targetSizeBytes);
+
+    final direction = probeSize < targetSizeBytes ? '⬆️ SUBIR' : '⬇️ BAJAR';
+    final method = probeSize < targetSizeBytes ? 'fórmula ~6%/punto' : 'regla de tres';
+    print('🎯 Quality target: $targetQuality ($direction - $method)');
+
+    // 5️⃣ SEGUNDA COMPRESIÓN con quality ajustado
+    final finalPath = path.join(directory, '${filename}_final.jpg');
+    final finalResult = await FlutterImageCompress.compressWithFile(
+      resizedPath,
+      quality: targetQuality,
+      format: CompressFormat.jpeg,
+    );
+
+    if (finalResult == null) {
+      throw Exception('Final compression failed');
+    }
+
+    await File(finalPath).writeAsBytes(finalResult);
+    final finalSize = getFileSize(finalPath);
+    final finalKB = (finalSize / 1024).toStringAsFixed(1);
+    final finalPercent = ((finalSize / originalSize) * 100).toStringAsFixed(1);
+
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    print('🎯 Peso final: $finalKB KB ($finalPercent% del original)');
+    final duration = DateTime.now().difference(startTime).inMilliseconds;
+    print('⏱️  Duración total: ${duration}ms');
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    // Limpiar archivos temporales
+    if (resizedPath != imagePath) {
+      await File(resizedPath).delete();
+    }
+    await File(probePath).delete();
+
+    return finalPath;
+  }
+
+  /// Calcula quality target usando regla de tres.
+  /// Clampea entre minQuality y maxQuality.
+  int _calculateTargetQuality(int probeSize, int targetSize) {
+    // Regla de tres: targetQuality = probeQuality × (targetSize / probeSize)
+    final calculatedQuality = (probeQuality * targetSize / probeSize).round();
+
+    // Clampear
+    return calculatedQuality.clamp(minQuality, maxQuality);
+  }
+
+  /// Calcula quality target para SUBIR usando fórmula empírica.
+  ///
+  /// **Fórmula basada en observación:**
+  /// - Incremento de ~6% de tamaño por punto de quality (rango 85-90)
+  /// - needed_growth = (target - probe) / probe
+  /// - quality_increment = needed_growth / 0.06
+  /// - target_quality = 85 + quality_increment
+  int _calculateQualityForUpscaling(int probeSize, int targetSize) {
+    // Cuánto necesitamos crecer en porcentaje
+    final neededGrowth = (targetSize - probeSize) / probeSize;
+
+    // Incremento de calidad basado en ~6% por punto
+    final qualityIncrement = neededGrowth / 0.06;
+
+    // Quality final
+    final targetQuality = (probeQuality + qualityIncrement).round();
+
+    // Clampear (nunca pasar de maxQuality = 90)
+    return targetQuality.clamp(probeQuality, maxQuality);
+  }
+
+  /// Redimensiona a A4 (2480×3508) si la imagen excede esas dimensiones.
+  /// Retorna el path de la imagen (original o redimensionada).
+  @override
+  Future<String> resizeToA4IfNeeded(String imagePath) async {
+    // Usar flutter_image_compress para redimensionar si es necesario
+    // minWidth/minHeight mantienen aspect ratio y solo redimensionan si excede
+    final directory = path.dirname(imagePath);
+    final filename = path.basenameWithoutExtension(imagePath);
+    final resizedPath = path.join(directory, '${filename}_resized.jpg');
+
+    final result = await FlutterImageCompress.compressWithFile(
+      imagePath,
+      minWidth: a4Width,
+      minHeight: a4Height,
+      quality: 95, // Alta calidad para esta etapa (solo redimensionamos)
+      format: CompressFormat.jpeg,
+    );
+
+    if (result == null) {
+      // Si falla, retornar original
+      return imagePath;
+    }
+
+    // Guardar resultado
+    await File(resizedPath).writeAsBytes(result);
+
+    // Si el tamaño es igual al original, no se redimensionó
+    // (la imagen ya era <= A4)
+    final originalSize = getFileSize(imagePath);
+    final resizedSize = getFileSize(resizedPath);
+
+    if (resizedSize >= originalSize * 0.95) {
+      // No hubo redimensionamiento significativo, usar original
+      await File(resizedPath).delete();
+      return imagePath;
+    }
+
+    return resizedPath;
   }
 
   @override
@@ -86,78 +242,4 @@ class ImageNormalizerServiceImpl implements ImageNormalizerService {
     return jpgPath;
   }
 
-  /// Comprime una imagen con la calidad especificada usando compresión nativa.
-  Future<String?> _compressImageNative(
-    String imagePath,
-    int quality, {
-    String suffix = '',
-  }) async {
-    final directory = path.dirname(imagePath);
-    final filename = path.basenameWithoutExtension(imagePath);
-    final newPath = path.join(directory, '$filename$suffix.jpg');
-
-    // Compresión nativa (PNG→JPG automático)
-    final result = await FlutterImageCompress.compressWithFile(
-      imagePath,
-      quality: quality,
-      format: CompressFormat.jpeg,
-    );
-
-    if (result == null) {
-      return null;
-    }
-
-    // Guardar resultado
-    await File(newPath).writeAsBytes(result);
-
-    return newPath;
-  }
-
-  /// Aplica el fallback: redimensionar + comprimir usando compresión nativa.
-  Future<String> _applyFallbackNative(
-    String imagePath,
-    int targetSizeBytes,
-  ) async {
-    // Obtener dimensiones originales
-    final originalFile = File(imagePath);
-    final originalBytes = await originalFile.readAsBytes();
-
-    // Calcular nuevo ancho (80% del original)
-    // Usamos un valor estimado conservador si no podemos obtener dimensiones exactas
-    final estimatedOriginalWidth = 2000; // Estimación típica para scanner
-    final newWidth = (estimatedOriginalWidth * fallbackScalePercent).round();
-
-    final directory = path.dirname(imagePath);
-    final filename = path.basenameWithoutExtension(imagePath);
-    final fallbackPath = path.join(directory, '${filename}_fallback.jpg');
-
-    // Redimensionar + comprimir con compresión nativa
-    final result = await FlutterImageCompress.compressWithFile(
-      imagePath,
-      minWidth: newWidth,
-      quality: fallbackQuality,
-      format: CompressFormat.jpeg,
-    );
-
-    if (result == null) {
-      throw Exception('Failed to apply fallback compression: $imagePath');
-    }
-
-    // Guardar resultado
-    await File(fallbackPath).writeAsBytes(result);
-
-    // Verificar que cumple el objetivo
-    final fallbackSize = getFileSize(fallbackPath);
-
-    if (fallbackSize > targetSizeBytes) {
-      // Log warning - aún así retornamos la imagen
-      // En casos extremos puede seguir siendo más grande
-      print(
-        'Warning: Fallback image still exceeds target '
-        '($fallbackSize > $targetSizeBytes bytes)',
-      );
-    }
-
-    return fallbackPath;
-  }
 }

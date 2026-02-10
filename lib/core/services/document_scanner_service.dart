@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:escandoc/features/image_processing/normalize_image/domain/normalize_image_use_case.dart';
 
 /// Interface para servicio de escaneo de documentos
 abstract class DocumentScannerService {
@@ -12,14 +11,19 @@ abstract class DocumentScannerService {
 /// Implementación usando flutter_doc_scanner
 ///
 /// Usa scanner nativo (ML Kit en Android, VisionKit en iOS)
-/// para detección automática de bordes y normalización OCR-first
+/// para detección automática de bordes.
+///
+/// IMPORTANTE: Retorna el File sin normalizar (JPG en Android, PNG en iOS).
+/// La normalización se hace después del clasificador para optimizar el flujo.
 class DocumentScannerServiceImpl implements DocumentScannerService {
   final FlutterDocScanner _scanner = FlutterDocScanner();
-  final NormalizeImageUseCase _normalizeImage;
 
-  DocumentScannerServiceImpl(this._normalizeImage);
+  DocumentScannerServiceImpl();
 
-  /// Abre scanner nativo y retorna imagen JPG normalizada (850 KB)
+  /// Abre scanner nativo y retorna imagen sin procesar.
+  ///
+  /// Retorna File del scanner (JPG en Android, PNG en iOS) sin normalizar.
+  /// La normalización se hace después del clasificador.
   ///
   /// Retorna null si:
   /// - Usuario cancela el scan
@@ -39,7 +43,7 @@ class DocumentScannerServiceImpl implements DocumentScannerService {
 
       debugPrint('[DocumentScanner] Permiso de cámara otorgado, abriendo scanner...');
 
-      // 2. Abrir scanner nativo (OCR-first: retorna JPG, no PDF)
+      // 2. Abrir scanner nativo (retorna JPG en Android, PNG en iOS)
       final scannedResult = await _scanner.getScannedDocumentAsImages();
 
       debugPrint('[DocumentScanner] Scanner cerrado. Resultado: $scannedResult');
@@ -53,7 +57,7 @@ class DocumentScannerServiceImpl implements DocumentScannerService {
       String? filePath;
 
       if (scannedResult is Map) {
-        // Extraer path del JPG (Android: JPG, iOS: PNG)
+        // Extraer path del archivo (Android: JPG, iOS: PNG)
         final images = scannedResult['images'] as List?;
         if (images == null || images.isEmpty) {
           debugPrint('[DocumentScanner] ERROR: images está vacío o null');
@@ -61,7 +65,7 @@ class DocumentScannerServiceImpl implements DocumentScannerService {
         }
 
         filePath = images.first.toString();
-        debugPrint('[DocumentScanner] Path JPG desde map (images): $filePath');
+        debugPrint('[DocumentScanner] Path desde map (images): $filePath');
         debugPrint('[DocumentScanner] count: ${scannedResult['count']}');
       } else {
         debugPrint('[DocumentScanner] ERROR: Tipo de resultado desconocido: ${scannedResult.runtimeType}');
@@ -90,26 +94,10 @@ class DocumentScannerServiceImpl implements DocumentScannerService {
       }
 
       final originalSize = file.lengthSync();
-      debugPrint('[DocumentScanner] Tamaño original: ${(originalSize / 1024).toStringAsFixed(2)} KB');
+      debugPrint('[DocumentScanner] Tamaño: ${(originalSize / 1024).toStringAsFixed(2)} KB');
+      debugPrint('[DocumentScanner] ✅ Scanner retornó archivo sin procesar (será clasificado y normalizado después)');
 
-      // 3. Normalizar imagen (OCR-first: reducir a 850 KB)
-      final startNormalize = DateTime.now();
-      debugPrint('[DocumentScanner] 🟢 START: Normalización - ${startNormalize.millisecondsSinceEpoch}');
-      final normalizedPath = await _normalizeImage.execute(filePath);
-      final endNormalize = DateTime.now();
-      final normalizeDuration = endNormalize.difference(startNormalize).inMilliseconds;
-      debugPrint('[DocumentScanner] 🔴 END: Normalización - Duración: ${normalizeDuration}ms');
-
-      final normalizedFile = File(normalizedPath);
-      if (!normalizedFile.existsSync()) {
-        debugPrint('[DocumentScanner] ERROR: Imagen normalizada no existe');
-        return null;
-      }
-
-      final normalizedSize = normalizedFile.lengthSync();
-      debugPrint('[DocumentScanner] Tamaño final: ${(normalizedSize / 1024).toStringAsFixed(2)} KB');
-
-      return normalizedFile;
+      return file;
     } catch (e, stackTrace) {
       // Error de permisos, cancelación, o cualquier otro error
       debugPrint('[DocumentScanner] ERROR: $e');

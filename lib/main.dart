@@ -16,7 +16,6 @@ import 'features/scan/domain/usecases/scan_document.dart';
 import 'features/scan/domain/usecases/save_scanned_document.dart';
 import 'features/scan/domain/usecases/process_ocr.dart';
 import 'core/services/document_scanner_service.dart';
-import 'core/services/pdf_generator.dart';
 import 'core/services/document_classifier.dart';
 import 'core/services/ocr_service.dart';
 import 'features/documents/data/repositories/document_repository.dart';
@@ -24,12 +23,9 @@ import 'features/documents/data/repositories/document_repository.dart';
 // Image processing dependencies (Épica 6 - OCR-first)
 import 'features/image_processing/normalize_image/domain/normalize_image_use_case.dart';
 import 'features/image_processing/normalize_image/data/image_normalizer_service_impl.dart';
-import 'features/image_processing/format_converter/domain/image_format_converter.dart';
 import 'features/image_processing/format_converter/data/image_format_converter_impl.dart';
-import 'features/image_processing/classification/domain/image_classifier.dart';
 import 'features/image_processing/classification/data/image_classifier_impl.dart';
 import 'features/documents/domain/usecases/import_document.dart';
-import 'core/services/pdf_converter_service.dart';
 import 'core/services/text_detector_service.dart';
 
 // Search dependencies
@@ -50,13 +46,6 @@ import 'features/scan/presentation/pages/camera_page.dart';
 import 'features/scan/presentation/pages/crop_page.dart';
 import 'features/search/presentation/pages/search_page.dart';
 import 'features/notes/presentation/pages/note_editor_page.dart';
-
-// TEMPORAL: Diagnóstico de SQLite
-import 'core/database/diagnostics_page.dart';
-
-// SPIKE TÉCNICO: Scanner custom (Épica 6 - Etapa 0)
-import 'features/scanner_custom/spike/scanner_spike_page.dart';
-import 'features/scanner_custom/spike/scanner_native_debug_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -110,17 +99,23 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(
           create: (_) {
-            // Crear servicios para Scan
+            // Crear servicios para Scan (compartidos con Import)
+            final scannerService = DocumentScannerServiceImpl();
             final imageNormalizerService = ImageNormalizerServiceImpl();
             final normalizeImageUseCase = NormalizeImageUseCase(imageNormalizerService);
-            final scannerService = DocumentScannerServiceImpl(normalizeImageUseCase);
-            // SIMPLIFICADO: Solo necesitamos classifier, OCR y repository
+            final formatConverter = ImageFormatConverterImpl();
+            final textDetector = TextDetectorServiceImpl();
+            final imageClassifier = ImageClassifierImpl(textDetector: textDetector);
             final classifier = DocumentClassifier();
             final ocrService = OCRServiceImpl();
             final documentRepository = DocumentRepository();
 
             // Crear UseCases
             final scanDocument = ScanDocument(scannerService);
+            final importDocument = ImportDocument(
+              formatConverter,
+              normalizeImageUseCase,
+            );
             final saveDocument = SaveScannedDocument(
               classifier,
               documentRepository,
@@ -133,6 +128,8 @@ class MyApp extends StatelessWidget {
 
             return ScanProvider(
               scanDocument: scanDocument,
+              importDocument: importDocument,
+              imageClassifier: imageClassifier,
               saveDocument: saveDocument,
               processOCR: processOCR,
             );
@@ -225,13 +222,6 @@ class MyApp extends StatelessWidget {
           '/document/detail': (context) => const DocumentDetailPage(),
           '/note/edit': (context) => const NoteEditorPage(),
           '/search': (context) => const SearchPage(),
-
-          // TEMPORAL: Diagnóstico de SQLite
-          '/diagnostics': (context) => const DiagnosticsPage(),
-
-          // SPIKE TÉCNICO: Scanner custom (Épica 6 - Etapa 0)
-          '/spike/scanner': (context) => const ScannerSpikePage(),
-          '/spike/native-debug': (context) => const ScannerNativeDebugPage(),
         },
       ),
     );

@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   flutter_doc_scanner
+  gal
   permission_handler_windows
   printing
   speech_to_text_windows

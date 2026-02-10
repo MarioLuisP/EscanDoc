@@ -37,13 +37,11 @@ dependencies:
   # DOCUMENT SCANNING (UI Nativa - ML Kit Android / VisionKit iOS)
   # ═══════════════════════════════════════════════════════════════════════════
   flutter_doc_scanner: ^0.0.17       # Scanner nativo con detección de bordes
-  cunning_document_scanner: ^1.3.3   # SPIKE: Scanner custom con MLKit (Épica 6 - Plan B)
   
   # ═══════════════════════════════════════════════════════════════════════════
   # OCR (Post-scan processing)
   # ═══════════════════════════════════════════════════════════════════════════
   google_mlkit_text_recognition: ^0.15.0  # OCR offline después del escaneo
-  google_mlkit_barcode_scanning: ^0.14.0  # Fase 1.5 - mejora detección vencimientos
 
   # ═══════════════════════════════════════════════════════════════════════════
   # IMAGE & PDF PROCESSING
@@ -54,6 +52,7 @@ dependencies:
   pdf_to_image_converter: ^0.0.5    # Conversión PDF→imagen (importar)
   printing: ^5.14.2                  # Vista previa e impresión de PDFs
   pdfrx: ^2.2.24                     # Visualización de PDFs con zoom
+  gal: ^2.3.0                        # Guardar imágenes en galería (feature: escanear fotos)
 
   # ═══════════════════════════════════════════════════════════════════════════
   # VOICE SEARCH
@@ -70,7 +69,7 @@ dependencies:
   # ═══════════════════════════════════════════════════════════════════════════
   path: ^1.9.1                       # Manipulación de rutas
   uuid: ^4.5.1                       # Generación de IDs únicos
-  permission_handler: ^12.0.1        # Manejo de permisos (actualizado para cunning)
+  permission_handler: ^12.0.1        # Manejo de permisos (camera, microphone)
 
 dev_dependencies:
   flutter_test:

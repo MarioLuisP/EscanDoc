@@ -9,14 +9,14 @@ import 'package:escandoc/features/image_processing/classification/domain/classif
 /// - MANUSCRITO (escritura manual) - futuro
 /// - etc.
 ///
-/// Estrategia actual (FASE 1 - Solo FOTO):
-/// - Análisis de colores únicos
-/// - Cobertura de top 10 colores más frecuentes
+/// Estrategia actual (FASE 1 - FOTO vs DOCUMENTO):
+/// - OpenCV Laplacian variance para detección de texto
+/// - Threshold 600: varianza > 600 → DOCUMENTO, < 600 → FOTO
+/// - Performance: ~1s (50-100x más rápido que OCR completo)
 ///
 /// Estrategia futura:
-/// - Combinar con OCR word count
-/// - Detección de escritura manual
-/// - Detección de códigos de barras
+/// - Clasificación avanzada: folleto, manuscrito, formulario
+/// - Barcode detection para feature separada
 abstract class ImageClassifier {
   /// Clasifica una imagen y retorna el tipo detectado.
   ///

@@ -8,6 +8,11 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <!-- Permisos para guardar en galería (feature: escanear fotos) -->
+    <!-- Android 10+ usa Scoped Storage automáticamente -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"/>
+
     <application
         android:label="escandoc"
         android:name="${applicationName}"

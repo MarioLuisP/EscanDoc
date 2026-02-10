@@ -2,10 +2,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:image/image.dart' as img;
 import 'package:printing/printing.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'dart:typed_data';
 
 /// Interface para generador de PDFs y thumbnails
 abstract class PDFGenerator {

@@ -146,5 +146,50 @@ void main() {
         expect(resultSize, lessThanOrEqualTo(targetSize));
       },
     );
+
+    group('resizeToA4IfNeeded', () {
+      test(
+        'DADO una imagen grande (> A4) '
+        'CUANDO se llama resizeToA4IfNeeded '
+        'ENTONCES delega al servicio y retorna path redimensionado',
+        () async {
+          // Arrange
+          const largeImagePath = '/test/path/large_image.jpg';
+          const resizedImagePath = '/test/path/large_image_resized.jpg';
+
+          when(() => mockService.resizeToA4IfNeeded(largeImagePath))
+              .thenAnswer((_) async => resizedImagePath);
+
+          // Act
+          final result = await useCase.resizeToA4IfNeeded(largeImagePath);
+
+          // Assert
+          expect(result, resizedImagePath);
+          verify(() => mockService.resizeToA4IfNeeded(largeImagePath))
+              .called(1);
+        },
+      );
+
+      test(
+        'DADO una imagen pequeña (<= A4) '
+        'CUANDO se llama resizeToA4IfNeeded '
+        'ENTONCES delega al servicio y retorna el mismo path',
+        () async {
+          // Arrange
+          const smallImagePath = '/test/path/small_image.jpg';
+
+          when(() => mockService.resizeToA4IfNeeded(smallImagePath))
+              .thenAnswer((_) async => smallImagePath);
+
+          // Act
+          final result = await useCase.resizeToA4IfNeeded(smallImagePath);
+
+          // Assert
+          expect(result, smallImagePath);
+          verify(() => mockService.resizeToA4IfNeeded(smallImagePath))
+              .called(1);
+        },
+      );
+    });
   });
 }
