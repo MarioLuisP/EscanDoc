@@ -52,7 +52,7 @@ void main() {
       expect(result.filePath, endsWith('.jpg'));
     });
 
-    test('debe usar mismo JPG como thumbnail', () async {
+    test('debe guardar JPG con metadata completa', () async {
       // Arrange
       when(() => mockClassifier.detectType(any())).thenReturn('documento');
       when(() => mockClassifier.generateDocumentName(any(), any(), any()))
@@ -62,9 +62,9 @@ void main() {
       // Act
       final result = await useCase.call(testImage, '/test/output', 'es', currentDate: now);
 
-      // Assert - thumbnailPath apunta al mismo JPG
-      expect(result.thumbnailPath, testImage.path);
-      expect(result.thumbnailPath, result.filePath);
+      // Assert - JPG ~850KB (UI usará cacheWidth para thumbnails)
+      expect(result.filePath, testImage.path);
+      expect(result.title, 'documento_25_Ene_2026');
     });
 
     test('debe detectar tipo automáticamente', () async {
@@ -109,7 +109,6 @@ void main() {
       verify(() => mockRepository.insertDocument(any())).called(1);
       expect(result, isA<DocumentModel>());
       expect(result.title, 'factura_25_Ene_2026');
-      expect(result.docType, 'factura');
     });
 
     test('debe usar fecha actual para nombre', () async {
@@ -142,7 +141,7 @@ void main() {
       expect(result.title, 'factura_25_Ene_2026');
     });
 
-    test('debe guardar con filePath y thumbnailPath apuntando al JPG', () async {
+    test('debe guardar con filePath apuntando al JPG', () async {
       // Arrange
       when(() => mockClassifier.detectType(any())).thenReturn('documento');
       when(() => mockClassifier.generateDocumentName(any(), any(), any()))
@@ -158,7 +157,6 @@ void main() {
       ).captured.first as DocumentModel;
 
       expect(captured.filePath, testImage.path);
-      expect(captured.thumbnailPath, testImage.path);
       expect(captured.filePath, endsWith('.jpg'));
     });
   });

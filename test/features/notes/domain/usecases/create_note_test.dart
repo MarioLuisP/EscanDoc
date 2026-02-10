@@ -28,7 +28,6 @@ void main() {
 
   group('CreateNote UseCase', () {
     final testNote = NoteModel(
-      title: 'Pagar antes del 15',
       content: 'Recordar pagar antes del vencimiento',
       createdAt: DateTime(2026, 1, 24, 10, 0),
     );
@@ -43,7 +42,6 @@ void main() {
 
       // Act
       final result = await useCase(
-        title: testNote.title,
         content: testNote.content,
         documentId: documentId,
       );
@@ -51,7 +49,7 @@ void main() {
       // Assert
       expect(result, isNotNull);
       expect(result?.id, 1);
-      expect(result?.title, testNote.title);
+      expect(result?.content, testNote.content);
       verify(() => mockRepository.createNote(any(), documentId)).called(1);
     });
 
@@ -63,7 +61,6 @@ void main() {
 
       // Act
       final result = await useCase(
-        title: testNote.title,
         content: testNote.content,
         documentId: documentId,
       );
@@ -74,22 +71,6 @@ void main() {
       expect(result?.id, greaterThan(0));
     });
 
-    test('Debe fallar si título está vacío', () async {
-      // Arrange
-      const documentId = 1;
-
-      // Act
-      final result = await useCase(
-        title: '',
-        content: 'Contenido',
-        documentId: documentId,
-      );
-
-      // Assert
-      expect(result, isNull);
-      verifyNever(() => mockRepository.createNote(any(), any()));
-    });
-
     test('Debe fallar si documento no existe', () async {
       // Arrange
       const invalidDocumentId = 999;
@@ -98,7 +79,6 @@ void main() {
 
       // Act
       final result = await useCase(
-        title: testNote.title,
         content: testNote.content,
         documentId: invalidDocumentId,
       );

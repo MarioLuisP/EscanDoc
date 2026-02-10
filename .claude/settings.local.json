@@ -24,7 +24,8 @@
       "Read(**/*.py)",
       "Bash(flutter pub get:*)",
       "Bash(flutter analyze:*)",
-      "Bash(flutter test:*)"
+      "Bash(flutter test:*)",
+      "1"
     ],
     "deny": [
       "Read(.env*)",

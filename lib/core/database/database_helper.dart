@@ -39,21 +39,14 @@ class DatabaseHelper {
         -- Metadata básica
         title TEXT NOT NULL,
         file_path TEXT NOT NULL,
-        thumbnail_path TEXT,
 
-        -- OCR y clasificación
+        -- OCR
         ocr_text TEXT,
-        doc_type TEXT DEFAULT 'documento',
         extracted_date DATE,
 
         -- Timestamps
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-
-        -- Constraints (sin category, solo doc_type según ADDS.md)
-        CONSTRAINT valid_doc_type CHECK (
-          doc_type IN ('factura', 'recibo', 'contrato', 'médico', 'documento')
-        )
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     ''');
 
@@ -64,8 +57,7 @@ class DatabaseHelper {
       CREATE TABLE notes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        -- Contenido
-        title TEXT NOT NULL,
+        -- Contenido (bloc de notas, sin título)
         content TEXT,
 
         -- Timestamps
@@ -139,7 +131,6 @@ class DatabaseHelper {
     // =========================================================================
     await db.execute('''
       CREATE VIRTUAL TABLE notes_fts USING fts4(
-        title,
         content,
         content=notes
       )
@@ -176,15 +167,15 @@ class DatabaseHelper {
     // =========================================================================
     await db.execute('''
       CREATE TRIGGER notes_ai AFTER INSERT ON notes BEGIN
-        INSERT INTO notes_fts(docid, title, content)
-        VALUES (new.id, new.title, new.content);
+        INSERT INTO notes_fts(docid, content)
+        VALUES (new.id, new.content);
       END
     ''');
 
     await db.execute('''
       CREATE TRIGGER notes_au AFTER UPDATE ON notes BEGIN
         UPDATE notes_fts
-        SET title = new.title, content = new.content
+        SET content = new.content
         WHERE docid = new.id;
       END
     ''');
@@ -231,9 +222,6 @@ class DatabaseHelper {
     // =========================================================================
     // ÍNDICES: Performance
     // =========================================================================
-    // Sin índice de category (eliminado según ADDS.md)
-    await db.execute(
-        'CREATE INDEX idx_documents_doc_type ON documents(doc_type)');
     await db.execute(
         'CREATE INDEX idx_documents_created_at ON documents(created_at DESC)');
     await db.execute(

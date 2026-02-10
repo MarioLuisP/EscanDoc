@@ -29,13 +29,11 @@ void main() {
   group('UpdateNote UseCase', () {
     final existingNote = NoteModel(
       id: 1,
-      title: 'Título original',
       content: 'Contenido original',
       createdAt: DateTime(2026, 1, 24, 10, 0),
     );
 
     final updatedNote = existingNote.copyWith(
-      title: 'Título actualizado',
       content: 'Contenido actualizado',
       updatedAt: DateTime(2026, 1, 24, 11, 0),
     );
@@ -48,13 +46,11 @@ void main() {
       // Act
       final result = await useCase(
         noteId: existingNote.id!,
-        title: updatedNote.title,
         content: updatedNote.content,
       );
 
       // Assert
       expect(result, isNotNull);
-      expect(result?.title, updatedNote.title);
       expect(result?.content, updatedNote.content);
       verify(() => mockRepository.updateNote(any())).called(1);
     });
@@ -67,7 +63,6 @@ void main() {
       // Act
       final result = await useCase(
         noteId: existingNote.id!,
-        title: 'Nuevo título',
         content: 'Nuevo contenido',
       );
 
@@ -85,7 +80,6 @@ void main() {
       // Act
       final result = await useCase(
         noteId: invalidNoteId,
-        title: 'Título',
         content: 'Contenido',
       );
 

@@ -15,14 +15,12 @@ class UpdateNote {
   /// Retorna NoteModel actualizada, o null si falla
   Future<NoteModel?> call({
     required int noteId,
-    required String title,
     String? content,
   }) async {
     try {
-      // Crear nota actualizada con nuevo timestamp
+      // Crear nota actualizada con nuevo timestamp (sin título)
       final updatedNote = NoteModel(
         id: noteId,
-        title: title.trim(),
         content: content?.trim(),
         createdAt: DateTime.now(), // Se mantiene el original en BD
         updatedAt: DateTime.now(),

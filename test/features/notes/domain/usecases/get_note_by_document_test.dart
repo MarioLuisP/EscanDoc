@@ -19,7 +19,6 @@ void main() {
   group('GetNoteByDocument UseCase', () {
     final testNote = NoteModel(
       id: 1,
-      title: 'Pagar antes del 15',
       content: 'Recordar pagar antes del vencimiento',
       createdAt: DateTime(2026, 1, 24, 10, 0),
     );
@@ -37,7 +36,7 @@ void main() {
       expect(result, isNotNull);
       expect(result, isA<NoteModel>());
       expect(result?.id, testNote.id);
-      expect(result?.title, testNote.title);
+      expect(result?.content, testNote.content);
       verify(() => mockRepository.getNoteByDocument(documentId)).called(1);
     });
 

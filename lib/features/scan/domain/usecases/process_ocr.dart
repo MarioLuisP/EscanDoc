@@ -74,7 +74,6 @@ class ProcessOCR {
       // 5. Actualizar documento con texto OCR
       final updatedDocument = document.copyWith(
         ocrText: extractedText,
-        docType: detectedType,
         extractedDate: extractedDate,
       );
 

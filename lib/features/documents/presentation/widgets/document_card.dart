@@ -77,77 +77,46 @@ class DocumentCard extends StatelessWidget {
 
   /// Construye el thumbnail del documento
   Widget _buildThumbnail() {
-    // Si existe thumbnail, mostrarlo
-    if (document.thumbnailPath != null) {
-      final thumbnailFile = File(document.thumbnailPath!);
-
-      return Container(
-        width: 80,
-        height: 80,
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.file(
-            thumbnailFile,
-            width: 80,
-            height: 80,
-            cacheWidth: 200, // Decode at 200px for efficiency (80dp * 2.5x max DPI)
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              // Si falla cargar imagen, mostrar ícono
-              return _buildPlaceholderIcon();
-            },
-          ),
-        ),
-      );
-    }
-
-    // Si no hay thumbnail, mostrar ícono placeholder
-    return _buildPlaceholderIcon();
-  }
-
-  /// Ícono placeholder cuando no hay thumbnail
-  Widget _buildPlaceholderIcon() {
-    IconData icon;
-    Color color;
-
-    // Ícono según tipo de documento
-    switch (document.docType) {
-      case 'factura':
-        icon = Icons.receipt_long;
-        color = Colors.blue;
-        break;
-      case 'recibo':
-        icon = Icons.receipt;
-        color = Colors.green;
-        break;
-      case 'contrato':
-        icon = Icons.description;
-        color = Colors.orange;
-        break;
-      case 'médico':
-        icon = Icons.medical_information;
-        color = Colors.red;
-        break;
-      default:
-        icon = Icons.insert_drive_file;
-        color = Colors.grey;
-    }
+    // Mostrar imagen del documento con cacheWidth para optimizar memoria
+    final imageFile = File(document.filePath);
 
     return Container(
       width: 80,
       height: 80,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: Colors.grey[200],
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Icon(
-        icon,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.file(
+          imageFile,
+          width: 80,
+          height: 80,
+          cacheWidth: 200, // Decode at 200px for efficiency (80dp * 2.5x max DPI)
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // Si falla cargar imagen, mostrar ícono
+            return _buildPlaceholderIcon();
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Ícono placeholder cuando falla cargar imagen
+  Widget _buildPlaceholderIcon() {
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Icon(
+        Icons.insert_drive_file,
         size: 40,
-        color: color,
+        color: Colors.grey,
       ),
     );
   }

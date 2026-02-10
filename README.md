@@ -132,7 +132,9 @@ Domain → Tests → Data → UI
 **Regla de oro:** Si una persona de 85 años no puede usarlo sin ayuda, está mal diseñado.
 
 ---
-
+Usa comandos slash:                                                                                                                                                                                                                /permissions ask    # Volver a modo "preguntar"                                                                                                                                                                                
+/permissions ask    # Volver a modo "preguntar"  
+/permissions auto   # Modo automático (sí a todo)
 # Para compilar:
 flutter build apk --release --split-per-abi
 

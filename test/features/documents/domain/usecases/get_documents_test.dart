@@ -21,17 +21,13 @@ void main() {
       DocumentModel(
         id: 1,
         title: 'factura_20_Ene_2026',
-        filePath: '/storage/documents/factura_20_Ene_2026.pdf',
-        thumbnailPath: '/storage/thumbnails/factura_20_Ene_2026_thumb.jpg',
-        docType: 'factura',
+        filePath: '/storage/documents/factura_20_Ene_2026.jpg',
         createdAt: DateTime(2026, 1, 20, 10, 15),
       ),
       DocumentModel(
         id: 2,
         title: 'recibo_17_Ene_2026',
-        filePath: '/storage/documents/recibo_17_Ene_2026.pdf',
-        thumbnailPath: '/storage/thumbnails/recibo_17_Ene_2026_thumb.jpg',
-        docType: 'recibo',
+        filePath: '/storage/documents/recibo_17_Ene_2026.jpg',
         createdAt: DateTime(2026, 1, 17, 14, 30),
       ),
     ];

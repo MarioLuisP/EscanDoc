@@ -49,15 +49,13 @@ void main() {
       // Crear un documento para las pruebas
       testDocument = DocumentModel(
         title: 'documento_test',
-        filePath: '/test/documento_test.pdf',
-        docType: 'documento',
+        filePath: '/test/documento_test.jpg',
         createdAt: DateTime(2026, 1, 24, 10, 0),
       );
       documentId = await documentRepository.insertDocument(testDocument);
     });
 
     final testNote = NoteModel(
-      title: 'Pagar antes del 15',
       content: 'Recordar pagar antes del vencimiento',
       createdAt: DateTime(2026, 1, 24, 10, 0),
     );
@@ -68,13 +66,12 @@ void main() {
 
       // Assert
       expect(createdNote.id, greaterThan(0));
-      expect(createdNote.title, testNote.title);
       expect(createdNote.content, testNote.content);
 
       // Verificar que se insertó correctamente
       final retrieved = await noteRepository.getNoteById(createdNote.id!);
       expect(retrieved, isNotNull);
-      expect(retrieved!.title, testNote.title);
+      expect(retrieved!.content, testNote.content);
     });
 
     test('Debe insertar vinculación en document_notes', () async {
@@ -85,7 +82,7 @@ void main() {
       final noteByDoc = await noteRepository.getNoteByDocument(documentId);
       expect(noteByDoc, isNotNull);
       expect(noteByDoc!.id, createdNote.id);
-      expect(noteByDoc.title, testNote.title);
+      expect(noteByDoc.content, testNote.content);
     });
 
     test('Debe recuperar nota por documento_id', () async {
@@ -97,15 +94,13 @@ void main() {
 
       // Assert
       expect(result, isNotNull);
-      expect(result!.title, testNote.title);
-      expect(result.content, testNote.content);
+      expect(result!.content, testNote.content);
     });
 
     test('Debe actualizar contenido de nota', () async {
       // Arrange
       final createdNote = await noteRepository.createNote(testNote, documentId);
       final updatedNote = createdNote.copyWith(
-        title: 'Título actualizado',
         content: 'Contenido actualizado',
       );
 
@@ -114,8 +109,7 @@ void main() {
 
       // Assert
       final retrieved = await noteRepository.getNoteById(createdNote.id!);
-      expect(retrieved!.title, 'Título actualizado');
-      expect(retrieved.content, 'Contenido actualizado');
+      expect(retrieved!.content, 'Contenido actualizado');
     });
 
     test('Debe eliminar nota y vinculación (CASCADE)', () async {

@@ -11,6 +11,7 @@ import 'package:escandoc/features/documents/presentation/widgets/document_card.d
 import 'package:escandoc/features/documents/presentation/widgets/empty_state.dart';
 import 'package:escandoc/features/documents/presentation/widgets/delete_confirmation_dialog.dart';
 import 'package:escandoc/features/scan/presentation/widgets/photo_detected_dialog.dart';
+import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 
 /// Página principal que muestra la lista de documentos guardados
 /// HU-001: Ver lista de documentos guardados

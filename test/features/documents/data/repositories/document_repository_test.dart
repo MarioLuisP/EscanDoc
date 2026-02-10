@@ -36,9 +36,7 @@ void main() {
   group('DocumentRepository Integration Tests', () {
     final testDocument = DocumentModel(
       title: 'factura_20_Ene_2026',
-      filePath: '/test/documents/factura_20_Ene_2026.pdf',
-      thumbnailPath: '/test/thumbnails/factura_20_Ene_2026_thumb.jpg',
-      docType: 'factura',
+      filePath: '/test/documents/factura_20_Ene_2026.jpg',
       ocrText: 'FACTURA Total: \$1000',
       createdAt: DateTime(2026, 1, 20, 10, 15),
     );
@@ -55,7 +53,6 @@ void main() {
       expect(retrieved, isNotNull);
       expect(retrieved!.title, testDocument.title);
       expect(retrieved.filePath, testDocument.filePath);
-      expect(retrieved.docType, testDocument.docType);
     });
 
     test('Debe recuperar documento por ID', () async {
@@ -70,8 +67,6 @@ void main() {
       expect(result!.id, insertedId);
       expect(result.title, testDocument.title);
       expect(result.filePath, testDocument.filePath);
-      expect(result.thumbnailPath, testDocument.thumbnailPath);
-      expect(result.docType, testDocument.docType);
       expect(result.ocrText, testDocument.ocrText);
     });
 

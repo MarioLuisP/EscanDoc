@@ -32,9 +32,7 @@ void main() {
     await db.insert('documents', {
       'id': 1,
       'title': 'Factura Edesur Enero 2026',
-      'file_path': '/test/factura.pdf',
-      'thumbnail_path': '/test/thumb.jpg',
-      'doc_type': 'factura',
+      'file_path': '/test/factura.jpg',
       'ocr_text': 'EDESUR S.A. Factura de Energía Eléctrica. Período Enero 2026. Total: \$12,500',
       'created_at': DateTime(2026, 1, 15).toIso8601String(),
     });
@@ -42,9 +40,7 @@ void main() {
     await db.insert('documents', {
       'id': 2,
       'title': 'Recibo Médico Dr. González',
-      'file_path': '/test/recibo.pdf',
-      'thumbnail_path': '/test/thumb2.jpg',
-      'doc_type': 'médico',
+      'file_path': '/test/recibo.jpg',
       'ocr_text': 'Dr. González. Consulta médica general. Fecha: 20/01/2026. Importe: \$8,000',
       'created_at': DateTime(2026, 1, 20).toIso8601String(),
     });
@@ -52,9 +48,7 @@ void main() {
     await db.insert('documents', {
       'id': 3,
       'title': 'Contrato Alquiler',
-      'file_path': '/test/contrato.pdf',
-      'thumbnail_path': '/test/thumb3.jpg',
-      'doc_type': 'contrato',
+      'file_path': '/test/contrato.jpg',
       'ocr_text': 'Contrato de Locación de Inmueble. Entre las partes...',
       'created_at': DateTime(2026, 1, 10).toIso8601String(),
     });
@@ -62,14 +56,12 @@ void main() {
     // Insertar notas de prueba
     await db.insert('notes', {
       'id': 1,
-      'title': 'Nota pago Edesur',
       'content': 'Pagar factura Edesur usando Mercado Pago antes del vencimiento 15/02/2026',
       'created_at': DateTime(2026, 1, 16).toIso8601String(),
     });
 
     await db.insert('notes', {
       'id': 2,
-      'title': 'Recordatorio médico',
       'content': 'Próxima consulta con Dr. González el 15/02/2026. Llevar estudios previos.',
       'created_at': DateTime(2026, 1, 21).toIso8601String(),
     });
@@ -233,9 +225,7 @@ void main() {
         await db.insert('documents', {
           'id': i,
           'title': 'Documento Test $i',
-          'file_path': '/test/doc$i.pdf',
-          'thumbnail_path': '/test/thumb$i.jpg',
-          'doc_type': 'documento',
+          'file_path': '/test/doc$i.jpg',
           'ocr_text': 'Contenido de prueba para búsqueda test',
           'created_at': DateTime(2026, 1, i).toIso8601String(),
         });

@@ -13,7 +13,6 @@ class NoteEditorPage extends StatefulWidget {
 }
 
 class _NoteEditorPageState extends State<NoteEditorPage> {
-  final _titleController = TextEditingController();
   final _contentController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   late bool _isEditing;
@@ -28,11 +27,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _documentId = args?['documentId'] as int? ?? 0;
     _isEditing = args?['isEditing'] as bool? ?? false;
 
-    // Si es edición, pre-poblar los campos
+    // Si es edición, pre-poblar el contenido
     if (_isEditing) {
       final noteProvider = context.watch<NoteProvider>();
       if (noteProvider.currentNote != null) {
-        _titleController.text = noteProvider.currentNote!.title;
         _contentController.text = noteProvider.currentNote!.content ?? '';
       }
     }
@@ -40,7 +38,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   @override
   void dispose() {
-    _titleController.dispose();
     _contentController.dispose();
     super.dispose();
   }
@@ -64,60 +61,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Campo de título
-            Text(
-              'note_title_label'.tr(),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _titleController,
-              autofocus: true, // Teclado aparece automáticamente
-              style: const TextStyle(fontSize: 18),
-              decoration: InputDecoration(
-                hintText: 'note_title_hint'.tr(),
-                hintStyle: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey[400],
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(width: 2),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: Theme.of(context).primaryColor,
-                    width: 2,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.all(16),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'El título no puede estar vacío';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 24),
-
-            // Campo de contenido
-            Text(
-              'note_content_label'.tr(),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
+            // Campo de contenido (bloc de notas, sin título)
             TextFormField(
               controller: _contentController,
+              autofocus: true, // Teclado aparece automáticamente
               style: const TextStyle(fontSize: 18),
-              maxLines: 8,
+              maxLines: 15, // Más líneas para bloc de notas
+              minLines: 10,
               decoration: InputDecoration(
                 hintText: 'note_content_hint'.tr(),
                 hintStyle: TextStyle(
@@ -207,13 +157,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     if (_isEditing) {
       // Actualizar nota existente
       success = await noteProvider.updateNote(
-        title: _titleController.text,
         content: _contentController.text,
       );
     } else {
       // Crear nueva nota
       success = await noteProvider.createNote(
-        title: _titleController.text,
         content: _contentController.text,
         documentId: _documentId,
       );

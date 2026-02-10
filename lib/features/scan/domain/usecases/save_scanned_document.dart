@@ -65,12 +65,9 @@ class SaveScannedDocument {
     debugPrint('[SaveScannedDocument] Nombre generado: $documentName');
 
     // 3. Crear modelo de documento
-    // filePath y thumbnailPath apuntan al MISMO JPG
     final document = DocumentModel(
       title: documentName,
-      filePath: scannedFile.path, // JPG permanente (no se eliminará)
-      thumbnailPath: scannedFile.path, // Mismo JPG (UI usará cacheWidth)
-      docType: detectedType,
+      filePath: scannedFile.path, // JPG ~850KB (UI usará cacheWidth para thumbnails)
       ocrText: null, // Se llenará después con ProcessOCR
       extractedDate: null,
       createdAt: date,

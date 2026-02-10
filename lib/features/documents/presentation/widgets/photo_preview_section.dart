@@ -5,12 +5,12 @@ import 'package:easy_localization/easy_localization.dart';
 /// Sección de preview de foto/PDF (50% altura)
 /// Tap → abre fullscreen con PDF completo
 class PhotoPreviewSection extends StatelessWidget {
-  final String? thumbnailPath;
+  final String? imagePath;
   final VoidCallback onTap;
 
   const PhotoPreviewSection({
     super.key,
-    required this.thumbnailPath,
+    required this.imagePath,
     required this.onTap,
   });
 
@@ -73,7 +73,7 @@ class PhotoPreviewSection extends StatelessWidget {
 
   Widget _buildPreview() {
     // Si no hay thumbnail, mostrar icono placeholder
-    if (thumbnailPath == null || thumbnailPath!.isEmpty) {
+    if (imagePath == null || imagePath!.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -97,7 +97,7 @@ class PhotoPreviewSection extends StatelessWidget {
     }
 
     // Mostrar thumbnail
-    final file = File(thumbnailPath!);
+    final file = File(imagePath!);
 
     return Image.file(
       file,

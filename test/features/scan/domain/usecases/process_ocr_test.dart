@@ -61,8 +61,6 @@ void main() {
         id: 1,
         title: 'documento_25_Ene_2026',
         filePath: testJpgFile.path,
-        thumbnailPath: testJpgFile.path,
-        docType: 'documento',
         createdAt: DateTime(2026, 1, 25),
         updatedAt: DateTime(2026, 1, 25),
       );
@@ -131,7 +129,7 @@ void main() {
       verify(() => mockClassifier.detectType(extractedText)).called(1);
     });
 
-    test('debe actualizar tipo de documento detectado', () async {
+    test('debe procesar OCR y actualizar documento', () async {
       // Arrange
       const extractedText = 'RECIBO de pago mensual';
       final testDoc = createTestDocument();
@@ -150,7 +148,7 @@ void main() {
       // Assert
       final captured = verify(() => mockRepository.updateDocument(captureAny()))
           .captured.single as DocumentModel;
-      expect(captured.docType, 'recibo');
+      expect(captured.ocrText, extractedText);
     });
 
     test('debe extraer fecha de vencimiento si existe', () async {
@@ -232,7 +230,6 @@ void main() {
       // Assert
       expect(result, isA<DocumentModel>());
       expect(result.ocrText, extractedText);
-      expect(result.docType, 'contrato');
     });
 
     test('debe lanzar excepción si documento no existe', () async {

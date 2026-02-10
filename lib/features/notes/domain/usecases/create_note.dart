@@ -4,7 +4,7 @@ import 'package:escandoc/features/notes/data/repositories/note_repository.dart';
 /// UseCase: Crea una nota y la vincula a un documento
 ///
 /// Reglas de negocio:
-/// - El título no puede estar vacío
+/// - Las notas ya NO tienen título (solo content, como bloc de notas)
 /// - Crea nota y vincula en transacción atómica
 /// - Si el documento no existe, falla gracefully
 /// - Retorna null en caso de error
@@ -16,19 +16,12 @@ class CreateNote {
   /// Ejecuta el caso de uso
   /// Retorna NoteModel creada con ID, o null si falla
   Future<NoteModel?> call({
-    required String title,
     String? content,
     required int documentId,
   }) async {
     try {
-      // Validar que el título no esté vacío
-      if (title.trim().isEmpty) {
-        return null;
-      }
-
-      // Crear nota con timestamp actual
+      // Crear nota con timestamp actual (sin título)
       final note = NoteModel(
-        title: title.trim(),
         content: content?.trim(),
         createdAt: DateTime.now(),
       );

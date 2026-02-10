@@ -4,9 +4,7 @@ class DocumentModel {
   final int? id;
   final String title;
   final String filePath;
-  final String? thumbnailPath;
   final String? ocrText;
-  final String docType;
   final DateTime? extractedDate;
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -15,9 +13,7 @@ class DocumentModel {
     this.id,
     required this.title,
     required this.filePath,
-    this.thumbnailPath,
     this.ocrText,
-    this.docType = 'documento',
     this.extractedDate,
     required this.createdAt,
     this.updatedAt,
@@ -29,9 +25,7 @@ class DocumentModel {
       id: map['id'] as int?,
       title: map['title'] as String,
       filePath: map['file_path'] as String,
-      thumbnailPath: map['thumbnail_path'] as String?,
       ocrText: map['ocr_text'] as String?,
-      docType: map['doc_type'] as String? ?? 'documento',
       extractedDate: map['extracted_date'] != null
           ? DateTime.parse(map['extracted_date'] as String)
           : null,
@@ -48,9 +42,7 @@ class DocumentModel {
       if (id != null) 'id': id,
       'title': title,
       'file_path': filePath,
-      'thumbnail_path': thumbnailPath,
       'ocr_text': ocrText,
-      'doc_type': docType,
       'extracted_date': extractedDate?.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
@@ -62,9 +54,7 @@ class DocumentModel {
     int? id,
     String? title,
     String? filePath,
-    String? thumbnailPath,
     String? ocrText,
-    String? docType,
     DateTime? extractedDate,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -73,9 +63,7 @@ class DocumentModel {
       id: id ?? this.id,
       title: title ?? this.title,
       filePath: filePath ?? this.filePath,
-      thumbnailPath: thumbnailPath ?? this.thumbnailPath,
       ocrText: ocrText ?? this.ocrText,
-      docType: docType ?? this.docType,
       extractedDate: extractedDate ?? this.extractedDate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -90,9 +78,7 @@ class DocumentModel {
         other.id == id &&
         other.title == title &&
         other.filePath == filePath &&
-        other.thumbnailPath == thumbnailPath &&
         other.ocrText == ocrText &&
-        other.docType == docType &&
         other.extractedDate == extractedDate &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
@@ -104,9 +90,7 @@ class DocumentModel {
       id,
       title,
       filePath,
-      thumbnailPath,
       ocrText,
-      docType,
       extractedDate,
       createdAt,
       updatedAt,
@@ -115,6 +99,6 @@ class DocumentModel {
 
   @override
   String toString() {
-    return 'DocumentModel(id: $id, title: $title, docType: $docType, createdAt: $createdAt)';
+    return 'DocumentModel(id: $id, title: $title, createdAt: $createdAt)';
   }
 }

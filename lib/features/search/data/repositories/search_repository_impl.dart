@@ -39,9 +39,9 @@ class SearchRepositoryImpl implements SearchRepository {
     final noteResults = await db.rawQuery('''
       SELECT
         n.id,
-        n.title,
+        SUBSTR(n.content, 1, 50) as title,
         'note' as type,
-        snippet(notes_fts, 1, '<b>', '</b>', '...', 32) AS snippet,
+        snippet(notes_fts, 0, '<b>', '</b>', '...', 32) AS snippet,
         n.created_at
       FROM notes n
       JOIN notes_fts ON notes_fts.docid = n.id

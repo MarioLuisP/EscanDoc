@@ -54,7 +54,6 @@ class NoteProvider extends ChangeNotifier {
 
   /// Crea una nueva nota y la vincula al documento
   Future<bool> createNote({
-    required String title,
     String? content,
     required int documentId,
   }) async {
@@ -64,7 +63,6 @@ class NoteProvider extends ChangeNotifier {
 
     try {
       final note = await _createNote(
-        title: title,
         content: content,
         documentId: documentId,
       );
@@ -88,7 +86,6 @@ class NoteProvider extends ChangeNotifier {
 
   /// Actualiza la nota actual
   Future<bool> updateNote({
-    required String title,
     String? content,
   }) async {
     if (_currentNote == null) return false;
@@ -100,7 +97,6 @@ class NoteProvider extends ChangeNotifier {
     try {
       final updatedNote = await _updateNote(
         noteId: _currentNote!.id!,
-        title: title,
         content: content,
       );
 

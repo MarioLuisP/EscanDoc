@@ -88,7 +88,7 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                   Expanded(
                     flex: 50,
                     child: PhotoPreviewSection(
-                      thumbnailPath: document.thumbnailPath,
+                      imagePath: document.filePath,
                       onTap: () => _openPhotoFullscreen(document.filePath),
                     ),
                   ),

@@ -5,11 +5,11 @@ import 'package:escandoc/features/documents/presentation/widgets/photo_preview_s
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  Widget buildWidget({String? thumbnailPath, required VoidCallback onTap}) {
+  Widget buildWidget({String? imagePath, required VoidCallback onTap}) {
     return MaterialApp(
       home: Scaffold(
         body: PhotoPreviewSection(
-          thumbnailPath: thumbnailPath,
+          imagePath: imagePath,
           onTap: onTap,
         ),
       ),
@@ -17,10 +17,10 @@ void main() {
   }
 
   group('PhotoPreviewSection', () {
-    testWidgets('debe mostrar placeholder cuando thumbnailPath es null', (tester) async {
+    testWidgets('debe mostrar placeholder cuando imagePath es null', (tester) async {
       await tester.pumpWidget(
         buildWidget(
-          thumbnailPath: null,
+          imagePath: null,
           onTap: () {},
         ),
       );
@@ -34,7 +34,7 @@ void main() {
 
       await tester.pumpWidget(
         buildWidget(
-          thumbnailPath: 'test.jpg',
+          imagePath: 'test.jpg',
           onTap: () => tapped = true,
         ),
       );
@@ -49,7 +49,7 @@ void main() {
     testWidgets('debe mostrar overlay con hint de zoom', (tester) async {
       await tester.pumpWidget(
         buildWidget(
-          thumbnailPath: 'test.jpg',
+          imagePath: 'test.jpg',
           onTap: () {},
         ),
       );

@@ -74,16 +74,11 @@ class DocumentRepository {
       final document = await getDocumentById(id);
       if (document == null) return false;
 
-      // 2. Eliminar archivos del filesystem
+      // 2. Eliminar archivo del filesystem
       final fileDeleted = await _deleteFile(document.filePath);
       if (!fileDeleted) return false;
 
-      // 3. Eliminar thumbnail si existe
-      if (document.thumbnailPath != null) {
-        await _deleteFile(document.thumbnailPath!);
-      }
-
-      // 4. Eliminar registro de BD (triggers eliminan automáticamente de FTS4)
+      // 3. Eliminar registro de BD (triggers eliminan automáticamente de FTS4)
       final db = await _dbHelper.database;
       final rowsDeleted = await db.delete(
         'documents',
