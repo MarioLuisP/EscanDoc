@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:escandoc/features/search/data/models/search_result.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart' as easy;
 
 /// Tarjeta de resultado de búsqueda
 class SearchResultCard extends StatelessWidget {
@@ -45,7 +46,7 @@ class SearchResultCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   // Tipo
                   Text(
-                    result.type == 'document' ? 'Documento' : 'Nota',
+                    result.type == 'document' ? 'result_type_document'.tr() : 'result_type_note'.tr(),
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[600],

@@ -88,5 +88,24 @@
   "ocr_section_title": "Texto extraído",
   "ocr_empty_hint": "No se pudo extraer texto",
   "ocr_copy_button": "COPIAR TEXTO",
-  "ocr_copied": "✓ Texto copiado"
+  "ocr_copied": "✓ Texto copiado",
+
+  "photo_detected_title": "Creemos que escaneaste una foto.",
+  "photo_detected_subtitle": "¿Quieres guardarla en tu galería?",
+  "photo_save_to_gallery": "Guardar en Galería",
+  "photo_save_to_app": "Guardar en App",
+  "photo_cancel": "Cancelar",
+
+  "scan_document_title": "Escanear Documento",
+  "adjust_document_title": "Ajustar Documento",
+  "clear_search_tooltip": "Limpiar búsqueda",
+  "search_empty_title": "Busca documentos y notas",
+  "search_empty_subtitle": "Escribe en la barra o usa el botón de voz",
+  "import_document_tooltip": "Importar documento",
+  "scan_cancelled": "Escaneo cancelado",
+  "import_cancelled": "Importación cancelada",
+  "document_imported": "Documento importado exitosamente",
+  "print_tooltip": "Imprimir",
+  "result_type_document": "Documento",
+  "result_type_note": "Nota"
 }

@@ -43,7 +43,7 @@ class PhotoFullscreenPage extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.print, size: 24),
               onPressed: () => _printDocument(context),
-              tooltip: 'Imprimir',
+              tooltip: 'print_tooltip'.tr(),
             ),
         ],
       ),

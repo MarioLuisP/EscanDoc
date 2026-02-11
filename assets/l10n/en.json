@@ -88,5 +88,24 @@
   "ocr_section_title": "Extracted text",
   "ocr_empty_hint": "Could not extract text",
   "ocr_copy_button": "COPY TEXT",
-  "ocr_copied": "✓ Text copied"
+  "ocr_copied": "✓ Text copied",
+
+  "photo_detected_title": "We think you scanned a photo.",
+  "photo_detected_subtitle": "Do you want to save it to your gallery?",
+  "photo_save_to_gallery": "Save to Gallery",
+  "photo_save_to_app": "Save to App",
+  "photo_cancel": "Cancel",
+
+  "scan_document_title": "Scan Document",
+  "adjust_document_title": "Adjust Document",
+  "clear_search_tooltip": "Clear search",
+  "search_empty_title": "Search documents and notes",
+  "search_empty_subtitle": "Type in the bar or use the voice button",
+  "import_document_tooltip": "Import document",
+  "scan_cancelled": "Scan cancelled",
+  "import_cancelled": "Import cancelled",
+  "document_imported": "Document imported successfully",
+  "print_tooltip": "Print",
+  "result_type_document": "Document",
+  "result_type_note": "Note"
 }

@@ -36,7 +36,7 @@ void main() {
         expect(result.metadata['variance'], 750.0);
         expect(result.metadata['hasText'], true);
         expect(result.metadata['threshold'], 600.0);
-        expect(result.metadata['method'], 'opencv_laplacian');
+        expect(result.metadata['method'], 'opencv_multicondition_v2');
         expect(result.confidence, greaterThan(0.5));
         verify(() => mockTextDetector.detect(testImagePath, threshold: 600.0))
             .called(1);
@@ -209,7 +209,7 @@ void main() {
 
         final result = await classifier.classify('/path/to/image.jpg');
 
-        expect(result.metadata['method'], 'opencv_laplacian');
+        expect(result.metadata['method'], 'opencv_multicondition_v2');
         expect(result.metadata['variance'], 850.0);
         expect(result.metadata['threshold'], 600.0);
         expect(result.metadata['hasText'], true);

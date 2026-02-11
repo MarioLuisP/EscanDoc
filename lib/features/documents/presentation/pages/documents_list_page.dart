@@ -48,7 +48,7 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
           IconButton(
             icon: const Icon(Icons.upload_file, size: 28),
             onPressed: () => _handleImport(context),
-            tooltip: 'Importar documento',
+            tooltip: 'import_document_tooltip'.tr(),
           ),
           // Botón de búsqueda
           IconButton(
@@ -170,12 +170,12 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
         // Usuario canceló
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(
-                'Escaneo cancelado',
-                style: TextStyle(fontSize: 16),
+                'scan_cancelled'.tr(),
+                style: const TextStyle(fontSize: 16),
               ),
-              duration: Duration(seconds: 2),
+              duration: const Duration(seconds: 2),
             ),
           );
         }
@@ -378,12 +378,12 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
           // Usuario canceló
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
+              SnackBar(
                 content: Text(
-                  'Importación cancelada',
-                  style: TextStyle(fontSize: 16),
+                  'import_cancelled'.tr(),
+                  style: const TextStyle(fontSize: 16),
                 ),
-                duration: Duration(seconds: 2),
+                duration: const Duration(seconds: 2),
               ),
             );
           }
@@ -424,9 +424,9 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
         documentsProvider.loadDocuments();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text(
-              'Documento importado exitosamente',
-              style: TextStyle(fontSize: 16),
+            content: Text(
+              'document_imported'.tr(),
+              style: const TextStyle(fontSize: 16),
             ),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 3),

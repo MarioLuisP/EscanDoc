@@ -127,7 +127,7 @@ class _SearchPageState extends State<SearchPage> {
               ),
               const SizedBox(height: 24),
               Text(
-                'Busca documentos y notas',
+                'search_empty_title'.tr(),
                 style: TextStyle(
                   fontSize: 18,
                   color: Colors.grey[600],
@@ -136,7 +136,7 @@ class _SearchPageState extends State<SearchPage> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Escribe en la barra o usa el botón de voz',
+                'search_empty_subtitle'.tr(),
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey[500],

@@ -35,7 +35,7 @@ class SearchBarWidget extends StatelessWidget {
               ? IconButton(
                   icon: const Icon(Icons.clear, size: 28),
                   onPressed: onClear,
-                  tooltip: 'Limpiar búsqueda',
+                  tooltip: 'clear_search_tooltip'.tr(),
                 )
               : null,
           filled: true,
