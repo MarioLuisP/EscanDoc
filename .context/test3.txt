@@ -1,149 +1,69 @@
-
-[SaveScannedDocument] 🟢 START: Insertar en BD - 1770691741336
-[SaveScannedDocument] 🔴 END: Insertar en BD - Duración: 0ms - ID: 1
-[SaveScannedDocument] 🔴 END: Guardado (JPG only) - Duración TOTAL: 1ms
-00:29 +163 -1: C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart: SearchRepository - FTS4 Integration Tests Debe ejecutar query FTS4 correctamente [E]
-  SqfliteFfiException(sqlite_error: 1, , SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)}) DatabaseException(SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)) sql 'INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_t
-ext, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)' args [1, Factura Edesur Enero 2026, /test/factura.pdf, /test/thumb.jpg, factura, EDESUR S.A. Factura de Energía Eléctrica. Período ..., 2026-01-15T00:00:00.000] {details: {database: {path: C:\Users\Mario\Documents\escandoc\.dart_tool\sqflite_common_ffi\databases\escandoc.db, id: 1, readOnly: false, singleInstance: true}}}
-  package:sqflite_common_ffi/src/method_call.dart 125:9  responseToResultOrThrow
-  package:sqflite_common_ffi/src/isolate.dart 35:12      SqfliteIsolate.handle
-
-
-To run this test again: C:\Users\Mario\fvm\versions\3.38.8\bin\cache\dart-sdk\bin\dart.exe test C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart -p vm --plain-name "SearchRepository - FTS4 Integration Tests Debe ejecutar query FTS4 correctamente"
-00:29 +163 -2: C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart: SearchRepository - FTS4 Integration Tests Debe buscar en documents_fts [E]
-  SqfliteFfiException(sqlite_error: 1, , SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)}) DatabaseException(SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)) sql 'INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_t
-ext, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)' args [1, Factura Edesur Enero 2026, /test/factura.pdf, /test/thumb.jpg, factura, EDESUR S.A. Factura de Energía Eléctrica. Período ..., 2026-01-15T00:00:00.000] {details: {database: {path: C:\Users\Mario\Documents\escandoc\.dart_tool\sqflite_common_ffi\databases\escandoc.db, id: 1, readOnly: false, singleInstance: true}}}
-  package:sqflite_common_ffi/src/method_call.dart 125:9  responseToResultOrThrow
-  package:sqflite_common_ffi/src/isolate.dart 35:12      SqfliteIsolate.handle
-
-
-To run this test again: C:\Users\Mario\fvm\versions\3.38.8\bin\cache\dart-sdk\bin\dart.exe test C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart -p vm --plain-name "SearchRepository - FTS4 Integration Tests Debe buscar en documents_fts"
-00:29 +163 -3: C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart: SearchRepository - FTS4 Integration Tests Debe buscar en notes_fts [E]
-  SqfliteFfiException(sqlite_error: 1, , SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)}) DatabaseException(SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)) sql 'INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_t
-ext, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)' args [1, Factura Edesur Enero 2026, /test/factura.pdf, /test/thumb.jpg, factura, EDESUR S.A. Factura de Energía Eléctrica. Período ..., 2026-01-15T00:00:00.000] {details: {database: {path: C:\Users\Mario\Documents\escandoc\.dart_tool\sqflite_common_ffi\databases\escandoc.db, id: 1, readOnly: false, singleInstance: true}}}
-  package:sqflite_common_ffi/src/method_call.dart 125:9  responseToResultOrThrow
-  package:sqflite_common_ffi/src/isolate.dart 35:12      SqfliteIsolate.handle
+grupo,descripcion,variance,white_ratio,contours,has_text,clasificado,esperado,correcto
+A,documento_a4_apaisado,4806.58,0.8442,0,true,DOCUMENT,DOCUMENT,SI
+A,factura_epec_completa,2077.66,0.7348,20,false,PHOTO,DOCUMENT,NO
+A,foto_texto_pantalla_compu,665.52,0.7032,3,false,PHOTO,DOCUMENT,NO
+A,instructivo_producto_bolsa,694.61,0.8116,26,true,DOCUMENT,DOCUMENT,SI
+A,foto_etiqueta_botella,1208.57,0.6782,37,false,PHOTO,DOCUMENT,NO
+A,receta_medica_manuscrita,,,,,PHOTO,DOCUMENT,NO
+A,codigo_pantalla_negro,1097.65,0.7070,270,false,PHOTO,DOCUMENT,NO
+A,precio_producto_pantalla_pc,,,,,PHOTO,DOCUMENT,NO
+A,texto_blanco_negro_pc,1464.71,0.8263,2,true,DOCUMENT,DOCUMENT,SI
+B,mortero_en_balanza,763.84,0.6596,27,false,PHOTO,PHOTO,SI
+B,bizcochos_con_moho,355.05,0.0000,0,false,PHOTO,PHOTO,SI
+B,cicatriz_cardio_piel,403.01,0.0000,0,false,PHOTO,PHOTO,SI
+B,rostros,,,,,PHOTO,PHOTO,SI
+B,pasto_pata_silla,1445.54,0.5540,55,false,PHOTO,PHOTO,SI
+B,frente_casa_gazebo,1895.68,0.6403,93,false,PHOTO,PHOTO,SI
+B,mosaicos_paisaje,2699.23,0.5977,114,false,PHOTO,PHOTO,SI
+B,macetas_flores,1984.16,0.6057,42,false,PHOTO,PHOTO,SI
+B,frente_casa_cielo,2314.00,0.7377,36,false,PHOTO,PHOTO,SI
+B,maceta_con_ia,,,,,PHOTO,PHOTO,SI
+B,captura_instagram_rostro,2604.47,0.7560,64,true,DOCUMENT,PHOTO,NO
 
 
-To run this test again: C:\Users\Mario\fvm\versions\3.38.8\bin\cache\dart-sdk\bin\dart.exe test C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart -p vm --plain-name "SearchRepository - FTS4 Integration Tests Debe buscar en notes_fts"
-00:29 +163 -4: C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart: SearchRepository - FTS4 Integration Tests Debe combinar resultados (docs + notas) [E]
-  SqfliteFfiException(sqlite_error: 1, , SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)}) DatabaseException(SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)) sql 'INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_t
-ext, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)' args [1, Factura Edesur Enero 2026, /test/factura.pdf, /test/thumb.jpg, factura, EDESUR S.A. Factura de Energía Eléctrica. Período ..., 2026-01-15T00:00:00.000] {details: {database: {path: C:\Users\Mario\Documents\escandoc\.dart_tool\sqflite_common_ffi\databases\escandoc.db, id: 1, readOnly: false, singleInstance: true}}}
-  package:sqflite_common_ffi/src/method_call.dart 125:9  responseToResultOrThrow
-  package:sqflite_common_ffi/src/isolate.dart 35:12      SqfliteIsolate.handle
 
+RESUMEN CLASIFICADOR - PRUEBAS DE CAMPO
 
-To run this test again: C:\Users\Mario\fvm\versions\3.38.8\bin\cache\dart-sdk\bin\dart.exe test C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart -p vm --plain-name "SearchRepository - FTS4 Integration Tests Debe combinar resultados (docs + notas)"
-00:29 +163 -5: C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart: SearchRepository - FTS4 Integration Tests Debe generar snippet con highlight [E]
-  SqfliteFfiException(sqlite_error: 1, , SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)}) DatabaseException(SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)) sql 'INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_t
-ext, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)' args [1, Factura Edesur Enero 2026, /test/factura.pdf, /test/thumb.jpg, factura, EDESUR S.A. Factura de Energía Eléctrica. Período ..., 2026-01-15T00:00:00.000] {details: {database: {path: C:\Users\Mario\Documents\escandoc\.dart_tool\sqflite_common_ffi\databases\escandoc.db, id: 1, readOnly: false, singleInstance: true}}}
-  package:sqflite_common_ffi/src/method_call.dart 125:9  responseToResultOrThrow
-  package:sqflite_common_ffi/src/isolate.dart 35:12      SqfliteIsolate.handle
+MÉTRICAS GLOBALES:
+- Total casos: 20
+- Grupo A (esperado DOCUMENT): 9 casos
+- Grupo B (esperado PHOTO): 11 casos
 
+ACCURACY:
+- Correctos: 14/20 (70%)
+- Errores: 6/20 (30%)
 
-To run this test again: C:\Users\Mario\fvm\versions\3.38.8\bin\cache\dart-sdk\bin\dart.exe test C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart -p vm --plain-name "SearchRepository - FTS4 Integration Tests Debe generar snippet con highlight"
-00:29 +165 -6: C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart: SearchRepository - FTS4 Integration Tests Debe manejar caracteres especiales en query [E]
-  SqfliteFfiException(sqlite_error: 1, , SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)}) DatabaseException(SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)) sql 'INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_t
-ext, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)' args [1, Factura Edesur Enero 2026, /test/factura.pdf, /test/thumb.jpg, factura, EDESUR S.A. Factura de Energía Eléctrica. Período ..., 2026-01-15T00:00:00.000] {details: {database: {path: C:\Users\Mario\Documents\escandoc\.dart_tool\sqflite_common_ffi\databases\escandoc.db, id: 1, readOnly: false, singleInstance: true}}}
-  package:sqflite_common_ffi/src/method_call.dart 125:9  responseToResultOrThrow
-  package:sqflite_common_ffi/src/isolate.dart 35:12      SqfliteIsolate.handle
+ERRORES POR GRUPO:
+Grupo A (DOCUMENT esperado):
+- Correctos: 4/9 (44.4%)
+- Falsos PHOTO: 5/9 (55.6%)
 
+Grupo B (PHOTO esperado):
+- Correctos: 10/11 (90.9%)
+- Falsos DOCUMENT: 1/11 (9.1%)
 
-To run this test again: C:\Users\Mario\fvm\versions\3.38.8\bin\cache\dart-sdk\bin\dart.exe test C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart -p vm --plain-name "SearchRepository - FTS4 Integration Tests Debe manejar caracteres especiales en query"
-00:29 +169 -7: C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart: SearchRepository - FTS4 Integration Tests Debe retornar lista vacía si no encuentra nada [E]
-  SqfliteFfiException(sqlite_error: 1, , SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)}) DatabaseException(SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)) sql 'INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_t
-ext, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)' args [1, Factura Edesur Enero 2026, /test/factura.pdf, /test/thumb.jpg, factura, EDESUR S.A. Factura de Energía Eléctrica. Período ..., 2026-01-15T00:00:00.000] {details: {database: {path: C:\Users\Mario\Documents\escandoc\.dart_tool\sqflite_common_ffi\databases\escandoc.db, id: 1, readOnly: false, singleInstance: true}}}
-  package:sqflite_common_ffi/src/method_call.dart 125:9  responseToResultOrThrow
-  package:sqflite_common_ffi/src/isolate.dart 35:12      SqfliteIsolate.handle
+PATRONES DE ERROR:
+1. Fotos de pantallas con texto → clasificadas como PHOTO (5 casos)
+   - variance: 665-2077
+   - whiteRatio: 0.67-0.73
+   - Problema: varianza < threshold por luz de pantalla
 
+2. Screenshot Instagram → clasificado DOCUMENT (1 caso)
+   - variance: 2604
+   - whiteRatio: 0.76
+   - contours: 64
+   - hasText: true
+   - Problema: fondo blanco + texto = documento
 
-To run this test again: C:\Users\Mario\fvm\versions\3.38.8\bin\cache\dart-sdk\bin\dart.exe test C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart -p vm --plain-name "SearchRepository - FTS4 Integration Tests Debe retornar lista vacía si no encuentra nada"
-00:29 +171 -8: C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart: SearchRepository - FTS4 Integration Tests Debe buscar en OCR text de documentos [E]
-  SqfliteFfiException(sqlite_error: 1, , SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)}) DatabaseException(SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)) sql 'INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_t
-ext, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)' args [1, Factura Edesur Enero 2026, /test/factura.pdf, /test/thumb.jpg, factura, EDESUR S.A. Factura de Energía Eléctrica. Período ..., 2026-01-15T00:00:00.000] {details: {database: {path: C:\Users\Mario\Documents\escandoc\.dart_tool\sqflite_common_ffi\databases\escandoc.db, id: 1, readOnly: false, singleInstance: true}}}
-  package:sqflite_common_ffi/src/method_call.dart 125:9  responseToResultOrThrow
-  package:sqflite_common_ffi/src/isolate.dart 35:12      SqfliteIsolate.handle
+THRESHOLD 600:
+- variance < 600 → PHOTO
+- variance > 600 → DOCUMENT (si hasText=true Y whiteRatio>0.7)
 
+CASOS CERCA DEL THRESHOLD:
+- variance=665 → PHOTO (correcto, foto de pantalla)
+- variance=694 → DOCUMENT (correcto, instructivo papel)
+- variance=763 → PHOTO (correcto, mortero)
 
-To run this test again: C:\Users\Mario\fvm\versions\3.38.8\bin\cache\dart-sdk\bin\dart.exe test C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart -p vm --plain-name "SearchRepository - FTS4 Integration Tests Debe buscar en OCR text de documentos"
-00:29 +171 -9: C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart: SearchRepository - FTS4 Integration Tests Debe buscar en content de notas [E]
-  SqfliteFfiException(sqlite_error: 1, , SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)}) DatabaseException(SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)) sql 'INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_t
-ext, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)' args [1, Factura Edesur Enero 2026, /test/factura.pdf, /test/thumb.jpg, factura, EDESUR S.A. Factura de Energía Eléctrica. Período ..., 2026-01-15T00:00:00.000] {details: {database: {path: C:\Users\Mario\Documents\escandoc\.dart_tool\sqflite_common_ffi\databases\escandoc.db, id: 1, readOnly: false, singleInstance: true}}}
-  package:sqflite_common_ffi/src/method_call.dart 125:9  responseToResultOrThrow
-  package:sqflite_common_ffi/src/isolate.dart 35:12      SqfliteIsolate.handle
-
-
-To run this test again: C:\Users\Mario\fvm\versions\3.38.8\bin\cache\dart-sdk\bin\dart.exe test C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart -p vm --plain-name "SearchRepository - FTS4 Integration Tests Debe buscar en content de notas"
-00:29 +171 -10: C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart: SearchRepository - FTS4 Integration Tests Debe retornar resultados ordenados [E]
-  SqfliteFfiException(sqlite_error: 1, , SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)}) DatabaseException(SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)) sql 'INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_t
-ext, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)' args [1, Factura Edesur Enero 2026, /test/factura.pdf, /test/thumb.jpg, factura, EDESUR S.A. Factura de Energía Eléctrica. Período ..., 2026-01-15T00:00:00.000] {details: {database: {path: C:\Users\Mario\Documents\escandoc\.dart_tool\sqflite_common_ffi\databases\escandoc.db, id: 1, readOnly: false, singleInstance: true}}}
-  package:sqflite_common_ffi/src/method_call.dart 125:9  responseToResultOrThrow
-  package:sqflite_common_ffi/src/isolate.dart 35:12      SqfliteIsolate.handle
-
-
-To run this test again: C:\Users\Mario\fvm\versions\3.38.8\bin\cache\dart-sdk\bin\dart.exe test C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart -p vm --plain-name "SearchRepository - FTS4 Integration Tests Debe retornar resultados ordenados"
-00:30 +171 -11: C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart: SearchRepository - FTS4 Integration Tests Debe limitar resultados si hay muchos [E]
-  SqfliteFfiException(sqlite_error: 1, , SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)}) DatabaseException(SqliteException(1): while preparing statement, table documents has no column named thumbnail_path, SQL logic error (code 1)
-    Causing statement: INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)) sql 'INSERT INTO documents (id, title, file_path, thumbnail_path, doc_type, ocr_t
-ext, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)' args [1, Factura Edesur Enero 2026, /test/factura.pdf, /test/thumb.jpg, factura, EDESUR S.A. Factura de Energía Eléctrica. Período ..., 2026-01-15T00:00:00.000] {details: {database: {path: C:\Users\Mario\Documents\escandoc\.dart_tool\sqflite_common_ffi\databases\escandoc.db, id: 1, readOnly: false, singleInstance: true}}}
-  package:sqflite_common_ffi/src/method_call.dart 125:9  responseToResultOrThrow
-  package:sqflite_common_ffi/src/isolate.dart 35:12      SqfliteIsolate.handle
-
-
-To run this test again: C:\Users\Mario\fvm\versions\3.38.8\bin\cache\dart-sdk\bin\dart.exe test C:/Users/Mario/Documents/escandoc/test/features/search/data/repositories/search_repository_test.dart -p vm --plain-name "SearchRepository - FTS4 Integration Tests Debe limitar resultados si hay muchos"
-00:30 +171 -11: C:/Users/Mario/Documents/escandoc/test/features/search/domain/usecases/voice_search_test.dart: VoiceSearch UseCase Debe transcribir voz correctamente
-[VoiceSearch] Inicializando servicio de voz...
-[VoiceSearch] Servicio de voz inicializado exitosamente
-[VoiceSearch] Iniciando escucha...
-[VoiceSearch] Texto reconocido: "factura edesur"
-00:30 +172 -11: C:/Users/Mario/Documents/escandoc/test/features/search/domain/usecases/voice_search_test.dart: VoiceSearch UseCase Debe retornar null si no entiende
-[VoiceSearch] Inicializando servicio de voz...
-[VoiceSearch] Servicio de voz inicializado exitosamente
-[VoiceSearch] Iniciando escucha...
-[VoiceSearch] Texto reconocido: "null"
-00:30 +173 -11: C:/Users/Mario/Documents/escandoc/test/features/search/domain/usecases/voice_search_test.dart: VoiceSearch UseCase Debe retornar null si timeout (5 seg)
-[VoiceSearch] Inicializando servicio de voz...
-[VoiceSearch] Servicio de voz inicializado exitosamente
-[VoiceSearch] Iniciando escucha...
-[VoiceSearch] Texto reconocido: "null"
-00:30 +174 -11: C:/Users/Mario/Documents/escandoc/test/features/search/domain/usecases/voice_search_test.dart: VoiceSearch UseCase Debe retornar null si inicialización falla
-[VoiceSearch] Inicializando servicio de voz...
-[VoiceSearch] ERROR: No se pudo inicializar el servicio de voz
-00:30 +175 -11: C:/Users/Mario/Documents/escandoc/test/features/search/domain/usecases/voice_search_test.dart: VoiceSearch UseCase Debe usar timeout de 5 segundos por defecto
-[VoiceSearch] Inicializando servicio de voz...
-[VoiceSearch] Servicio de voz inicializado exitosamente
-[VoiceSearch] Iniciando escucha...
-[VoiceSearch] Texto reconocido: "test"
-00:30 +176 -11: C:/Users/Mario/Documents/escandoc/test/features/search/domain/usecases/voice_search_test.dart: VoiceSearch UseCase Debe retornar texto vacío como válido
-[VoiceSearch] Inicializando servicio de voz...
-[VoiceSearch] Servicio de voz inicializado exitosamente
-[VoiceSearch] Iniciando escucha...
-[VoiceSearch] Texto reconocido: ""
-00:30 +177 -11: C:/Users/Mario/Documents/escandoc/test/features/search/domain/usecases/voice_search_test.dart: VoiceSearch UseCase Debe trimear espacios del texto reconocido
-[VoiceSearch] Inicializando servicio de voz...
-[VoiceSearch] Servicio de voz inicializado exitosamente
-[VoiceSearch] Iniciando escucha...
-[VoiceSearch] Texto reconocido: "  factura edesur  "
-00:30 +178 -11: Some tests failed.
-C:\Users\Mario\Documents\escandoc [main ≡ +2 ~0 -0 | +3 ~28 -0 !]>
+RECOMENDACIÓN:
+El clasificador funciona bien para documentos ESCANEADOS vs FOTOS REALES.
+Falla con fotos DE PANTALLAS (luz backlight reduce varianza).

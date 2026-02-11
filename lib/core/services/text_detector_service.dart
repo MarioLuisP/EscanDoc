@@ -18,9 +18,12 @@ abstract class TextDetectorService {
   ///
   /// Retorna mapa con:
   /// - `variance`: Varianza Laplaciana calculada
-  /// - `hasText`: true si variance > threshold
+  /// - `hasText`: true si tiene texto (según regla multi-condición)
+  /// - `whiteRatio`: Ratio de píxeles blancos (densidad de tinta/texto)
+  /// - `darkRatio`: Ratio de píxeles negros (detecta fondos oscuros)
+  /// - `contourCount`: Número de contornos válidos detectados (para debugging)
   ///
-  /// Performance: ~1.5s en imágenes grandes (12 MP)
+  /// Performance: ~150-250ms (con validación de densidad)
   Future<Map<String, dynamic>> detect(String imagePath, {double threshold = 600.0});
 
   /// [DEPRECATED] Usar detect() en su lugar.
@@ -45,23 +48,26 @@ class TextDetectorServiceImpl implements TextDetectorService {
       });
 
       if (result == null) {
-        return {'variance': 0.0, 'hasText': false, 'error': 'null_result'};
+        return {'variance': 0.0, 'hasText': false, 'whiteRatio': 0.0, 'darkRatio': 0.0, 'contourCount': 0, 'error': 'null_result'};
       }
 
       return {
         'variance': result['variance'] as double,
         'hasText': result['hasText'] as bool,
+        'whiteRatio': result['whiteRatio'] as double? ?? 0.0,
+        'darkRatio': result['darkRatio'] as double? ?? 0.0,
+        'contourCount': result['contourCount'] as int? ?? 0,
       };
     } on PlatformException catch (e) {
       // Error nativo: log y retornar fallback seguro
       // ignore: avoid_print
       print('[TextDetector] Platform error: ${e.message}');
-      return {'variance': 0.0, 'hasText': false, 'error': e.message};
+      return {'variance': 0.0, 'hasText': false, 'whiteRatio': 0.0, 'darkRatio': 0.0, 'contourCount': 0, 'error': e.message};
     } catch (e) {
       // Error inesperado: fallback seguro
       // ignore: avoid_print
       print('[TextDetector] Unexpected error: $e');
-      return {'variance': 0.0, 'hasText': false, 'error': e.toString()};
+      return {'variance': 0.0, 'hasText': false, 'whiteRatio': 0.0, 'darkRatio': 0.0, 'contourCount': 0, 'error': e.toString()};
     }
   }
 

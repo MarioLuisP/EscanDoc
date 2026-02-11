@@ -79,10 +79,10 @@ ESTRATEGIA OPTIMIZADA IMPLEMENTADA:
 
    B) SI PROBE < 800 KB (necesita SUBIR calidad):
       - LA REGLA DE TRES NO FUNCIONA (relación NO lineal al subir)
-      - Fórmula empírica descubierta: ~6% de incremento de tamaño por punto de quality
+      - Fórmula empírica descubierta: ~8% de incremento de tamaño por punto de quality
       - Cálculo:
         * needed_growth = (850 - probe) / probe
-        * quality_increment = needed_growth / 0.06
+        * quality_increment = needed_growth / 0.08
         * target_quality = 85 + quality_increment
       - Clampear máximo a quality 90 (retornos decrecientes después)
 
@@ -91,11 +91,11 @@ ARCHIVOS MODIFICADOS:
 
 HALLAZGOS EMPÍRICOS:
 
-Datos observados en imágenes reales (3 casos):
-- Incremento Q85 → Q88 (+3 puntos) = +17-20% tamaño
-- Promedio: ~6% incremento por punto de quality en rango 85-90
+Datos observados en imágenes reales (8 casos, análisis empírico 2026):
+- Incremento Q85 → Q90 (+5 puntos) = +32% a +45% tamaño
+- Promedio: ~8% incremento por punto de quality en rango 85-90 (7.75% observado)
 - Este factor NO es constante en todo el rango, solo válido para 85-90
-- Imágenes muy compresibles (uniformes) tienen menor incremento
+- Factor promedio por quality: Q86=1.07, Q87=1.10, Q88=1.17, Q90=1.38
 
 PERFORMANCE FINAL:
 - Antes (iterativo): 10-12 segundos en imágenes grandes

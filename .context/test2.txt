@@ -269,4 +269,3 @@ findContours → filtra por área mínima/máxima y bounding box aspect ratio.
 Si número de contornos válidos > 30 (ajusta) → texto confirmado.
 
 Esto hace que sea mucho más robusto contra fondos complicados, y mantiene la velocidad.Prueba primero con tus fotos que fallaban (las que subían falsos positivos con 600 solo). Añade el conteo de contornos y verás cómo baja drásticamente los errores.
-

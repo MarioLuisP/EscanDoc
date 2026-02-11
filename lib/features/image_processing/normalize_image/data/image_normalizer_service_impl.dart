@@ -106,7 +106,7 @@ class ImageNormalizerServiceImpl implements ImageNormalizerService {
         : _calculateTargetQuality(probeSize, targetSizeBytes);
 
     final direction = probeSize < targetSizeBytes ? '⬆️ SUBIR' : '⬇️ BAJAR';
-    final method = probeSize < targetSizeBytes ? 'fórmula ~6%/punto' : 'regla de tres';
+    final method = probeSize < targetSizeBytes ? 'fórmula ~8%/punto' : 'regla de tres';
     print('🎯 Quality target: $targetQuality ($direction - $method)');
 
     // 5️⃣ SEGUNDA COMPRESIÓN con quality ajustado
@@ -154,16 +154,16 @@ class ImageNormalizerServiceImpl implements ImageNormalizerService {
   /// Calcula quality target para SUBIR usando fórmula empírica.
   ///
   /// **Fórmula basada en observación:**
-  /// - Incremento de ~6% de tamaño por punto de quality (rango 85-90)
+  /// - Incremento de ~8% de tamaño por punto de quality (rango 85-90)
   /// - needed_growth = (target - probe) / probe
-  /// - quality_increment = needed_growth / 0.06
+  /// - quality_increment = needed_growth / 0.08
   /// - target_quality = 85 + quality_increment
   int _calculateQualityForUpscaling(int probeSize, int targetSize) {
     // Cuánto necesitamos crecer en porcentaje
     final neededGrowth = (targetSize - probeSize) / probeSize;
 
-    // Incremento de calidad basado en ~6% por punto
-    final qualityIncrement = neededGrowth / 0.06;
+    // Incremento de calidad basado en ~8% por punto
+    final qualityIncrement = neededGrowth / 0.08;
 
     // Quality final
     final targetQuality = (probeQuality + qualityIncrement).round();
