@@ -196,14 +196,11 @@ class ImportProvider with ChangeNotifier {
       final docsDir = await getApplicationDocumentsDirectory();
       debugPrint('[ImportProvider] Directorio de docs: ${docsDir.path}');
 
-      // Preparar notas iniciales con clasificación (solo si NO es foto)
-      String? initialNotes;
-      if (preparation.classification.type != DocumentType.photo) {
-        final typeName = preparation.classification.type.name;
-        final confidence = (preparation.classification.confidence * 100).toStringAsFixed(1);
-        initialNotes = 'Clasificado como: $typeName (confianza: $confidence%)';
-        debugPrint('[ImportProvider] 📝 Notas iniciales: $initialNotes');
-      }
+      // Preparar notas iniciales con clasificación (todas las categorías)
+      final label = preparation.classification.metadata['label'] as String? ?? 'desconocido';
+      final confidence = (preparation.classification.confidence * 100).toStringAsFixed(1);
+      final initialNotes = 'Clasificado como: $label (confianza: $confidence%)';
+      debugPrint('[ImportProvider] 📝 Notas iniciales: $initialNotes');
 
       // Guardar documento
       final startSave = DateTime.now();
