@@ -123,7 +123,7 @@ class ScanProvider with ChangeNotifier {
       final convertDuration = endConvert.difference(startConvert).inMilliseconds;
       debugPrint('[ScanProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: ${convertDuration}ms');
 
-      // 3. Clasificar Laplacian (sobre imagen A4, más rápido)
+      // 3. Clasificar imagen con TFLite
       final startClassify = DateTime.now();
       debugPrint('[ScanProvider] 🟢 START: Clasificar imagen - ${startClassify.millisecondsSinceEpoch}');
       final classification = await _imageClassifier.classify(jpgFile.path);
@@ -215,6 +215,15 @@ class ScanProvider with ChangeNotifier {
       final docsDir = await getApplicationDocumentsDirectory();
       debugPrint('[ScanProvider] Directorio de docs: ${docsDir.path}');
 
+      // Preparar notas iniciales con clasificación (solo si NO es foto)
+      String? initialNotes;
+      if (preparation.classification.type != DocumentType.photo) {
+        final typeName = preparation.classification.type.name;
+        final confidence = (preparation.classification.confidence * 100).toStringAsFixed(1);
+        initialNotes = 'Clasificado como: $typeName (confianza: $confidence%)';
+        debugPrint('[ScanProvider] 📝 Notas iniciales: $initialNotes');
+      }
+
       // Guardar documento
       final startSave = DateTime.now();
       debugPrint('[ScanProvider] 🟢 START: Guardar documento - ${startSave.millisecondsSinceEpoch}');
@@ -222,6 +231,7 @@ class ScanProvider with ChangeNotifier {
         finalFile,
         docsDir.path,
         locale,
+        initialNotes: initialNotes,
       );
       final endSave = DateTime.now();
       final saveDuration = endSave.difference(startSave).inMilliseconds;

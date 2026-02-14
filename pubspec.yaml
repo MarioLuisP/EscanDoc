@@ -39,9 +39,10 @@ dependencies:
   flutter_doc_scanner: ^0.0.17       # Scanner nativo con detección de bordes
   
   # ═══════════════════════════════════════════════════════════════════════════
-  # OCR (Post-scan processing)
+  # OCR & ML (Post-scan processing)
   # ═══════════════════════════════════════════════════════════════════════════
   google_mlkit_text_recognition: ^0.15.0  # OCR offline después del escaneo
+  tflite_flutter: ^0.12.1                 # TensorFlow Lite para clasificación de imágenes
 
   # ═══════════════════════════════════════════════════════════════════════════
   # IMAGE & PDF PROCESSING
@@ -94,6 +95,7 @@ flutter:
     - assets/images/
     - assets/onboarding/
     - assets/l10n/
+    - assets/models/
 
   # fonts:
   #   - family: Roboto

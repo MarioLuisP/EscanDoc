@@ -1,4 +1,4 @@
-# Flujo Unificado: Scanner + Importar
+ # Flujo Unificado: Scanner + Importar
 
 **Fecha:** Febrero 2026
 **Versión:** 1.0
@@ -6,7 +6,7 @@
 ---
 
 ## 📋 Tabla de Contenidos
-
+ 
 1. [Resumen Ejecutivo](#resumen-ejecutivo)
 2. [Arquitectura General](#arquitectura-general)
 3. [Pipeline en 2 Fases](#pipeline-en-2-fases)

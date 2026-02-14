@@ -104,7 +104,7 @@ class ImportProvider with ChangeNotifier {
       final convertDuration = endConvert.difference(startConvert).inMilliseconds;
       debugPrint('[ImportProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: ${convertDuration}ms');
 
-      // 2. Clasificar Laplacian (sobre imagen A4, más rápido)
+      // 2. Clasificar imagen con TFLite
       final startClassify = DateTime.now();
       debugPrint('[ImportProvider] 🟢 START: Clasificar imagen - ${startClassify.millisecondsSinceEpoch}');
       final classification = await _imageClassifier.classify(jpgFile.path);
@@ -196,6 +196,15 @@ class ImportProvider with ChangeNotifier {
       final docsDir = await getApplicationDocumentsDirectory();
       debugPrint('[ImportProvider] Directorio de docs: ${docsDir.path}');
 
+      // Preparar notas iniciales con clasificación (solo si NO es foto)
+      String? initialNotes;
+      if (preparation.classification.type != DocumentType.photo) {
+        final typeName = preparation.classification.type.name;
+        final confidence = (preparation.classification.confidence * 100).toStringAsFixed(1);
+        initialNotes = 'Clasificado como: $typeName (confianza: $confidence%)';
+        debugPrint('[ImportProvider] 📝 Notas iniciales: $initialNotes');
+      }
+
       // Guardar documento
       final startSave = DateTime.now();
       debugPrint('[ImportProvider] 🟢 START: Guardar documento - ${startSave.millisecondsSinceEpoch}');
@@ -203,6 +212,7 @@ class ImportProvider with ChangeNotifier {
         finalFile,
         docsDir.path,
         locale,
+        initialNotes: initialNotes,
       );
       final endSave = DateTime.now();
       final saveDuration = endSave.difference(startSave).inMilliseconds;

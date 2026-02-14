@@ -19,14 +19,14 @@ import 'core/services/document_scanner_service.dart';
 import 'core/services/document_classifier.dart';
 import 'core/services/ocr_service.dart';
 import 'features/documents/data/repositories/document_repository.dart';
+import 'features/notes/data/repositories/note_repository.dart';
 
 // Image processing dependencies (Épica 6 - OCR-first)
 import 'features/image_processing/normalize_image/domain/normalize_image_use_case.dart';
 import 'features/image_processing/normalize_image/data/image_normalizer_service_impl.dart';
 import 'features/image_processing/format_converter/data/image_format_converter_impl.dart';
-import 'features/image_processing/classification/data/image_classifier_impl.dart';
 import 'features/documents/domain/usecases/import_document.dart';
-import 'core/services/text_detector_service.dart';
+import 'features/image_processing/classification/data/tflite_image_classifier.dart';
 
 // Search dependencies
 import 'features/search/data/repositories/search_repository_impl.dart';
@@ -104,11 +104,11 @@ class MyApp extends StatelessWidget {
             final imageNormalizerService = ImageNormalizerServiceImpl();
             final normalizeImageUseCase = NormalizeImageUseCase(imageNormalizerService);
             final formatConverter = ImageFormatConverterImpl();
-            final textDetector = TextDetectorServiceImpl();
-            final imageClassifier = ImageClassifierImpl(textDetector: textDetector);
+            final imageClassifier = TFLiteImageClassifier();
             final classifier = DocumentClassifier();
             final ocrService = OCRServiceImpl();
             final documentRepository = DocumentRepository();
+            final noteRepository = NoteRepository();
 
             // Crear UseCases
             final scanDocument = ScanDocument(scannerService);
@@ -119,6 +119,7 @@ class MyApp extends StatelessWidget {
             final saveDocument = SaveScannedDocument(
               classifier,
               documentRepository,
+              noteRepository,
             );
             final processOCR = ProcessOCR(
               ocrService,
@@ -141,11 +142,11 @@ class MyApp extends StatelessWidget {
             final imageNormalizerService = ImageNormalizerServiceImpl();
             final normalizeImageUseCase = NormalizeImageUseCase(imageNormalizerService);
             final formatConverter = ImageFormatConverterImpl();
-            final textDetector = TextDetectorServiceImpl();
-            final imageClassifier = ImageClassifierImpl(textDetector: textDetector);
+            final imageClassifier = TFLiteImageClassifier();
             final classifier = DocumentClassifier();
             final ocrService = OCRServiceImpl();
             final documentRepository = DocumentRepository();
+            final noteRepository = NoteRepository();
 
             // Crear UseCases
             final importDocument = ImportDocument(
@@ -155,6 +156,7 @@ class MyApp extends StatelessWidget {
             final saveDocument = SaveScannedDocument(
               classifier,
               documentRepository,
+              noteRepository,
             );
             final processOCR = ProcessOCR(
               ocrService,

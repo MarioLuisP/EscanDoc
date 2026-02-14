@@ -1,27 +1,31 @@
 /// Tipos de documentos detectables por clasificación de imagen.
+///
+/// Clasificación con TFLite Keras (5 clases):
+/// - 0: document → Documentos generales
+/// - 1: brochure → Folletos con mucho texto/color
+/// - 2: photo → Fotografías
+/// - 3: handwritten → Documentos manuscritos
+/// - 4: ticket → Tickets/recibos largos
 enum DocumentType {
-  /// Fotografía real (personas, lugares, objetos)
-  /// Criterios actuales:
-  /// - Varianza Laplaciana < 600 (OpenCV)
-  photo,
-
   /// Documento escaneado (facturas, contratos, recibos, etc.)
-  /// Es el tipo por defecto si no cumple otros criterios.
+  /// Índice TFLite: 0
   document,
 
-  // FUTURO: Descomentar cuando se implementen
-  // /// Folleto o documento con mucho texto
-  // /// Criterios: > 50 palabras detectadas por OCR
-  // folleto,
-  //
-  // /// Documento manuscrito
-  // /// Criterios: Detección de escritura manual
-  // manuscrito,
-  //
-  // /// Documento con código de barras (facturas, recibos, productos)
-  // /// Criterios: Barcode o QR code detectado (usar BarcodeDetectorService)
-  // /// NOTA: ML Kit es lento (2-4s), no usar en cascade de clasificación
-  // barcode,
+  /// Folleto o documento con mucho texto/color
+  /// Índice TFLite: 1
+  brochure,
+
+  /// Fotografía real (personas, lugares, objetos)
+  /// Índice TFLite: 2
+  photo,
+
+  /// Documento manuscrito (notas escritas a mano)
+  /// Índice TFLite: 3
+  handwritten,
+
+  /// Ticket o recibo largo (supermercado, etc.)
+  /// Índice TFLite: 4
+  ticket,
 }
 
 /// Resultado de la clasificación de una imagen.
