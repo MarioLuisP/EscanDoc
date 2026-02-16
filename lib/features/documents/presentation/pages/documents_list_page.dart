@@ -163,7 +163,7 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
     if (preparation.classification.type == DocumentType.photo) {
       final action = await PhotoDetectedDialog.show(
         context,
-        preparation.processedFile,
+        preparation.thumbnailFile ?? preparation.processedFile, // Thumbnail si existe, sino A4
       );
 
       if (action == PhotoAction.cancel || action == null) {
@@ -370,7 +370,7 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
       if (preparation.classification.type == DocumentType.photo) {
         final action = await PhotoDetectedDialog.show(
           context,
-          preparation.processedFile,
+          preparation.thumbnailFile ?? preparation.processedFile, // Thumbnail si existe, sino A4
           showGalleryOption: false, // Import: solo App o Cancelar
         );
 

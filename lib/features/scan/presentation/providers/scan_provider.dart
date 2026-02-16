@@ -8,33 +8,40 @@ import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/domain/usecases/import_document.dart';
 import 'package:escandoc/features/image_processing/classification/domain/image_classifier.dart';
 import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
+import 'package:escandoc/features/image_processing/thumbnail/domain/thumbnail_generator.dart';
 
 /// Resultado de la preparación de escaneo.
 ///
+/// **OPTIMIZACIÓN (16 Feb 2026):** Eliminado resize A4 previo.
+///
 /// Contiene la imagen procesada y su clasificación.
-/// - Fotos: convertidas JPG + redimensionadas A4 (sin comprimir) para ahorrar tiempo
-/// - Documentos: convertidas JPG + redimensionadas A4 + comprimidas <850KB
+/// - Fotos: convertidas JPG (original) + thumbnail preview (NO resize A4)
+/// - Documentos: convertidas JPG + comprimidas <850KB (resize A4 + compress)
 ///
 /// El UI puede decidir si continuar o cancelar basado en la clasificación.
 class ScanPreparationResult {
   final File processedFile;
   final ClassificationResult classification;
   final bool isNormalized;
+  final File? thumbnailFile; // Thumbnail optimizado para preview (solo si es foto)
 
   ScanPreparationResult({
     required this.processedFile,
     required this.classification,
     required this.isNormalized,
+    this.thumbnailFile,
   });
 }
 
 /// Provider para manejar el flujo de escaneo de documentos
 ///
-/// Flujo optimizado dividido en 2 fases:
-/// 1. PREPARACIÓN: Scanner + Convertir JPG + Resize A4 + Clasificar (+ Comprimir solo si es documento)
-/// 2. GUARDADO: Comprimir si es foto + Guardar en BD + OCR background
+/// **OPTIMIZACIÓN (16 Feb 2026):** Eliminado resize A4 previo.
 ///
-/// Ahorro de tiempo: Si usuario cancela una foto, evitamos normalización (~6s)
+/// Flujo optimizado dividido en 2 fases:
+/// 1. PREPARACIÓN: Scanner + Convertir JPG + Clasificar + Thumbnail (NO resize A4)
+/// 2. GUARDADO: Resize A4 + Comprimir + Guardar en BD + OCR background
+///
+/// Ahorro de tiempo: Si usuario cancela foto, evitamos resize A4 + compress (~3.5s)
 ///
 /// Estados:
 /// - isScanning: Scanner nativo abierto o procesando imagen
@@ -47,6 +54,7 @@ class ScanProvider with ChangeNotifier {
   final ImageClassifier _imageClassifier;
   final SaveScannedDocument _saveDocument;
   final ProcessOCR _processOCR;
+  final ThumbnailGenerator _thumbnailGenerator;
 
   ScanProvider({
     required ScanDocument scanDocument,
@@ -54,11 +62,13 @@ class ScanProvider with ChangeNotifier {
     required ImageClassifier imageClassifier,
     required SaveScannedDocument saveDocument,
     required ProcessOCR processOCR,
+    required ThumbnailGenerator thumbnailGenerator,
   })  : _scanDocument = scanDocument,
         _importDocument = importDocument,
         _imageClassifier = imageClassifier,
         _saveDocument = saveDocument,
-        _processOCR = processOCR;
+        _processOCR = processOCR,
+        _thumbnailGenerator = thumbnailGenerator;
 
   // Estado
   bool _isScanning = false;
@@ -77,10 +87,10 @@ class ScanProvider with ChangeNotifier {
   DocumentModel? get lastScannedDocument => _lastScannedDocument;
   ClassificationResult? get lastClassification => _lastClassification;
 
-  /// FASE 1: Prepara documento escaneado (scanner + convierte JPG + resize A4 + clasifica + comprime si es documento).
+  /// FASE 1: Prepara documento escaneado (scanner + convierte JPG + clasifica).
   ///
-  /// OPTIMIZACIÓN: Resize A4 ANTES de clasificar (más rápido). Solo comprime si es DOCUMENTO.
-  /// Las fotos se comprimen en FASE 2 solo si el usuario confirma (ahorro ~6s si cancela).
+  /// **OPTIMIZACIÓN (16 Feb 2026):** NO hace resize A4 previo (TFLite hace resize a 224×224).
+  /// Solo comprime si es DOCUMENTO. Las fotos se comprimen en FASE 2 solo si usuario confirma.
   ///
   /// NO guarda en BD todavía. Retorna resultado con clasificación
   /// para que el UI pueda decidir si continuar o cancelar.
@@ -117,11 +127,11 @@ class ScanProvider with ChangeNotifier {
 
       // 2. Convertir a JPG + Redimensionar A4 (geometría, sin comprimir)
       final startConvert = DateTime.now();
-      debugPrint('[ScanProvider] 🟢 START: Convertir JPG + Resize A4 - ${startConvert.millisecondsSinceEpoch}');
+      debugPrint('[ScanProvider] 🟢 START: Convertir JPG (sin resize) - ${startConvert.millisecondsSinceEpoch}');
       final jpgFile = await _importDocument.convertOnly(scannedFile);
       final endConvert = DateTime.now();
       final convertDuration = endConvert.difference(startConvert).inMilliseconds;
-      debugPrint('[ScanProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: ${convertDuration}ms');
+      debugPrint('[ScanProvider] 🔴 END: Convertir JPG (sin resize) - Duración: ${convertDuration}ms');
 
       // 3. Clasificar imagen con TFLite
       final startClassify = DateTime.now();
@@ -136,6 +146,7 @@ class ScanProvider with ChangeNotifier {
 
       File processedFile;
       bool isNormalized;
+      File? thumbnailFile;
 
       // 4. Comprimir solo si es DOCUMENTO (ya está redimensionado a A4)
       if (classification.type == DocumentType.document) {
@@ -150,6 +161,16 @@ class ScanProvider with ChangeNotifier {
         debugPrint('[ScanProvider] Es foto → saltando compresión (se hará si usuario acepta)');
         processedFile = jpgFile;
         isNormalized = false;
+
+        // 5. Generar thumbnail para preview (solo si es foto)
+        debugPrint('[ScanProvider] 🟢 START: Generar thumbnail para preview');
+        final startThumb = DateTime.now();
+        thumbnailFile = await _thumbnailGenerator.generateThumbnail(
+          processedFile.path,
+          maxWidth: 200, // Reducido de 400 → 200px (4x menos píxeles = ~4x más rápido)
+        );
+        final thumbDuration = DateTime.now().difference(startThumb).inMilliseconds;
+        debugPrint('[ScanProvider] 🔴 END: Thumbnail generado en ${thumbDuration}ms');
       }
 
       _isScanning = false;
@@ -163,6 +184,7 @@ class ScanProvider with ChangeNotifier {
         processedFile: processedFile,
         classification: classification,
         isNormalized: isNormalized,
+        thumbnailFile: thumbnailFile,
       );
     } catch (e, stackTrace) {
       _error = e.toString();

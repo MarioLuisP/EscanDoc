@@ -27,6 +27,7 @@ import 'features/image_processing/normalize_image/data/image_normalizer_service_
 import 'features/image_processing/format_converter/data/image_format_converter_impl.dart';
 import 'features/documents/domain/usecases/import_document.dart';
 import 'features/image_processing/classification/data/tflite_image_classifier.dart';
+import 'features/image_processing/thumbnail/data/thumbnail_generator_impl.dart';
 
 // Search dependencies
 import 'features/search/data/repositories/search_repository_impl.dart';
@@ -109,6 +110,7 @@ class MyApp extends StatelessWidget {
             final ocrService = OCRServiceImpl();
             final documentRepository = DocumentRepository();
             final noteRepository = NoteRepository();
+            final thumbnailGenerator = ThumbnailGeneratorImpl();
 
             // Crear UseCases
             final scanDocument = ScanDocument(scannerService);
@@ -133,6 +135,7 @@ class MyApp extends StatelessWidget {
               imageClassifier: imageClassifier,
               saveDocument: saveDocument,
               processOCR: processOCR,
+              thumbnailGenerator: thumbnailGenerator,
             );
           },
         ),
@@ -147,6 +150,7 @@ class MyApp extends StatelessWidget {
             final ocrService = OCRServiceImpl();
             final documentRepository = DocumentRepository();
             final noteRepository = NoteRepository();
+            final thumbnailGenerator = ThumbnailGeneratorImpl();
 
             // Crear UseCases
             final importDocument = ImportDocument(
@@ -169,6 +173,7 @@ class MyApp extends StatelessWidget {
               imageClassifier: imageClassifier,
               saveDocument: saveDocument,
               processOCR: processOCR,
+              thumbnailGenerator: thumbnailGenerator,
             );
           },
         ),

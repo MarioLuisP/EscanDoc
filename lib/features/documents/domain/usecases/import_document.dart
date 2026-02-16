@@ -22,26 +22,27 @@ class ImportDocument {
     this._normalizeImage,
   );
 
-  /// Convierte archivo a JPG y redimensiona a A4 si excede (sin comprimir).
+  /// Convierte archivo a JPG (sin resize ni compresión).
   ///
-  /// FLUJO OPTIMIZADO:
+  /// **OPTIMIZACIÓN (16 Feb 2026):** Eliminado resize A4 previo.
+  /// El clasificador TFLite hace su propio resize a 224×224, no necesita A4.
+  /// Resize A4 se hace DESPUÉS si usuario acepta (ahorro ~1.5s si cancela foto).
+  ///
+  /// FLUJO:
   /// 1. Convertir a JPG (formato)
-  /// 2. Redimensionar a A4 si excede (geometría - rápido)
-  /// 3. Retorna listo para clasificación Laplacian
-  ///
-  /// NO comprime (eso se hace después de clasificar en `normalize()`).
+  /// 2. Retorna JPG original listo para clasificación
   ///
   /// Parámetros:
   /// - [importedFile]: Archivo importado (cualquier formato soportado)
   ///
-  /// Retorna: File JPG redimensionado a A4 (sin comprimir)
+  /// Retorna: File JPG (sin resize, sin comprimir)
   ///
   /// Lanza:
   /// - [UnsupportedImageFormatException] si el formato no es soportado
   /// - [ImageConversionException] si la conversión falla
   Future<File> convertOnly(File importedFile) async {
     try {
-      debugPrint('[ImportDocument] 🟢 Convertir a JPG y redimensionar A4');
+      debugPrint('[ImportDocument] 🟢 Convertir a JPG (sin resize)');
       debugPrint('[ImportDocument] Archivo: ${importedFile.path}');
 
       // Verificar que existe
@@ -49,29 +50,34 @@ class ImportDocument {
         throw Exception('Imported file does not exist: ${importedFile.path}');
       }
 
-      // 1. Convertir a JPG
+      // 1. Convertir a JPG (solo formato, NO resize)
       final jpgPath = await _formatConverter.convertToJpg(importedFile.path);
 
-      // 2. Redimensionar a A4 si excede (rápido, antes de clasificar)
-      final resizedPath = await _normalizeImage.resizeToA4IfNeeded(jpgPath);
-
-      return File(resizedPath);
+      return File(jpgPath);
     } catch (e) {
       debugPrint('[ImportDocument] ERROR en convertOnly: $e');
       rethrow;
     }
   }
 
-  /// Normaliza un archivo JPG a <850 KB.
+  /// Normaliza un archivo JPG: Resize A4 + Compress <850 KB.
+  ///
+  /// **OPTIMIZACIÓN (16 Feb 2026):** Ahora hace resize A4 + compress.
+  /// Antes solo comprimía (resize A4 se hacía en convertOnly).
+  /// Ahora resize A4 solo cuando usuario acepta (ahorro si cancela).
   ///
   /// Parámetros:
-  /// - [jpgFile]: Archivo JPG (ya convertido)
+  /// - [jpgFile]: Archivo JPG original (sin resize)
   ///
-  /// Retorna: File JPG normalizado (<850 KB)
+  /// Retorna: File JPG normalizado (A4 + <850 KB)
   Future<File> normalize(File jpgFile) async {
     try {
-      debugPrint('[ImportDocument] 🟢 Normalizar JPG');
+      debugPrint('[ImportDocument] 🟢 Normalizar JPG (Resize A4 + Compress)');
+
+      // 1. Resize A4 si excede (incluido en normalizeImage.execute)
+      // 2. Compress a <850 KB
       final normalizedPath = await _normalizeImage.execute(jpgFile.path);
+
       return File(normalizedPath);
     } catch (e) {
       debugPrint('[ImportDocument] ERROR en normalize: $e');
