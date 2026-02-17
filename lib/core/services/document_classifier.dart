@@ -28,22 +28,52 @@ class DocumentClassifier {
     return 'documento';
   }
 
-  /// Genera nombre de documento localizado: {tipo}_{día}_{mes}_{año}
+  /// Retorna el nombre visible del tipo en el locale dado.
   ///
-  /// Ejemplos:
-  /// - ES: "factura_25_Ene_2026"
-  /// - EN: "invoice_25_Jan_2026"
-  String generateDocumentName(String tipo, DateTime date, String locale) {
-    final day = date.day;
-    final year = date.year;
+  /// Usado para:
+  /// - Generar el prefijo del título del documento
+  /// - Contar documentos del mismo tipo en BD (countByTypePrefix)
+  ///
+  /// Ejemplos ES: 'factura' → 'Factura', 'manuscrito' → 'Nota'
+  /// Ejemplos EN: 'factura' → 'Invoice', 'manuscrito' → 'Note'
+  String getTypeDisplayName(String tipo, String locale) {
+    if (locale == 'en') {
+      switch (tipo) {
+        case 'factura':    return 'Invoice';
+        case 'recibo':     return 'Receipt';
+        case 'contrato':   return 'Contract';
+        case 'médico':     return 'Medical';
+        case 'manuscrito': return 'Note';
+        case 'folleto':    return 'Brochure';
+        case 'foto':       return 'Photo';
+        default:           return 'Document';
+      }
+    }
 
-    // Traducir tipo según locale
-    final translatedType = _translateType(tipo, locale);
+    // Español (default)
+    switch (tipo) {
+      case 'factura':    return 'Factura';
+      case 'recibo':     return 'Recibo';
+      case 'contrato':   return 'Contrato';
+      case 'médico':     return 'Médico';
+      case 'manuscrito': return 'Nota';
+      case 'folleto':    return 'Folleto';
+      case 'foto':       return 'Foto';
+      default:           return 'Documento';
+    }
+  }
 
-    // Obtener mes abreviado según locale
-    final month = _getMonthAbbreviation(date.month, locale);
-
-    return '${translatedType}_${day}_${month}_$year';
+  /// Genera nombre de documento: {Tipo} {N} del {día}/{mes}
+  ///
+  /// Ejemplos ES: "Factura 1 del 17/2", "Nota 3 del 5/11"
+  /// Ejemplos EN: "Invoice 1 of 17/2", "Note 3 of 5/11"
+  ///
+  /// [count]: número secuencial del tipo en ese día (obtenido de BD)
+  String generateDocumentName(
+      String tipo, DateTime date, String locale, int count) {
+    final displayName = getTypeDisplayName(tipo, locale);
+    final connector = locale == 'en' ? 'of' : 'del';
+    return '$displayName $count $connector ${date.day}/${date.month}';
   }
 
   /// Extrae fecha de vencimiento del texto OCR
@@ -102,57 +132,11 @@ class DocumentClassifier {
             return date;
           }
         } catch (e) {
-          // Fecha inválida, continuar buscando
           continue;
         }
       }
     }
 
     return null;
-  }
-
-  // =========================================================================
-  // Métodos privados
-  // =========================================================================
-
-  /// Traduce tipo de documento según locale
-  String _translateType(String tipo, String locale) {
-    if (locale == 'en') {
-      switch (tipo) {
-        case 'factura':
-          return 'invoice';
-        case 'recibo':
-          return 'receipt';
-        case 'contrato':
-          return 'contract';
-        case 'médico':
-          return 'medical';
-        case 'documento':
-          return 'document';
-        default:
-          return 'document';
-      }
-    }
-
-    // Default: español (mantener original)
-    return tipo;
-  }
-
-  /// Retorna mes abreviado según locale
-  String _getMonthAbbreviation(int month, String locale) {
-    if (locale == 'en') {
-      const monthsEN = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-      ];
-      return monthsEN[month - 1];
-    }
-
-    // Default: español
-    const monthsES = [
-      'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
-    ];
-    return monthsES[month - 1];
   }
 }

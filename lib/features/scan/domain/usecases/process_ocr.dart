@@ -4,42 +4,49 @@ import 'package:escandoc/core/services/ocr_service.dart';
 import 'package:escandoc/core/services/document_classifier.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
+import 'package:escandoc/features/notes/data/models/note_model.dart';
+import 'package:escandoc/features/notes/data/repositories/note_repository.dart';
+import 'package:escandoc/features/scan/domain/usecases/refine_classification.dart';
 
 /// UseCase para procesar OCR en documento escaneado (SIMPLIFICADO - JPG only)
 ///
-/// FLUJO SIMPLIFICADO:
+/// FLUJO:
 /// 1. Obtener documento de BD (filePath apunta al JPG)
-/// 2. Extraer texto con OCR desde JPG
-/// 3. Re-clasificar tipo basado en texto real
-/// 4. Extraer fecha de vencimiento si existe
-/// 5. Actualizar documento en BD con texto OCR
-///
-/// NOTA: Ya NO genera PDF. El JPG permanece como archivo maestro.
-/// PDF se generará on-demand solo cuando se necesite compartir/imprimir.
+/// 2. Extraer análisis OCR (texto + blockCount + avgConfidence)
+/// 3. Refinar clasificación TFLite con métricas OCR (2° paso)
+/// 4. Si hubo reclasificación → guardar nota de corrección
+/// 5. Extraer fecha de vencimiento si existe
+/// 6. Actualizar documento en BD con texto OCR
 ///
 /// Se ejecuta en background después de SaveScannedDocument
 class ProcessOCR {
   final OCRService _ocrService;
   final DocumentClassifier _classifier;
   final DocumentRepository _repository;
+  final NoteRepository _noteRepository;
+  final RefineClassification _refinement;
 
   ProcessOCR(
     this._ocrService,
     this._classifier,
     this._repository,
+    this._noteRepository,
+    this._refinement,
   );
 
-  /// Procesa OCR para documento y retorna documento actualizado
+  /// Procesa OCR y refina clasificación para el documento dado.
   ///
-  /// SIMPLIFICADO: Solo OCR, sin conversión PDF
-  /// - OCR desde JPG
-  /// - Actualizar DB con texto OCR
-  ///
-  /// Lanza Exception si documento no existe
-  Future<DocumentModel> call(int documentId) async {
+  /// [tfliteClass]: clasificación inicial del TFLite (ej: 'documento', 'manuscrito').
+  /// [locale]: idioma para regenerar el título si hay reclasificación (ej: 'es', 'en').
+  Future<DocumentModel> call(
+    int documentId, {
+    String tfliteClass = 'documento',
+    String locale = 'es',
+  }) async {
     try {
       final startProcess = DateTime.now();
-      debugPrint('[ProcessOCR] 🟢 START: OCR (JPG only) - ${startProcess.millisecondsSinceEpoch}');
+      debugPrint(
+          '[ProcessOCR] 🟢 START: OCR (JPG only) - ${startProcess.millisecondsSinceEpoch}');
 
       // 1. Obtener documento (filePath apunta al JPG)
       final document = await _repository.getDocumentById(documentId);
@@ -55,37 +62,81 @@ class ProcessOCR {
         throw Exception('JPG file not found: $jpgPath');
       }
 
-      // 2. OCR desde JPG
+      // 2. Extraer análisis OCR (texto + métricas)
       final startOCR = DateTime.now();
-      debugPrint('[ProcessOCR] 🟢 START: OCR extractText - ${startOCR.millisecondsSinceEpoch}');
-      final extractedText = await _ocrService.extractText(jpgFile);
+      debugPrint(
+          '[ProcessOCR] 🟢 START: OCR extractAnalysis - ${startOCR.millisecondsSinceEpoch}');
+      final ocrAnalysis = await _ocrService.extractAnalysis(jpgFile);
       final endOCR = DateTime.now();
-      final ocrDuration = endOCR.difference(startOCR).inMilliseconds;
-      debugPrint('[ProcessOCR] 🔴 END: OCR extractText - Duración: ${ocrDuration}ms - ${extractedText.length} caracteres');
+      debugPrint(
+          '[ProcessOCR] 🔴 END: OCR extractAnalysis - ${endOCR.difference(startOCR).inMilliseconds}ms'
+          ' - ${ocrAnalysis.text.length} chars'
+          ' - ${ocrAnalysis.blockCount} bloques'
+          ' - avgConf: ${ocrAnalysis.avgConfidence.toStringAsFixed(3)}');
 
-      // 3. Re-clasificar tipo basado en texto real
-      final detectedType = _classifier.detectType(extractedText);
-      debugPrint('[ProcessOCR] Tipo detectado: $detectedType');
+      final extractedText = ocrAnalysis.text;
 
-      // 4. Extraer fecha de vencimiento si existe
-      final extractedDate = _classifier.extractDueDate(extractedText);
+      // 3. Refinar clasificación TFLite con métricas OCR (2° paso)
+      final refinement = _refinement.call(tfliteClass, ocrAnalysis);
+      debugPrint('[ProcessOCR] TFLite: $tfliteClass → Refinado: ${refinement.refinedClass}');
+
+      // 4. Si hubo reclasificación → nota de corrección + actualizar título
+      String updatedTitle = document.title;
+      if (refinement.wasReclassified) {
+        debugPrint('[ProcessOCR] 📝 Reclasificado: ${refinement.correctionNote}');
+        final now = DateTime.now();
+        await _noteRepository.createNote(
+          NoteModel(
+            content: refinement.correctionNote,
+            createdAt: now,
+            updatedAt: now,
+          ),
+          documentId,
+        );
+
+        // Regenerar título con el tipo correcto y número secuencial
+        final newDisplayName =
+            _classifier.getTypeDisplayName(refinement.refinedClass, locale);
+        final countForNewType = await _repository.countByTypePrefix(
+            newDisplayName, document.createdAt);
+        updatedTitle = _classifier.generateDocumentName(
+          refinement.refinedClass,
+          document.createdAt,
+          locale,
+          countForNewType + 1,
+        );
+        debugPrint('[ProcessOCR] 🏷️  Título actualizado: ${document.title} → $updatedTitle');
+      }
+
+      // 5. Si es manuscrito → anteponer aviso en el texto OCR
+      const _manuscritoDisclaimer =
+          '⚠️ Texto manuscrito — el reconocimiento puede contener errores.\n\n';
+      final ocrText = refinement.refinedClass == 'manuscrito'
+          ? '$_manuscritoDisclaimer$extractedText'
+          : extractedText;
+
+      // 6. Extraer fecha de vencimiento si existe
+      final extractedDate = _classifier.extractDueDate(ocrText);
       debugPrint('[ProcessOCR] Fecha extraída: $extractedDate');
 
-      // 5. Actualizar documento con texto OCR
+      // 7. Actualizar documento con texto OCR (y título si hubo reclasificación)
       final updatedDocument = document.copyWith(
-        ocrText: extractedText,
+        title: updatedTitle,
+        ocrText: ocrText,
         extractedDate: extractedDate,
       );
 
       final startDBUpdate = DateTime.now();
-      debugPrint('[ProcessOCR] 🟢 START: Update DB con OCR - ${startDBUpdate.millisecondsSinceEpoch}');
+      debugPrint(
+          '[ProcessOCR] 🟢 START: Update DB con OCR - ${startDBUpdate.millisecondsSinceEpoch}');
       await _repository.updateDocument(updatedDocument);
-      final endDBUpdate = DateTime.now();
-      debugPrint('[ProcessOCR] 🔴 END: Update DB con OCR - Duración: ${endDBUpdate.difference(startDBUpdate).inMilliseconds}ms');
+      debugPrint(
+          '[ProcessOCR] 🔴 END: Update DB con OCR - ${DateTime.now().difference(startDBUpdate).inMilliseconds}ms');
 
-      final endProcess = DateTime.now();
-      final totalDuration = endProcess.difference(startProcess).inMilliseconds;
-      debugPrint('[ProcessOCR] 🔴 END: OCR (JPG only) - Duración TOTAL: ${totalDuration}ms');
+      final totalDuration =
+          DateTime.now().difference(startProcess).inMilliseconds;
+      debugPrint(
+          '[ProcessOCR] 🔴 END: OCR (JPG only) - Duración TOTAL: ${totalDuration}ms');
 
       return updatedDocument;
     } catch (e, stackTrace) {

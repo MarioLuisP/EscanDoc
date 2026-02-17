@@ -12,6 +12,7 @@ import 'package:escandoc/features/documents/presentation/widgets/empty_state.dar
 import 'package:escandoc/features/documents/presentation/widgets/delete_confirmation_dialog.dart';
 import 'package:escandoc/features/scan/presentation/widgets/photo_detected_dialog.dart';
 import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
+import 'package:escandoc/core/user/user_preferences.dart';
 
 /// Página principal que muestra la lista de documentos guardados
 /// HU-001: Ver lista de documentos guardados
@@ -163,7 +164,8 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
     if (preparation.classification.type == DocumentType.photo) {
       final action = await PhotoDetectedDialog.show(
         context,
-        preparation.thumbnailFile ?? preparation.processedFile, // Thumbnail si existe, sino A4
+        preparation.thumbnailFile ?? preparation.processedFile,
+        userName: UserPreferences().userName,
       );
 
       if (action == PhotoAction.cancel || action == null) {
@@ -370,8 +372,9 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
       if (preparation.classification.type == DocumentType.photo) {
         final action = await PhotoDetectedDialog.show(
           context,
-          preparation.thumbnailFile ?? preparation.processedFile, // Thumbnail si existe, sino A4
-          showGalleryOption: false, // Import: solo App o Cancelar
+          preparation.thumbnailFile ?? preparation.processedFile,
+          userName: UserPreferences().userName,
+          showGalleryOption: false,
         );
 
         if (action == PhotoAction.cancel || action == null) {

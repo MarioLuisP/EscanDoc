@@ -1,12 +1,15 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 
+# El EarlyStopping es lo más útil: para automáticamente cuando el modelo deja de mejorar 
+# y guarda el mejor punto 👍
+
 IMG_SIZE = 224
 BATCH_SIZE = 64
-NUM_CLASSES = 2
+NUM_CLASSES = 4  # ← Cambiado a 4
 
 train_ds = tf.keras.utils.image_dataset_from_directory(
-    "G:/entrenamiento_2clases",
+    "G:/entrenamiento",
     validation_split=0.2,
     subset="training",
     seed=123,
@@ -16,7 +19,7 @@ train_ds = tf.keras.utils.image_dataset_from_directory(
 )
 
 val_ds = tf.keras.utils.image_dataset_from_directory(
-    "G:/entrenamiento_2clases",
+    "G:/entrenamiento",
     validation_split=0.2,
     subset="validation",
     seed=123,
@@ -25,6 +28,9 @@ val_ds = tf.keras.utils.image_dataset_from_directory(
     label_mode="int"
 )
 
+print("Clases detectadas:", train_ds.class_names)  # Verificá que sean las 4 correctas
+
+# Data augmentation SEPARADO (solo para training)
 data_augmentation = tf.keras.Sequential([
     layers.RandomFlip("horizontal"),
     layers.RandomRotation(0.1),
@@ -48,7 +54,7 @@ model = tf.keras.Sequential([
     base_model,
     layers.GlobalAveragePooling2D(),
     layers.Dense(128, activation="relu"),
-    layers.Dropout(0.3),
+    layers.Dropout(0.4),  # ← Subido de 0.3 a 0.4
     layers.Dense(NUM_CLASSES, activation="softmax")
 ])
 
@@ -58,10 +64,24 @@ model.compile(
     metrics=["accuracy"]
 )
 
-history = model.fit(train_ds_augmented, validation_data=val_ds, epochs=10)
+# Callbacks
+callbacks = tf.keras.callbacks.EarlyStopping(
+    monitor='val_accuracy',
+    patience=3,
+    restore_best_weights=True
+)
 
+# Entrenar
+history = model.fit(
+    train_ds_augmented,
+    validation_data=val_ds,
+    epochs=15,  # ← Subido de 10 a 15
+    callbacks=[callbacks]
+)
+
+# Fine-tuning
 base_model.trainable = True
-fine_tune_at = len(base_model.layers) - 40
+fine_tune_at = len(base_model.layers) - 20  # ← Reducido de 40 a 20
 for layer in base_model.layers[:fine_tune_at]:
     layer.trainable = False
 
@@ -71,7 +91,12 @@ model.compile(
     metrics=["accuracy"]
 )
 
-model.fit(train_ds_augmented, validation_data=val_ds, epochs=8)
+model.fit(
+    train_ds_augmented,
+    validation_data=val_ds,
+    epochs=5,  # ← Reducido de 8 a 5
+    callbacks=[callbacks]
+)
 
-model.save("clasificador_doc_vs_manuscrito.keras")
-print("Modelo 2 clases guardado")
+model.save("clasificador_documento4.keras")
+print("Modelo guardado en formato .keras")

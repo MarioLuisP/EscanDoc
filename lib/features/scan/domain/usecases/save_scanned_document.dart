@@ -6,20 +6,19 @@ import 'package:escandoc/features/documents/data/repositories/document_repositor
 import 'package:escandoc/features/notes/data/models/note_model.dart';
 import 'package:escandoc/features/notes/data/repositories/note_repository.dart';
 
-/// UseCase para guardar documento escaneado (SIMPLIFICADO - JPG only)
+/// UseCase para guardar documento escaneado (JPG only)
 ///
-/// FLUJO SIMPLIFICADO:
-/// 1. Guardar JPG normalizado en filePath
-/// 2. Usar mismo JPG como thumbnail (sin comprimir)
-/// 3. Detectar tipo automáticamente (sin OCR inicial)
-/// 4. Generar nombre localizado
-/// 5. Guardar en BD
+/// FLUJO:
+/// 1. Usar clasificación TFLite para el nombre provisional
+/// 2. Contar documentos del mismo tipo creados hoy → número secuencial
+/// 3. Generar nombre: "Factura 1 del 17/2"
+/// 4. Guardar en BD
+/// 5. Crear nota inicial con clasificación TFLite
 ///
 /// ProcessOCR (background) hará:
 /// - OCR desde JPG
-/// - Actualizar BD con texto OCR
-///
-/// NOTA: PDF se generará on-demand solo cuando se necesite compartir/imprimir.
+/// - Refinar clasificación
+/// - Actualizar título si el tipo cambia
 ///
 /// CLEAN ARCHITECTURE: Este UseCase NO conoce path_provider.
 /// El storage path debe ser inyectado desde Data/Presentation layer.
@@ -36,45 +35,42 @@ class SaveScannedDocument {
 
   /// Guarda documento y retorna modelo con ID
   ///
-  /// Parámetros:
-  /// - [scannedImage]: Imagen escaneada
-  /// - [outputDirectory]: Directorio donde guardar PDF/thumbnail (inyectado)
-  /// - [locale]: Idioma para nombre (es/en)
-  /// - [currentDate]: Fecha para timestamp (opcional, usa DateTime.now())
-  /// - [initialNotes]: Notas iniciales (ej: clasificación) - se crea nota automática
+  /// - [tfliteClass]: tipo inicial del clasificador TFLite (ej: 'documento', 'manuscrito')
+  /// - [locale]: idioma para el nombre (es/en)
+  /// - [initialNotes]: nota automática con clasificación TFLite
   Future<DocumentModel> call(
     File scannedFile,
     String outputDirectory,
     String locale, {
     DateTime? currentDate,
     String? initialNotes,
+    String tfliteClass = 'documento',
   }) async {
     final date = currentDate ?? DateTime.now();
-    final timestamp = date.millisecondsSinceEpoch;
 
     final startSave = DateTime.now();
     debugPrint('[SaveScannedDocument] 🟢 START: Guardado (JPG only) - ${startSave.millisecondsSinceEpoch}');
     debugPrint('[SaveScannedDocument] JPG: ${scannedFile.path}');
 
-    // FLUJO SIMPLIFICADO: Solo guardar JPG, sin thumbnail ni PDF
+    // 1. Obtener nombre visible del tipo y contar existentes hoy
+    final displayName = _classifier.getTypeDisplayName(tfliteClass, locale);
+    final todayCount = await _repository.countByTypePrefix(displayName, date);
+    debugPrint('[SaveScannedDocument] Tipo: $tfliteClass → "$displayName", hoy: $todayCount');
 
-    // 1. Detectar tipo (sin OCR inicial, usamos string vacío)
-    final detectedType = _classifier.detectType('');
-    debugPrint('[SaveScannedDocument] Tipo detectado: $detectedType');
-
-    // 2. Generar nombre localizado
+    // 2. Generar nombre: "Factura 1 del 17/2"
     final documentName = _classifier.generateDocumentName(
-      detectedType,
+      tfliteClass,
       date,
       locale,
+      todayCount + 1,
     );
     debugPrint('[SaveScannedDocument] Nombre generado: $documentName');
 
     // 3. Crear modelo de documento
     final document = DocumentModel(
       title: documentName,
-      filePath: scannedFile.path, // JPG ~850KB (UI usará cacheWidth para thumbnails)
-      ocrText: null, // Se llenará después con ProcessOCR
+      filePath: scannedFile.path,
+      ocrText: null,
       extractedDate: null,
       createdAt: date,
       updatedAt: date,
@@ -84,27 +80,20 @@ class SaveScannedDocument {
     final startDB = DateTime.now();
     debugPrint('[SaveScannedDocument] 🟢 START: Insertar en BD - ${startDB.millisecondsSinceEpoch}');
     final insertedId = await _repository.insertDocument(document);
-    final endDB = DateTime.now();
-    final dbDuration = endDB.difference(startDB).inMilliseconds;
-    debugPrint('[SaveScannedDocument] 🔴 END: Insertar en BD - Duración: ${dbDuration}ms - ID: $insertedId');
+    debugPrint('[SaveScannedDocument] 🔴 END: Insertar en BD - ${DateTime.now().difference(startDB).inMilliseconds}ms - ID: $insertedId');
 
-    // 5. Crear nota inicial si se proporcionó (ej: clasificación TFLite)
+    // 5. Crear nota inicial si se proporcionó (clasificación TFLite)
     if (initialNotes != null && initialNotes.isNotEmpty) {
       debugPrint('[SaveScannedDocument] 📝 Creando nota inicial: $initialNotes');
-      final note = NoteModel(
-        content: initialNotes,
-        createdAt: date,
-        updatedAt: date,
+      await _noteRepository.createNote(
+        NoteModel(content: initialNotes, createdAt: date, updatedAt: date),
+        insertedId,
       );
-      await _noteRepository.createNote(note, insertedId);
       debugPrint('[SaveScannedDocument] ✅ Nota inicial creada');
     }
 
-    final endSave = DateTime.now();
-    final saveDuration = endSave.difference(startSave).inMilliseconds;
-    debugPrint('[SaveScannedDocument] 🔴 END: Guardado (JPG only) - Duración TOTAL: ${saveDuration}ms');
+    debugPrint('[SaveScannedDocument] 🔴 END: Guardado (JPG only) - ${DateTime.now().difference(startSave).inMilliseconds}ms');
 
-    // 6. Retornar documento con ID
     return document.copyWith(id: insertedId);
   }
 }

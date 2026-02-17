@@ -90,8 +90,10 @@
   "ocr_copy_button": "COPY TEXT",
   "ocr_copied": "✓ Text copied",
 
-  "photo_detected_title": "We think you scanned a photo.",
-  "photo_detected_subtitle": "Do you want to save it to your gallery?",
+  "photo_detected_scan_title": "{name}, it looks like you captured a photo",
+  "photo_detected_scan_subtitle": "Where do you want to save it?",
+  "photo_detected_import_title": "{name}, this image looks like a photo",
+  "photo_detected_import_subtitle": "Do you want to add it to your documents?",
   "photo_save_to_gallery": "Save to Gallery",
   "photo_save_to_app": "Save to App",
   "photo_cancel": "Cancel",

@@ -15,6 +15,7 @@ import 'features/notes/presentation/providers/note_provider.dart';
 import 'features/scan/domain/usecases/scan_document.dart';
 import 'features/scan/domain/usecases/save_scanned_document.dart';
 import 'features/scan/domain/usecases/process_ocr.dart';
+import 'features/scan/domain/usecases/refine_classification.dart';
 import 'core/services/document_scanner_service.dart';
 import 'core/services/document_classifier.dart';
 import 'core/services/ocr_service.dart';
@@ -127,6 +128,8 @@ class MyApp extends StatelessWidget {
               ocrService,
               classifier,
               documentRepository,
+              noteRepository,
+              RefineClassification(),
             );
 
             return ScanProvider(
@@ -166,6 +169,8 @@ class MyApp extends StatelessWidget {
               ocrService,
               classifier,
               documentRepository,
+              noteRepository,
+              RefineClassification(),
             );
 
             return ImportProvider(

@@ -110,9 +110,28 @@
             │   ProcessOCR (no bloquea UI)    │
             ├─────────────────────────────────┤
             │ • google_mlkit_text_recognition │
-            │ • Actualizar nota con resumen   │
+            │ • Extrae texto + blockCount     │
+            │   + avgConfidence               │
             │ • Tiempo: ~3-5s                 │
             │ • Usuario puede seguir usando   │
+            └─────────────────────────────────┘
+                                ↓
+            ┌─────────────────────────────────┐
+            │   6. REFINAMIENTO (background)  │
+            │   RefineClassification          │
+            ├─────────────────────────────────┤
+            │ Solo ajusta 'documento' y       │
+            │ 'manuscrito' (resto intocable)  │
+            │                                 │
+            │ avgConf < 0.55                  │
+            │   → manuscrito                  │
+            │ avgConf ≥ 0.55                  │
+            │   → documento                   │
+            │   + keywords + bloques > 80     │
+            │     → factura                   │
+            │                                 │
+            │ Si hubo cambio → nota automática│
+            │ "X → Y (2° paso: motivo)"      │
             └─────────────────────────────────┘
                                 ↓
                           ✅ LISTO
@@ -280,6 +299,6 @@ TOTAL (sin OCR)       4270ms   3680ms     -14%
 
 ---
 
-**Versión:** 2.0 - Flujo optimizado con eliminación de resize A4 previo
+**Versión:** 2.1 - Flujo con refinamiento de clasificación post-OCR
 **Performance:** 39% más rápido que v1.0 en caso de foto cancelada
 **Mantenibilidad:** ✅ Tests actualizados, providers unificados, código limpio

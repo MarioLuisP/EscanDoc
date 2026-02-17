@@ -15,38 +15,43 @@ enum PhotoAction {
 /// - Modal central (tarjeta flotante)
 /// - Fondo crema/beige claro (#F5F5DC)
 /// - Preview de la imagen
-/// - Botones en columna (2 o 3 según origen):
-///   - Scanner: Galería (principal) → App (secundario) → Cancelar
-///   - Import: App (principal) → Cancelar
+/// - Texto personalizado con nombre de usuario según origen
+/// - Botones en columna (los que no aplican simplemente no aparecen):
+///   - Scanner: Galería → App → Cancelar
+///   - Import:  App → Cancelar  (sin galería: ya viene de la galería)
 ///
-/// Target: Usuarios mayores (60-85 años) → UX espaciosa y clara
+/// Target: Todos los públicos → UX amigable, espaciosa y clara
 class PhotoDetectedDialog extends StatelessWidget {
   final File imageFile;
   final bool showGalleryOption;
+  final String userName;
 
   const PhotoDetectedDialog({
     super.key,
     required this.imageFile,
-    this.showGalleryOption = true, // true por defecto (scanner)
+    required this.userName,
+    this.showGalleryOption = true,
   });
 
   /// Muestra el diálogo y retorna la acción elegida por el usuario.
   ///
   /// Parámetros:
   /// - [context]: BuildContext
-  /// - [imageFile]: Imagen detectada como foto
-  /// - [showGalleryOption]: Si true, muestra botón "Guardar en Galería" (scanner).
-  ///                        Si false, solo muestra "Guardar en App" (import).
+  /// - [imageFile]: Imagen detectada como foto (thumbnail recomendado)
+  /// - [userName]: Nombre del usuario para personalizar el mensaje
+  /// - [showGalleryOption]: true = origen scanner (3 botones), false = import (2 botones)
   static Future<PhotoAction?> show(
     BuildContext context,
     File imageFile, {
+    required String userName,
     bool showGalleryOption = true,
   }) async {
     return showDialog<PhotoAction>(
       context: context,
-      barrierDismissible: false, // Requiere acción explícita
+      barrierDismissible: false,
       builder: (context) => PhotoDetectedDialog(
         imageFile: imageFile,
+        userName: userName,
         showGalleryOption: showGalleryOption,
       ),
     );
@@ -162,13 +167,23 @@ class PhotoDetectedDialog extends StatelessWidget {
     );
   }
 
-  /// Texto: Título y subtítulo
+  /// Texto: Título y subtítulo personalizados según origen y nombre de usuario.
+  ///
+  /// Scanner: "Mario, parece que capturaste una foto" / "¿Dónde la guardamos?"
+  /// Import:  "Mario, esta imagen parece una foto"    / "¿La agregamos a tus documentos?"
   Widget _buildText() {
+    final titleKey = showGalleryOption
+        ? 'photo_detected_scan_title'
+        : 'photo_detected_import_title';
+    final subtitleKey = showGalleryOption
+        ? 'photo_detected_scan_subtitle'
+        : 'photo_detected_import_subtitle';
+    final args = {'name': userName};
+
     return Column(
       children: [
-        // Título
         Text(
-          'photo_detected_title'.tr(),
+          titleKey.tr(namedArgs: args),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -177,9 +192,8 @@ class PhotoDetectedDialog extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
-        // Subtítulo
         Text(
-          'photo_detected_subtitle'.tr(),
+          subtitleKey.tr(namedArgs: args),
           style: TextStyle(
             fontSize: 16,
             color: Colors.grey[600],

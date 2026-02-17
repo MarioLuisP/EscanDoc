@@ -251,6 +251,7 @@ class ScanProvider with ChangeNotifier {
         docsDir.path,
         locale,
         initialNotes: initialNotes,
+        tfliteClass: label,
       );
       final endSave = DateTime.now();
       final saveDuration = endSave.difference(startSave).inMilliseconds;
@@ -267,7 +268,7 @@ class ScanProvider with ChangeNotifier {
       debugPrint('[ScanProvider] 🔴 END: Completar escaneo - Duración TOTAL: ${totalDuration}ms');
 
       // Procesar OCR en background (no bloquea UI)
-      _processOCRInBackground(document.id!);
+      _processOCRInBackground(document.id!, label, locale);
 
       return document;
     } catch (e, stackTrace) {
@@ -294,7 +295,8 @@ class ScanProvider with ChangeNotifier {
   }
 
   /// Ejecuta OCR en background sin bloquear UI
-  Future<void> _processOCRInBackground(int documentId) async {
+  Future<void> _processOCRInBackground(
+      int documentId, String tfliteClass, String locale) async {
     _isProcessingOCR = true;
     notifyListeners();
 
@@ -302,7 +304,7 @@ class ScanProvider with ChangeNotifier {
     debugPrint('[ScanProvider] 🟢 START: Procesamiento OCR background - ${startBackground.millisecondsSinceEpoch}');
 
     try {
-      await _processOCR.call(documentId);
+      await _processOCR.call(documentId, tfliteClass: tfliteClass, locale: locale);
       final endBackground = DateTime.now();
       final backgroundDuration = endBackground.difference(startBackground).inMilliseconds;
       debugPrint('[ScanProvider] 🔴 END: Procesamiento OCR background - Duración: ${backgroundDuration}ms');

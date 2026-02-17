@@ -2,15 +2,14 @@ import tensorflow as tf
 import numpy as np
 from sklearn.metrics import confusion_matrix, classification_report
 import matplotlib.pyplot as plt
-import seaborn as sns
 
-model = tf.keras.models.load_model("clasificador_doc_vs_manuscrito.keras")
+model = tf.keras.models.load_model("clasificador_documento4.keras")
 
 IMG_SIZE = 224
 BATCH_SIZE = 64
 
 val_ds = tf.keras.utils.image_dataset_from_directory(
-    "G:/entrenamiento_2clases",
+    "G:/entrenamiento",
     validation_split=0.2,
     subset="validation",
     seed=123,
@@ -40,12 +39,26 @@ print(cm)
 print("\n" + "="*60 + "\n")
 print(classification_report(y_true, y_pred, target_names=class_names))
 
-plt.figure(figsize=(8, 6))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
-            xticklabels=class_names, yticklabels=class_names)
-plt.xlabel('Predicción')
-plt.ylabel('Real')
-plt.title(f'Documentos vs Manuscrito - Accuracy: {accuracy*100:.1f}%')
+# Gráfico de barras: por cada clase real, cuántas predijo bien vs mal
+fig, axes = plt.subplots(1, len(class_names), figsize=(4 * len(class_names), 5))
+fig.suptitle(f'Accuracy: {accuracy*100:.1f}%', fontsize=14, fontweight='bold')
+
+for i, clase in enumerate(class_names):
+    total = cm[i].sum()
+    correctas = cm[i][i]
+    incorrectas = total - correctas
+
+    axes[i].bar(['✅ Correctas', '❌ Errores'], 
+                [correctas, incorrectas], 
+                color=['#2ecc71', '#e74c3c'])
+    
+    axes[i].set_title(f'{clase}\n({correctas}/{total})', fontweight='bold')
+    axes[i].set_ylim(0, total + 10)
+    
+    # Mostrar números arriba de cada barra
+    axes[i].text(0, correctas + 1, str(correctas), ha='center', fontweight='bold')
+    axes[i].text(1, incorrectas + 1, str(incorrectas), ha='center', fontweight='bold')
+
 plt.tight_layout()
-plt.savefig('confusion_matrix_2clases.png')
-print("Matriz guardada en: confusion_matrix_2clases.png")
+plt.savefig('confusion_barras.png')
+print("Gráfico guardado en: confusion_barras.png")

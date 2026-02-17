@@ -92,6 +92,26 @@ class DocumentRepository {
     }
   }
 
+  /// Cuenta documentos cuyo título empieza con [prefix] creados en [date]
+  ///
+  /// Usado para generar el número secuencial del nombre:
+  /// "Factura 1 del 17/2" → prefix = "Factura"
+  Future<int> countByTypePrefix(String prefix, DateTime date) async {
+    try {
+      final db = await _dbHelper.database;
+      final dayStr =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      final result = await db.rawQuery(
+        "SELECT COUNT(*) as count FROM documents "
+        "WHERE title LIKE ? AND date(created_at) = ?",
+        ['$prefix %', dayStr],
+      );
+      return (result.first['count'] as int?) ?? 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
   /// Helper privado para eliminar archivos del filesystem
   Future<bool> _deleteFile(String path) async {
     try {

@@ -90,8 +90,10 @@
   "ocr_copy_button": "COPIAR TEXTO",
   "ocr_copied": "✓ Texto copiado",
 
-  "photo_detected_title": "Creemos que escaneaste una foto.",
-  "photo_detected_subtitle": "¿Quieres guardarla en tu galería?",
+  "photo_detected_scan_title": "{name}, parece que capturaste una foto",
+  "photo_detected_scan_subtitle": "¿Dónde la guardamos?",
+  "photo_detected_import_title": "{name}, esta imagen parece una foto",
+  "photo_detected_import_subtitle": "¿La agregamos a tus documentos?",
   "photo_save_to_gallery": "Guardar en Galería",
   "photo_save_to_app": "Guardar en App",
   "photo_cancel": "Cancelar",
