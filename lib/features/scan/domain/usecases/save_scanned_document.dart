@@ -3,8 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:escandoc/core/services/document_classifier.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
-import 'package:escandoc/features/notes/data/models/note_model.dart';
-import 'package:escandoc/features/notes/data/repositories/note_repository.dart';
 
 /// UseCase para guardar documento escaneado (JPG only)
 ///
@@ -13,37 +11,33 @@ import 'package:escandoc/features/notes/data/repositories/note_repository.dart';
 /// 2. Contar documentos del mismo tipo creados hoy → número secuencial
 /// 3. Generar nombre: "Factura 1 del 17/2"
 /// 4. Guardar en BD
-/// 5. Crear nota inicial con clasificación TFLite
 ///
 /// ProcessOCR (background) hará:
 /// - OCR desde JPG
 /// - Refinar clasificación
 /// - Actualizar título si el tipo cambia
+/// - Crear nota de extracto con el texto reconocido
 ///
 /// CLEAN ARCHITECTURE: Este UseCase NO conoce path_provider.
 /// El storage path debe ser inyectado desde Data/Presentation layer.
 class SaveScannedDocument {
   final DocumentClassifier _classifier;
   final DocumentRepository _repository;
-  final NoteRepository _noteRepository;
 
   SaveScannedDocument(
     this._classifier,
     this._repository,
-    this._noteRepository,
   );
 
   /// Guarda documento y retorna modelo con ID
   ///
   /// - [tfliteClass]: tipo inicial del clasificador TFLite (ej: 'documento', 'manuscrito')
   /// - [locale]: idioma para el nombre (es/en)
-  /// - [initialNotes]: nota automática con clasificación TFLite
   Future<DocumentModel> call(
     File scannedFile,
     String outputDirectory,
     String locale, {
     DateTime? currentDate,
-    String? initialNotes,
     String tfliteClass = 'documento',
   }) async {
     final date = currentDate ?? DateTime.now();
@@ -81,16 +75,6 @@ class SaveScannedDocument {
     debugPrint('[SaveScannedDocument] 🟢 START: Insertar en BD - ${startDB.millisecondsSinceEpoch}');
     final insertedId = await _repository.insertDocument(document);
     debugPrint('[SaveScannedDocument] 🔴 END: Insertar en BD - ${DateTime.now().difference(startDB).inMilliseconds}ms - ID: $insertedId');
-
-    // 5. Crear nota inicial si se proporcionó (clasificación TFLite)
-    if (initialNotes != null && initialNotes.isNotEmpty) {
-      debugPrint('[SaveScannedDocument] 📝 Creando nota inicial: $initialNotes');
-      await _noteRepository.createNote(
-        NoteModel(content: initialNotes, createdAt: date, updatedAt: date),
-        insertedId,
-      );
-      debugPrint('[SaveScannedDocument] ✅ Nota inicial creada');
-    }
 
     debugPrint('[SaveScannedDocument] 🔴 END: Guardado (JPG only) - ${DateTime.now().difference(startSave).inMilliseconds}ms');
 

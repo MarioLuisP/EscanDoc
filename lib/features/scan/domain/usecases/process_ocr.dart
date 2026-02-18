@@ -80,19 +80,10 @@ class ProcessOCR {
       final refinement = _refinement.call(tfliteClass, ocrAnalysis);
       debugPrint('[ProcessOCR] TFLite: $tfliteClass → Refinado: ${refinement.refinedClass}');
 
-      // 4. Si hubo reclasificación → nota de corrección + actualizar título
+      // 4. Si hubo reclasificación → actualizar título
       String updatedTitle = document.title;
       if (refinement.wasReclassified) {
         debugPrint('[ProcessOCR] 📝 Reclasificado: ${refinement.correctionNote}');
-        final now = DateTime.now();
-        await _noteRepository.createNote(
-          NoteModel(
-            content: refinement.correctionNote,
-            createdAt: now,
-            updatedAt: now,
-          ),
-          documentId,
-        );
 
         // Regenerar título con el tipo correcto y número secuencial
         final newDisplayName =
@@ -109,10 +100,10 @@ class ProcessOCR {
       }
 
       // 5. Si es manuscrito → anteponer aviso en el texto OCR
-      const _manuscritoDisclaimer =
+      const manuscritoDisclaimer =
           '⚠️ Texto manuscrito — el reconocimiento puede contener errores.\n\n';
       final ocrText = refinement.refinedClass == 'manuscrito'
-          ? '$_manuscritoDisclaimer$extractedText'
+          ? '$manuscritoDisclaimer$extractedText'
           : extractedText;
 
       // 6. Extraer fecha de vencimiento si existe
@@ -125,6 +116,18 @@ class ProcessOCR {
         ocrText: ocrText,
         extractedDate: extractedDate,
       );
+
+      // 8. Crear nota de extracto con el contenido del OCR
+      final noteContent = _buildExtractNote(
+          refinement.refinedClass, extractedText, ocrAnalysis.topConfidenceText);
+      if (noteContent.isNotEmpty) {
+        final now = DateTime.now();
+        await _noteRepository.createNote(
+          NoteModel(content: noteContent, createdAt: now, updatedAt: now),
+          documentId,
+        );
+        debugPrint('[ProcessOCR] 📝 Nota de extracto creada: ${noteContent.substring(0, noteContent.length.clamp(0, 60))}...');
+      }
 
       final startDBUpdate = DateTime.now();
       debugPrint(
@@ -144,5 +147,28 @@ class ProcessOCR {
       debugPrint('[ProcessOCR] StackTrace: $stackTrace');
       rethrow;
     }
+  }
+
+  /// Nota para manuscritos: prefija "Nota manuscrita de" + top-palabras.
+  /// Si no hay palabras reconocibles, retorna "Nota manuscrita".
+  String _buildManuscritoNote(String topConfidenceText) {
+    if (topConfidenceText.trim().isEmpty) return 'Nota manuscrita';
+    return 'Nota manuscrita de ${topConfidenceText.trim()}';
+  }
+
+  /// Nota para documentos impresos: primeros 150 chars del texto OCR,
+  /// colapsando espacios y saltos de línea múltiples.
+  String _buildPrintedNote(String text) {
+    if (text.isEmpty) return '';
+    final collapsed = text.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return collapsed.length > 150 ? collapsed.substring(0, 150).trimRight() : collapsed;
+  }
+
+  /// Selecciona la nota correcta según el tipo refinado.
+  String _buildExtractNote(String refinedClass, String extractedText, String topConfidenceText) {
+    if (refinedClass == 'manuscrito') {
+      return _buildManuscritoNote(topConfidenceText);
+    }
+    return _buildPrintedNote(extractedText);
   }
 }

@@ -4,6 +4,7 @@ import 'package:escandoc/features/documents/data/repositories/document_repositor
 import 'package:escandoc/features/documents/domain/usecases/get_documents.dart';
 import 'package:escandoc/features/documents/domain/usecases/get_document_by_id.dart';
 import 'package:escandoc/features/documents/domain/usecases/delete_document.dart';
+import 'package:escandoc/features/documents/domain/usecases/rename_document.dart';
 
 /// Provider para gestionar estado de la lista de documentos
 /// Conecta los UseCases (Domain) con la UI (Presentation)
@@ -12,6 +13,7 @@ class DocumentsProvider extends ChangeNotifier {
   late final GetDocuments _getDocuments;
   late final GetDocumentById _getDocumentById;
   late final DeleteDocument _deleteDocument;
+  late final RenameDocument _renameDocument;
 
   // State
   List<DocumentModel> _documents = [];
@@ -32,6 +34,7 @@ class DocumentsProvider extends ChangeNotifier {
     _getDocuments = GetDocuments(repository: repo);
     _getDocumentById = GetDocumentById(repository: repo);
     _deleteDocument = DeleteDocument(repository: repo);
+    _renameDocument = RenameDocument(repository: repo);
   }
 
   /// Carga todos los documentos de la BD
@@ -92,6 +95,29 @@ class DocumentsProvider extends ChangeNotifier {
       return false;
     } catch (e) {
       _errorMessage = 'Error al eliminar documento';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Renombra un documento y actualiza estado local
+  Future<bool> renameDocument(int id, String newTitle) async {
+    try {
+      final success = await _renameDocument(id, newTitle);
+      if (success) {
+        final trimmed = newTitle.trim();
+        if (_selectedDocument?.id == id) {
+          _selectedDocument = _selectedDocument!.copyWith(title: trimmed);
+        }
+        final index = _documents.indexWhere((d) => d.id == id);
+        if (index != -1) {
+          _documents[index] = _documents[index].copyWith(title: trimmed);
+        }
+        notifyListeners();
+      }
+      return success;
+    } catch (e) {
+      _errorMessage = 'Error al renombrar documento';
       notifyListeners();
       return false;
     }

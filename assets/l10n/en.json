@@ -62,6 +62,11 @@
   "note_content_hint": "Write your note here...",
   "note_saved": "✓ Note saved",
 
+  "rename_dialog_title": "Rename",
+  "rename_hint": "Document name",
+  "rename_button": "RENAME",
+  "rename_empty_error": "Name cannot be empty",
+
   "delete_confirm_title": "Delete this document?",
   "delete_confirm_message": "This action cannot be undone",
   "delete_yes_button": "YES, DELETE",

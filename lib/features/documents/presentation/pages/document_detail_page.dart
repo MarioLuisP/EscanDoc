@@ -53,6 +53,12 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
           },
         ),
         actions: [
+          // Botón de renombrar
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, size: 28),
+            onPressed: _showRenameDialog,
+            tooltip: 'rename_button'.tr(),
+          ),
           // Botón de eliminación
           IconButton(
             icon: const Icon(Icons.delete_outline, size: 28),
@@ -156,6 +162,59 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
         builder: (context) => OcrFullscreenPage(ocrText: ocrText),
       ),
     );
+  }
+
+  /// Muestra el diálogo para renombrar el documento
+  void _showRenameDialog() async {
+    final provider = context.read<DocumentsProvider>();
+    final document = provider.selectedDocument;
+    if (document == null) return;
+
+    final controller = TextEditingController(text: document.title);
+    final formKey = GlobalKey<FormState>();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'rename_dialog_title'.tr(),
+          style: const TextStyle(fontSize: 20),
+        ),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            style: const TextStyle(fontSize: 18),
+            decoration: InputDecoration(
+              hintText: 'rename_hint'.tr(),
+            ),
+            validator: (value) => (value == null || value.trim().isEmpty)
+                ? 'rename_empty_error'.tr()
+                : null,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('cancel_button'.tr(), style: const TextStyle(fontSize: 16)),
+          ),
+          TextButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.pop(ctx, true);
+              }
+            },
+            child: Text('rename_button'.tr(), style: const TextStyle(fontSize: 16)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      await provider.renameDocument(document.id!, controller.text);
+    }
+    controller.dispose();
   }
 
   /// Muestra el diálogo de confirmación de eliminación

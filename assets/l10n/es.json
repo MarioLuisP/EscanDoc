@@ -62,6 +62,11 @@
   "note_content_hint": "Escribe aquí tu nota...",
   "note_saved": "✓ Nota guardada",
 
+  "rename_dialog_title": "Renombrar",
+  "rename_hint": "Nombre del documento",
+  "rename_button": "RENOMBRAR",
+  "rename_empty_error": "El nombre no puede estar vacío",
+
   "delete_confirm_title": "¿Eliminar este documento?",
   "delete_confirm_message": "Esta acción no se puede deshacer",
   "delete_yes_button": "SÍ, ELIMINAR",

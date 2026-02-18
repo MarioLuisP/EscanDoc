@@ -62,6 +62,15 @@ void main() {
       mockNoteRepository,
       mockRefinement,
     );
+
+    // Stub default para createNote (siempre se crea nota de extracto)
+    when(() => mockNoteRepository.createNote(any(), any()))
+        .thenAnswer((_) async => NoteModel(
+              id: 1,
+              content: '',
+              createdAt: DateTime(2026),
+              updatedAt: DateTime(2026),
+            ));
   });
 
   tearDown(() async {
@@ -71,10 +80,11 @@ void main() {
   });
 
   // Helper para OcrAnalysis
-  OcrAnalysis makeAnalysis(String text) => OcrAnalysis(
+  OcrAnalysis makeAnalysis(String text, {String topConfidenceText = ''}) => OcrAnalysis(
         text: text,
         blockCount: 10,
         avgConfidence: 0.85,
+        topConfidenceText: topConfidenceText,
       );
 
   // Helper para RefinementResult sin cambio
@@ -162,53 +172,14 @@ void main() {
       verify(() => mockRefinement.call('manuscrito', any())).called(1);
     });
 
-    test('si hubo reclasificación → crear nota de corrección', () async {
+    test('siempre crea nota de extracto (impreso: primeros 150 chars)', () async {
       // Arrange
+      const text = 'Este es el texto extraído con OCR del documento impreso';
       final testDoc = createTestDocument();
-      final analysis = makeAnalysis('texto');
-      const nota = 'documento → factura (2° paso: keywords + 120 bloques)';
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
       when(() => mockOCRService.extractAnalysis(any()))
-          .thenAnswer((_) async => analysis);
-      when(() => mockRefinement.call(any(), any())).thenReturn(
-        RefinementResult(refinedClass: 'factura', correctionNote: nota),
-      );
-      when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
-      when(() => mockClassifier.getTypeDisplayName('factura', any()))
-          .thenReturn('Factura');
-      when(() => mockRepository.countByTypePrefix('Factura', any()))
-          .thenAnswer((_) async => 0);
-      when(() => mockClassifier.generateDocumentName('factura', any(), any(), any()))
-          .thenReturn('Factura 1 del 17/2');
-      when(() => mockRepository.updateDocument(any()))
-          .thenAnswer((_) async => 1);
-      when(() => mockNoteRepository.createNote(any(), any()))
-          .thenAnswer((_) async => NoteModel(
-                id: 1,
-                content: nota,
-                createdAt: DateTime(2026),
-                updatedAt: DateTime(2026),
-              ));
-
-      // Act
-      await useCase.call(1);
-
-      // Assert
-      final capturedNote =
-          verify(() => mockNoteRepository.createNote(captureAny(), 1))
-              .captured.single as NoteModel;
-      expect(capturedNote.content, nota);
-    });
-
-    test('si no hubo reclasificación → no crear nota', () async {
-      // Arrange
-      final testDoc = createTestDocument();
-      final analysis = makeAnalysis('texto');
-      when(() => mockRepository.getDocumentById(1))
-          .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
-          .thenAnswer((_) async => analysis);
+          .thenAnswer((_) async => makeAnalysis(text));
       when(() => mockRefinement.call(any(), any()))
           .thenReturn(noChange('documento'));
       when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
@@ -218,7 +189,106 @@ void main() {
       // Act
       await useCase.call(1);
 
+      // Assert: se crea nota con el texto del documento
+      final captured =
+          verify(() => mockNoteRepository.createNote(captureAny(), 1))
+              .captured.single as NoteModel;
+      expect(captured.content, text);
+    });
+
+    test('nota de impreso: texto largo → truncado a 150 chars', () async {
+      // Arrange
+      final longText = 'A' * 200;
+      final testDoc = createTestDocument();
+      when(() => mockRepository.getDocumentById(1))
+          .thenAnswer((_) async => testDoc);
+      when(() => mockOCRService.extractAnalysis(any()))
+          .thenAnswer((_) async => makeAnalysis(longText));
+      when(() => mockRefinement.call(any(), any()))
+          .thenReturn(noChange('documento'));
+      when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
+      when(() => mockRepository.updateDocument(any()))
+          .thenAnswer((_) async => 1);
+
+      // Act
+      await useCase.call(1);
+
+      // Assert: nota truncada a 150 chars
+      final captured =
+          verify(() => mockNoteRepository.createNote(captureAny(), 1))
+              .captured.single as NoteModel;
+      expect(captured.content?.length, 150);
+    });
+
+    test('nota de manuscrito: empieza con "Nota manuscrita de"', () async {
+      // Arrange
+      final testDoc = createTestDocument();
+      when(() => mockRepository.getDocumentById(1))
+          .thenAnswer((_) async => testDoc);
+      when(() => mockOCRService.extractAnalysis(any()))
+          .thenAnswer((_) async => makeAnalysis(
+                'texto borroso',
+                topConfidenceText: 'Hospital Central',
+              ));
+      when(() => mockRefinement.call(any(), any()))
+          .thenReturn(RefinementResult(refinedClass: 'manuscrito'));
+      when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
+      when(() => mockRepository.updateDocument(any()))
+          .thenAnswer((_) async => 1);
+
+      // Act
+      await useCase.call(1, tfliteClass: 'manuscrito');
+
       // Assert
+      final captured =
+          verify(() => mockNoteRepository.createNote(captureAny(), 1))
+              .captured.single as NoteModel;
+      expect(captured.content, 'Nota manuscrita de Hospital Central');
+    });
+
+    test('nota de manuscrito sin palabras reconocibles: "Nota manuscrita"', () async {
+      // Arrange
+      final testDoc = createTestDocument();
+      when(() => mockRepository.getDocumentById(1))
+          .thenAnswer((_) async => testDoc);
+      when(() => mockOCRService.extractAnalysis(any()))
+          .thenAnswer((_) async => makeAnalysis(
+                'texto muy borroso',
+                topConfidenceText: '',
+              ));
+      when(() => mockRefinement.call(any(), any()))
+          .thenReturn(RefinementResult(refinedClass: 'manuscrito'));
+      when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
+      when(() => mockRepository.updateDocument(any()))
+          .thenAnswer((_) async => 1);
+
+      // Act
+      await useCase.call(1, tfliteClass: 'manuscrito');
+
+      // Assert
+      final captured =
+          verify(() => mockNoteRepository.createNote(captureAny(), 1))
+              .captured.single as NoteModel;
+      expect(captured.content, 'Nota manuscrita');
+    });
+
+    test('OCR vacío → no crea nota', () async {
+      // Arrange
+      final testDoc = createTestDocument();
+      when(() => mockRepository.getDocumentById(1))
+          .thenAnswer((_) async => testDoc);
+      when(() => mockOCRService.extractAnalysis(any()))
+          .thenAnswer((_) async => OcrAnalysis.empty);
+      when(() => mockRefinement.call(any(), any()))
+          .thenReturn(noChange('documento'));
+      when(() => mockClassifier.extractDueDate('')).thenReturn(null);
+      when(() => mockRepository.updateDocument(any()))
+          .thenAnswer((_) async => 1);
+
+      // Act
+      await useCase.call(1);
+
+      // Assert: texto vacío → no se crea nota
       verifyNever(() => mockNoteRepository.createNote(any(), any()));
     });
 
@@ -269,23 +339,6 @@ void main() {
           verify(() => mockRepository.updateDocument(captureAny()))
               .captured.single as DocumentModel;
       expect(captured.extractedDate, expectedDate);
-    });
-
-    test('debe manejar OCR fallido sin lanzar excepción', () async {
-      // Arrange
-      final testDoc = createTestDocument();
-      when(() => mockRepository.getDocumentById(1))
-          .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
-          .thenAnswer((_) async => OcrAnalysis.empty);
-      when(() => mockRefinement.call(any(), any()))
-          .thenReturn(noChange('documento'));
-      when(() => mockClassifier.extractDueDate('')).thenReturn(null);
-      when(() => mockRepository.updateDocument(any()))
-          .thenAnswer((_) async => 1);
-
-      // Act & Assert - no debe lanzar excepción
-      await expectLater(useCase.call(1), completes);
     });
 
     test('debe retornar documento actualizado', () async {
@@ -352,10 +405,6 @@ void main() {
           .thenAnswer((_) async => 0);
       when(() => mockClassifier.generateDocumentName('factura', any(), 'es', 1))
           .thenReturn('Factura 1 del 17/2');
-      when(() => mockNoteRepository.createNote(any(), any()))
-          .thenAnswer((_) async => NoteModel(
-                id: 1, content: 'nota', createdAt: DateTime(2026), updatedAt: DateTime(2026),
-              ));
       when(() => mockRepository.updateDocument(any())).thenAnswer((_) async => 1);
 
       // Act
@@ -386,13 +435,6 @@ void main() {
           .thenAnswer((_) async => 0);
       when(() => mockClassifier.generateDocumentName('manuscrito', any(), any(), any()))
           .thenReturn('Nota 1 del 17/2');
-      when(() => mockNoteRepository.createNote(any(), any()))
-          .thenAnswer((_) async => NoteModel(
-                id: 1,
-                content: 'nota',
-                createdAt: DateTime(2026),
-                updatedAt: DateTime(2026),
-              ));
       when(() => mockRepository.updateDocument(any()))
           .thenAnswer((_) async => 1);
 

@@ -218,11 +218,7 @@ class ImportProvider with ChangeNotifier {
       final docsDir = await getApplicationDocumentsDirectory();
       debugPrint('[ImportProvider] Directorio de docs: ${docsDir.path}');
 
-      // Preparar notas iniciales con clasificación (todas las categorías)
       final label = preparation.classification.metadata['label'] as String? ?? 'desconocido';
-      final confidence = (preparation.classification.confidence * 100).toStringAsFixed(1);
-      final initialNotes = 'Clasificado como: $label (confianza: $confidence%)';
-      debugPrint('[ImportProvider] 📝 Notas iniciales: $initialNotes');
 
       // Guardar documento
       final startSave = DateTime.now();
@@ -231,7 +227,6 @@ class ImportProvider with ChangeNotifier {
         finalFile,
         docsDir.path,
         locale,
-        initialNotes: initialNotes,
         tfliteClass: label,
       );
       final endSave = DateTime.now();

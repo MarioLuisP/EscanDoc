@@ -116,3 +116,53 @@ previous balance, minimum payment, payment stub, tear here
 - 31 tests en `refine_classification_test.dart`
 - 10 tests en `process_ocr_test.dart` (actualizados)
 - Todos pasan ✅
+
+---
+
+## Títulos de documentos (18 Febrero 2026)
+
+Cada documento recibe un nombre amigable en el momento de guardado, basado en el tipo TFLite inicial.
+Si el refinamiento post-OCR cambia el tipo, el título se regenera con el tipo correcto.
+
+### Formato
+`[Tipo] [N] del [D]/[M]` en español, `[Type] [N] of [D]/[M]` en inglés.
+
+Ejemplos: `Factura 1 del 17/2`, `Nota 3 del 18/2`, `Foto 1 del 18/2`
+
+### Nombres por tipo
+
+| Tipo TFLite  | ES       | EN       |
+|--------------|----------|----------|
+| documento    | Documento| Document |
+| factura      | Factura  | Invoice  |
+| manuscrito   | Nota     | Note     |
+| folleto      | Folleto  | Brochure |
+| foto         | Foto     | Photo    |
+| recibo       | Recibo   | Receipt  |
+
+### Numeración secuencial
+Se cuenta cuántos documentos del mismo tipo ya existen **en el mismo día** usando el prefijo del nombre (`LIKE 'Factura %'`). El nuevo recibe el siguiente número.
+
+### Renombrado manual
+El usuario puede cambiar el nombre desde el detalle del documento (ícono de lápiz). El nuevo nombre se valida como no vacío y se guarda en BD.
+
+---
+
+## Notas automáticas (18 Febrero 2026)
+
+Las notas de debug (clasificación TFLite y corrección de tipo) fueron eliminadas.
+En su lugar, `ProcessOCR` crea una única nota de extracto útil para el usuario.
+
+### Nota para documentos impresos
+Primeros 150 caracteres del texto OCR, con espacios y saltos de línea colapsados.
+
+### Nota para manuscritos
+Se toman las top-5 líneas con mayor confianza OCR (sin importar si superan un umbral fijo) y se unen con espacio. Si hay palabras reconocibles: `"Nota manuscrita de [palabras]"`. Si no hay nada reconocible: `"Nota manuscrita"`.
+
+La idea es que si el documento tiene texto impreso (membrete, encabezado), esas líneas naturalmente tendrán confianza alta y aparecerán en la nota. Si es puro manuscrito, al menos aparecen las palabras más legibles.
+
+### Cuándo no se crea nota
+Si el OCR no extrae ningún texto (imagen en blanco, error de reconocimiento), no se crea nota.
+
+### Campo agregado a OcrAnalysis
+Se agregó `topConfidenceText` al modelo de dominio `OcrAnalysis`, calculado en `OCRServiceImpl` ordenando todas las líneas por confianza y tomando las top-5 con longitud útil.

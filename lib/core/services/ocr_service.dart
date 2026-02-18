@@ -39,20 +39,32 @@ class OCRServiceImpl implements OCRService {
       // DEBUG: log estructura completa de ML Kit
       _logOCRStructure(recognizedText);
 
-      // Calcular promedio de confianza de todas las líneas
-      final allConfidences = recognizedText.blocks
+      // Recopilar todas las líneas para métricas
+      final allLines = recognizedText.blocks
           .expand((block) => block.lines)
-          .map((line) => line.confidence ?? 0.0)
           .toList();
 
-      final avgConf = allConfidences.isEmpty
+      // Promedio de confianza
+      final avgConf = allLines.isEmpty
           ? 0.0
-          : allConfidences.reduce((a, b) => a + b) / allConfidences.length;
+          : allLines.map((l) => l.confidence ?? 0.0).reduce((a, b) => a + b) /
+              allLines.length;
+
+      // Top-5 líneas por confianza (solo las que tienen texto útil)
+      final sortedLines = List.of(allLines)
+        ..sort((a, b) =>
+            (b.confidence ?? 0.0).compareTo(a.confidence ?? 0.0));
+      final topConfidenceText = sortedLines
+          .where((l) => l.text.trim().length > 2)
+          .take(5)
+          .map((l) => l.text.trim())
+          .join(' ');
 
       return OcrAnalysis(
         text: recognizedText.text,
         blockCount: recognizedText.blocks.length,
         avgConfidence: avgConf,
+        topConfidenceText: topConfidenceText,
       );
     } catch (e) {
       return OcrAnalysis.empty;

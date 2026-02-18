@@ -122,7 +122,6 @@ class MyApp extends StatelessWidget {
             final saveDocument = SaveScannedDocument(
               classifier,
               documentRepository,
-              noteRepository,
             );
             final processOCR = ProcessOCR(
               ocrService,
@@ -163,7 +162,6 @@ class MyApp extends StatelessWidget {
             final saveDocument = SaveScannedDocument(
               classifier,
               documentRepository,
-              noteRepository,
             );
             final processOCR = ProcessOCR(
               ocrService,

@@ -5,39 +5,31 @@ import 'package:escandoc/features/scan/domain/usecases/save_scanned_document.dar
 import 'package:escandoc/core/services/document_classifier.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
-import 'package:escandoc/features/notes/data/models/note_model.dart';
-import 'package:escandoc/features/notes/data/repositories/note_repository.dart';
 
 // Mocks
 class MockDocumentClassifier extends Mock implements DocumentClassifier {}
 class MockDocumentRepository extends Mock implements DocumentRepository {}
-class MockNoteRepository extends Mock implements NoteRepository {}
 
 // Fakes para registerFallbackValue
 class FakeDocumentModel extends Fake implements DocumentModel {}
-class FakeNoteModel extends Fake implements NoteModel {}
 
 void main() {
   late SaveScannedDocument useCase;
   late MockDocumentClassifier mockClassifier;
   late MockDocumentRepository mockRepository;
-  late MockNoteRepository mockNoteRepository;
 
   setUpAll(() {
     TestWidgetsFlutterBinding.ensureInitialized();
     registerFallbackValue(FakeDocumentModel());
-    registerFallbackValue(FakeNoteModel());
   });
 
   setUp(() {
     mockClassifier = MockDocumentClassifier();
     mockRepository = MockDocumentRepository();
-    mockNoteRepository = MockNoteRepository();
 
     useCase = SaveScannedDocument(
       mockClassifier,
       mockRepository,
-      mockNoteRepository,
     );
   });
 
@@ -150,84 +142,4 @@ void main() {
     });
   });
 
-  group('SaveScannedDocument - Notas iniciales (TFLite)', () {
-    final testImage = File('scanned_image.jpg');
-    final now = DateTime(2026, 2, 13);
-
-    test('debe crear nota automática cuando se proporciona initialNotes', () async {
-      const initialNotes = 'Clasificado como: ticket (confianza: 85.3%)';
-      stubDefaults(insertedId: 123);
-      when(() => mockNoteRepository.createNote(any(), any())).thenAnswer(
-        (_) async => NoteModel(id: 456, content: initialNotes, createdAt: now),
-      );
-
-      await useCase.call(
-        testImage, '/test/output', 'es',
-        currentDate: now,
-        initialNotes: initialNotes,
-      );
-
-      verify(() => mockNoteRepository.createNote(any(), 123)).called(1);
-    });
-
-    test('debe vincular nota al documento con su ID', () async {
-      const initialNotes = 'Clasificado como: document (confianza: 92.1%)';
-      stubDefaults(insertedId: 999);
-      when(() => mockNoteRepository.createNote(any(), any())).thenAnswer(
-        (_) async => NoteModel(id: 111, content: initialNotes, createdAt: now),
-      );
-
-      await useCase.call(
-        testImage, '/test/output', 'es',
-        currentDate: now,
-        initialNotes: initialNotes,
-      );
-
-      final captured = verify(
-        () => mockNoteRepository.createNote(captureAny(), captureAny()),
-      ).captured;
-      expect((captured[0] as NoteModel).content, initialNotes);
-      expect(captured[1] as int, 999);
-    });
-
-    test('NO debe crear nota si initialNotes es null', () async {
-      stubDefaults(insertedId: 123);
-
-      await useCase.call(
-        testImage, '/test/output', 'es',
-        currentDate: now,
-        initialNotes: null,
-      );
-
-      verifyNever(() => mockNoteRepository.createNote(any(), any()));
-    });
-
-    test('NO debe crear nota si initialNotes es vacío', () async {
-      stubDefaults(insertedId: 123);
-
-      await useCase.call(
-        testImage, '/test/output', 'es',
-        currentDate: now,
-        initialNotes: '',
-      );
-
-      verifyNever(() => mockNoteRepository.createNote(any(), any()));
-    });
-
-    test('debe lanzar excepción si la nota falla', () async {
-      const initialNotes = 'Clasificado como: ticket';
-      stubDefaults(insertedId: 123);
-      when(() => mockNoteRepository.createNote(any(), any()))
-          .thenThrow(Exception('DB error'));
-
-      expect(
-        () => useCase.call(
-          testImage, '/test/output', 'es',
-          currentDate: now,
-          initialNotes: initialNotes,
-        ),
-        throwsException,
-      );
-    });
-  });
 }
