@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:escandoc/features/documents/presentation/pages/ocr_fullscreen_page.dart';
 
 void main() {
@@ -13,18 +14,18 @@ void main() {
   }
 
   group('OcrFullscreenPage', () {
-    testWidgets('debe mostrar texto OCR en TextField', (tester) async {
+    testWidgets('debe mostrar texto OCR en Markdown', (tester) async {
       const ocrText = 'Texto extraído del documento';
 
       await tester.pumpWidget(buildWidget(ocrText: ocrText));
       await tester.pumpAndSettle();
 
-      // Debe mostrar el texto en el TextField
-      expect(find.text(ocrText), findsOneWidget);
+      // Debe mostrar Markdown con el texto OCR
+      final markdown = tester.widget<Markdown>(find.byType(Markdown));
+      expect(markdown.data, ocrText);
 
-      // El TextField debe ser de solo lectura
-      final textField = tester.widget<TextField>(find.byType(TextField));
-      expect(textField.readOnly, true);
+      // Debe ser seleccionable
+      expect(markdown.selectable, true);
     });
 
     testWidgets('debe mostrar botón copiar cuando hay texto', (tester) async {

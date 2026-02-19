@@ -5,7 +5,7 @@
 
 ---
 
-## 📊 Flujo Completo Optimizado
+## 📊 Flujo Completo Optimizado  (diagrama ASCII)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -110,10 +110,28 @@
             │   ProcessOCR (no bloquea UI)    │
             ├─────────────────────────────────┤
             │ • google_mlkit_text_recognition │
-            │ • Extrae texto + blockCount     │
-            │   + avgConfidence               │
+            │ • extractAnalysis(jpg,          │
+            │     docType: tfliteClass)       │
+            │                                 │
+            │ blocksToMarkdown(blocks,        │
+            │   documentTypeFromString(type)) │
+            │ ┌───────────────────────────┐  │
+            │ │ 1. imageSize desde bboxes │  │
+            │ │ 2. Rotación por mediana   │  │
+            │ │    FIX: normalizar < 0    │  │
+            │ │    -90° → 270° (CW ✓)    │  │
+            │ │    +90° → 90°  (CCW ✓)   │  │
+            │ │ 3. Coords transformadas   │  │
+            │ │ 4. Clustering columnas    │  │
+            │ │ 5a. documento/manuscrito  │  │
+            │ │     → # heading, listas   │  │
+            │ │ 5b. factura/recibo        │  │
+            │ │     + 2 cols → tabla MD   │  │
+            │ └───────────────────────────┘  │
+            │                                 │
+            │ OcrAnalysis(text: markdown,     │
+            │   blockCount, avgConfidence)    │
             │ • Tiempo: ~3-5s                 │
-            │ • Usuario puede seguir usando   │
             └─────────────────────────────────┘
                                 ↓
             ┌─────────────────────────────────┐
@@ -132,6 +150,23 @@
             │                                 │
             │ Si hubo cambio → nota automática│
             │ "X → Y (2° paso: motivo)"      │
+            │                                 │
+            │ Nota extracto (150 chars):      │
+            │ strip # ## - | --- del markdown │
+            │ → texto plano legible en BD     │
+            └─────────────────────────────────┘
+                                ↓
+            ┌─────────────────────────────────┐
+            │   7. RENDER UI                  │
+            │   flutter_markdown_plus         │
+            ├─────────────────────────────────┤
+            │ OcrPreviewSection               │
+            │   MarkdownBody(data: ocrText)   │
+            │   (30% altura, scroll)          │
+            │                                 │
+            │ OcrFullscreenPage               │
+            │   Markdown(selectable: true)    │
+            │   (fullscreen, scrollbar)       │
             └─────────────────────────────────┘
                                 ↓
                           ✅ LISTO
@@ -302,3 +337,121 @@ TOTAL (sin OCR)       4270ms   3680ms     -14%
 **Versión:** 2.1 - Flujo con refinamiento de clasificación post-OCR
 **Performance:** 39% más rápido que v1.0 en caso de foto cancelada
 **Mantenibilidad:** ✅ Tests actualizados, providers unificados, código limpio
+
+
+## 📝 OCR Markdown Pipeline
+
+**Fecha:** 18 Febrero 2026
+
+### **Problema**
+
+`OCRServiceImpl.extractAnalysis()` retornaba `recognizedText.text` — texto plano desordenado que ML Kit concatena sin respetar jerarquía ni rotación del documento.
+
+### **Solución**
+
+Conectar `blocksToMarkdown()` al pipeline OCR para generar Markdown estructurado real:
+
+```
+ML Kit blocks → blocksToMarkdown(blocks, docType) → Markdown estructurado
+     ↓                                                        ↓
+  texto plano                                    headings, listas, tablas
+  desordenado                                    según tipo de documento
+```
+
+### **Diagrama del nuevo flujo OCR**
+
+```
+ProcessOCR.call(documentId, tfliteClass)
+         ↓
+extractAnalysis(jpgFile, docType: tfliteClass)
+         ↓
+  ML Kit processImage()
+         ↓
+  blocksToMarkdown(blocks, documentTypeFromString(docType))
+  ┌─────────────────────────────────────────────────────┐
+  │  1. Calcular imageSize desde max de bboxes          │
+  │  2. Detectar rotación (mediana de ángulos)          │
+  │     ⚠️ FIX: normalizar ángulos negativos primero    │
+  │     (-90° → 270°, no 270° < 45° = deg0)            │
+  │  3. Aplanar a _Line con coords transformadas        │
+  │  4. Clustering de columnas                          │
+  │  5. Renderizar según docType:                       │
+  │     - documento/folleto/manuscrito → secuencial     │
+  │       (# heading si caps grande, ## si caps medio)  │
+  │     - factura/recibo + 2+ columnas → tabla Markdown │
+  └─────────────────────────────────────────────────────┘
+         ↓
+  OcrAnalysis(text: markdown, blockCount, avgConfidence)
+         ↓
+  RefineClassification (2° paso)
+         ↓
+  _buildPrintedNote(markdown)  ← strip prefijos # ## ### - | ---
+         ↓
+  DB: ocrText = markdown, nota = texto limpio (150 chars)
+```
+
+### **Archivos involucrados**
+
+| Archivo | Rol |
+|---------|-----|
+| `lib/core/services/blocks_to_markdown.dart` | Movido desde `lib/`, + `documentTypeFromString()` |
+| `lib/core/services/ocr_service.dart` | `extractAnalysis({docType})` + llama `blocksToMarkdown` |
+| `lib/features/scan/domain/usecases/process_ocr.dart` | Pasa `docType: tfliteClass`, strip markdown en nota |
+
+### **UI: Markdown rendering**
+
+| Widget | Antes | Ahora |
+|--------|-------|-------|
+| `OcrPreviewSection` | `Text(ocrText)` | `MarkdownBody(data: ocrText)` |
+| `OcrFullscreenPage` | `TextField(readOnly: true)` | `Markdown(selectable: true)` |
+
+Dependencia agregada a `pubspec.yaml`:
+```yaml
+flutter_markdown_plus: ^1.0.7
+```
+
+### **Bug fix: Rotación en _detectRotation**
+
+**Problema:** ML Kit reporta `-90°` para rotación CW. El código normalizaba sobre `[0, 360)` con:
+```dart
+if (median >= 315 || median < 45) return _Rotation.deg0;
+```
+→ `-90 < 45` → clasificado como `deg0` → rotación ignorada completamente.
+
+**Fix aplicado** (`lib/core/services/blocks_to_markdown.dart`):
+```dart
+// Normalizar negativos ANTES de calcular la mediana
+final normalized = angles.map((a) => a < 0 ? a + 360 : a).toList();
+```
+
+**Resultado:**
+- `-90°` → `270°` → cae en `[225, 315)` → `_Rotation.deg270` ✓ (rotación CW)
+- `+90°` → `90°` → cae en `[45, 135)` → `_Rotation.deg90` ✓ (rotación CCW)
+
+### **Nota sobre la nota de extracto**
+
+`_buildPrintedNote` ahora recibe Markdown y lo limpia antes de truncar:
+```dart
+final stripped = markdown
+    .replaceAll(RegExp(r'^#{1,3}\s+', multiLine: true), '')   // # ## ###
+    .replaceAll(RegExp(r'^[-*]\s+', multiLine: true), '')       // listas
+    .replaceAll(RegExp(r'\|', multiLine: true), ' ')            // tablas
+    .replaceAll(RegExp(r'^---+$', multiLine: true), '')         // separadores
+    .replaceAll(RegExp(r'\s+'), ' ')
+    .trim();
+```
+La nota en BD siempre es texto plano legible (máx 150 chars).
+
+---
+
+## 📚 Referencias
+
+- **MEMORY.md**: Decisiones históricas del proyecto
+- **compressor.txt**: Detalles de Probe Compression strategy
+- **keras.md**: Clasificador TFLite + Optimización preprocesado dart:ui (NUEVO 16 Feb 2026)
+
+---
+
+**Última actualización:** 18 Febrero 2026
+**Autor:** Equipo EscanDoc
+**Versión:** 1.2 - OCR Markdown Pipeline + fix rotación ángulos negativos

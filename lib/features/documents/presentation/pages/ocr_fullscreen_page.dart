@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
 /// Página fullscreen para visualizar y copiar texto OCR
 /// TextField de solo lectura con scroll y botón copiar
@@ -17,20 +18,10 @@ class OcrFullscreenPage extends StatefulWidget {
 }
 
 class _OcrFullscreenPageState extends State<OcrFullscreenPage> {
-  late final TextEditingController _controller;
   final ScrollController _scrollController = ScrollController();
 
   @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(
-      text: widget.ocrText ?? 'ocr_empty_hint'.tr(),
-    );
-  }
-
-  @override
   void dispose() {
-    _controller.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -63,40 +54,30 @@ class _OcrFullscreenPageState extends State<OcrFullscreenPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Scrollbar(
-          controller: _scrollController,
-          thumbVisibility: true,
-          child: TextField(
-            controller: _controller,
-            scrollController: _scrollController,
-            readOnly: true,
-            maxLines: null,
-            expands: true,
-            style: TextStyle(
-              fontSize: 18,
-              color: hasText ? Colors.grey[800] : Colors.grey[500],
-              fontStyle: hasText ? FontStyle.normal : FontStyle.italic,
-              height: 1.5,
-            ),
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+        child: hasText
+            ? Scrollbar(
+                controller: _scrollController,
+                thumbVisibility: true,
+                child: Markdown(
+                  controller: _scrollController,
+                  data: widget.ocrText!,
+                  selectable: true,
+                  styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                    p:  Theme.of(context).textTheme.bodyLarge,
+                    h1: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                    h2: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    h3: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              )
+            : Text(
+                'ocr_empty_hint'.tr(),
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey[500],
+                  fontStyle: FontStyle.italic,
+                ),
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[400]!),
-              ),
-              filled: true,
-              fillColor: hasText ? Colors.grey[50] : Colors.grey[100],
-              contentPadding: const EdgeInsets.all(16),
-            ),
-          ),
-        ),
       ),
       // Botón grande COPIAR TEXTO en el fondo (solo si hay texto)
       bottomNavigationBar: hasText ? _buildCopyButton() : null,

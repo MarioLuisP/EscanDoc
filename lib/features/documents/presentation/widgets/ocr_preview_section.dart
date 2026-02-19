@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
 /// Sección de preview de texto OCR (30% altura)
 /// Tap → abre vista completa con capacidad de copiar
@@ -61,16 +62,24 @@ class OcrPreviewSection extends StatelessWidget {
             // Preview de texto OCR o mensaje vacío
             Expanded(
               child: SingleChildScrollView(
-                child: Text(
-                  hasText ? ocrText! : 'ocr_empty_hint'.tr(),
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: hasText ? Colors.grey[800] : Colors.grey[500],
-                    fontStyle: hasText ? FontStyle.normal : FontStyle.italic,
-                  ),
-                  maxLines: 6,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child: hasText
+                    ? MarkdownBody(
+                        data: ocrText!,
+                        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                          p: TextStyle(fontSize: 16, color: Colors.grey[800]),
+                          h1: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey[800]),
+                          h2: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.grey[800]),
+                          h3: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey[800]),
+                        ),
+                      )
+                    : Text(
+                        'ocr_empty_hint'.tr(),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[500],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
               ),
             ),
           ],

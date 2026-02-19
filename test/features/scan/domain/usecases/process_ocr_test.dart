@@ -108,7 +108,7 @@ void main() {
       final analysis = makeAnalysis('Texto extraído del documento');
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => analysis);
       when(() => mockRefinement.call(any(), any()))
           .thenReturn(noChange('documento'));
@@ -121,7 +121,7 @@ void main() {
 
       // Assert - extractAnalysis debe ser llamado con el archivo JPG
       final captured =
-          verify(() => mockOCRService.extractAnalysis(captureAny()))
+          verify(() => mockOCRService.extractAnalysis(captureAny(), docType: any(named: 'docType')))
               .captured.single as File;
       expect(captured.path, testJpgFile.path);
     });
@@ -133,7 +133,7 @@ void main() {
       final analysis = makeAnalysis(extractedText);
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => analysis);
       when(() => mockRefinement.call(any(), any()))
           .thenReturn(noChange('documento'));
@@ -157,7 +157,7 @@ void main() {
       final analysis = makeAnalysis('texto');
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => analysis);
       when(() => mockRefinement.call(any(), any()))
           .thenReturn(noChange('documento'));
@@ -178,7 +178,7 @@ void main() {
       final testDoc = createTestDocument();
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(text));
       when(() => mockRefinement.call(any(), any()))
           .thenReturn(noChange('documento'));
@@ -202,7 +202,7 @@ void main() {
       final testDoc = createTestDocument();
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(longText));
       when(() => mockRefinement.call(any(), any()))
           .thenReturn(noChange('documento'));
@@ -225,7 +225,7 @@ void main() {
       final testDoc = createTestDocument();
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(
                 'texto borroso',
                 topConfidenceText: 'Hospital Central',
@@ -251,7 +251,7 @@ void main() {
       final testDoc = createTestDocument();
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(
                 'texto muy borroso',
                 topConfidenceText: '',
@@ -277,7 +277,7 @@ void main() {
       final testDoc = createTestDocument();
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => OcrAnalysis.empty);
       when(() => mockRefinement.call(any(), any()))
           .thenReturn(noChange('documento'));
@@ -299,7 +299,7 @@ void main() {
       final testDoc = createTestDocument();
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(extractedText));
       when(() => mockRefinement.call(any(), any()))
           .thenReturn(noChange('documento'));
@@ -322,7 +322,7 @@ void main() {
       final testDoc = createTestDocument();
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(extractedText));
       when(() => mockRefinement.call(any(), any()))
           .thenReturn(noChange('documento'));
@@ -347,7 +347,7 @@ void main() {
       final testDoc = createTestDocument();
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(extractedText));
       when(() => mockRefinement.call(any(), any()))
           .thenReturn(noChange('documento'));
@@ -369,7 +369,7 @@ void main() {
       final testDoc = createTestDocument();
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(rawText));
       when(() => mockRefinement.call(any(), any()))
           .thenReturn(RefinementResult(refinedClass: 'manuscrito'));
@@ -390,7 +390,7 @@ void main() {
       final testDoc = createTestDocument();
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis('texto'));
       when(() => mockRefinement.call(any(), any())).thenReturn(
         RefinementResult(
@@ -420,7 +420,7 @@ void main() {
       final testDoc = createTestDocument();
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(rawText));
       when(() => mockRefinement.call(any(), any())).thenReturn(
         RefinementResult(
@@ -452,7 +452,7 @@ void main() {
       final testDoc = createTestDocument();
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);
-      when(() => mockOCRService.extractAnalysis(any()))
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(rawText));
       when(() => mockRefinement.call(any(), any()))
           .thenReturn(noChange('documento'));

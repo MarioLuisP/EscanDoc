@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:escandoc/features/documents/presentation/widgets/ocr_preview_section.dart';
 
 void main() {
@@ -27,8 +28,9 @@ void main() {
         ),
       );
 
-      // Debe mostrar el texto OCR
-      expect(find.text(ocrText), findsOneWidget);
+      // Debe mostrar MarkdownBody con el texto OCR
+      final markdownBody = tester.widget<MarkdownBody>(find.byType(MarkdownBody));
+      expect(markdownBody.data, ocrText);
 
       // Debe mostrar icono de texto
       expect(find.byIcon(Icons.text_fields), findsOneWidget);

@@ -66,7 +66,7 @@ class ProcessOCR {
       final startOCR = DateTime.now();
       debugPrint(
           '[ProcessOCR] 🟢 START: OCR extractAnalysis - ${startOCR.millisecondsSinceEpoch}');
-      final ocrAnalysis = await _ocrService.extractAnalysis(jpgFile);
+      final ocrAnalysis = await _ocrService.extractAnalysis(jpgFile, docType: tfliteClass);
       final endOCR = DateTime.now();
       debugPrint(
           '[ProcessOCR] 🔴 END: OCR extractAnalysis - ${endOCR.difference(startOCR).inMilliseconds}ms'
@@ -156,12 +156,18 @@ class ProcessOCR {
     return 'Nota manuscrita de ${topConfidenceText.trim()}';
   }
 
-  /// Nota para documentos impresos: primeros 150 chars del texto OCR,
-  /// colapsando espacios y saltos de línea múltiples.
-  String _buildPrintedNote(String text) {
-    if (text.isEmpty) return '';
-    final collapsed = text.replaceAll(RegExp(r'\s+'), ' ').trim();
-    return collapsed.length > 150 ? collapsed.substring(0, 150).trimRight() : collapsed;
+  /// Nota para documentos impresos: primeros 150 chars del markdown limpio.
+  /// Quita prefijos markdown antes de truncar.
+  String _buildPrintedNote(String markdown) {
+    if (markdown.isEmpty) return '';
+    final stripped = markdown
+        .replaceAll(RegExp(r'^#{1,3}\s+', multiLine: true), '')
+        .replaceAll(RegExp(r'^[-*]\s+', multiLine: true), '')
+        .replaceAll(RegExp(r'\|', multiLine: true), ' ')
+        .replaceAll(RegExp(r'^---+$', multiLine: true), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    return stripped.length > 150 ? stripped.substring(0, 150).trimRight() : stripped;
   }
 
   /// Selecciona la nota correcta según el tipo refinado.

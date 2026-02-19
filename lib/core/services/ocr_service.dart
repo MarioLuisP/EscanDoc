@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:escandoc/core/services/ocr_analysis.dart';
+import 'package:escandoc/core/services/blocks_to_markdown.dart';
 
 /// Interface para servicio de OCR (permite mocking en tests)
 abstract class OCRService {
-  Future<OcrAnalysis> extractAnalysis(File imageFile);
+  Future<OcrAnalysis> extractAnalysis(File imageFile, {String docType = 'documento'});
   void dispose();
 }
 
@@ -27,7 +28,7 @@ class OCRServiceImpl implements OCRService {
   /// - La imagen es inválida
   /// - OCR falla por cualquier razón
   @override
-  Future<OcrAnalysis> extractAnalysis(File imageFile) async {
+  Future<OcrAnalysis> extractAnalysis(File imageFile, {String docType = 'documento'}) async {
     try {
       if (!imageFile.existsSync() || imageFile.path.isEmpty) {
         return OcrAnalysis.empty;
@@ -60,8 +61,14 @@ class OCRServiceImpl implements OCRService {
           .map((l) => l.text.trim())
           .join(' ');
 
+      // Convertir bloques estructurados a Markdown
+      final markdown = blocksToMarkdown(
+        recognizedText.blocks,
+        documentTypeFromString(docType),
+      );
+
       return OcrAnalysis(
-        text: recognizedText.text,
+        text: markdown,
         blockCount: recognizedText.blocks.length,
         avgConfidence: avgConf,
         topConfidenceText: topConfidenceText,
