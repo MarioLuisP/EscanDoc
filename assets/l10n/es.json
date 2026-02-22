@@ -6,7 +6,7 @@
   "cancel_button": "CANCELAR",
   "delete_button": "ELIMINAR",
   "edit_button": "EDITAR",
-  "search_button": "BUSCAR",
+  "search_button": "Buscar",
   "back_button": "VOLVER",
   "share_button": "COMPARTIR",
 
@@ -107,12 +107,44 @@
   "adjust_document_title": "Ajustar Documento",
   "clear_search_tooltip": "Limpiar búsqueda",
   "search_empty_title": "Busca documentos y notas",
-  "search_empty_subtitle": "Escribe en la barra o usa el botón de voz",
+  "search_empty_subtitle": "Escribí palabras clave o presioná el micrófono para buscar por voz.",
   "import_document_tooltip": "Importar documento",
   "scan_cancelled": "Escaneo cancelado",
   "import_cancelled": "Importación cancelada",
   "document_imported": "Documento importado exitosamente",
   "print_tooltip": "Imprimir",
   "result_type_document": "Documento",
-  "result_type_note": "Nota"
+  "result_type_note": "Nota",
+
+  "recent_documents": "Últimos documentos",
+  "view_all": "Ver Todos",
+  "scan_subtitle": "Escaneá y guardá tus documentos.",
+
+  "all_documents_title": "Documentos",
+  "go_home": "Inicio",
+  "sort_recent": "Más recientes",
+  "sort_oldest": "Más antiguos",
+  "sort_name": "Por nombre",
+  "sort_type": "Por tipo",
+  "doc_type_nota": "Nota",
+  "doc_type_informe": "Informe",
+  "doc_type_manuscrito": "Manuscrito",
+  "doc_type_foto": "Foto",
+  "doc_type_folleto": "Folleto",
+
+  "clear_button": "Limpiar",
+  "no_recent_results": "No hay resultados recientes",
+
+  "note_edit_title": "Editar Nota de {docName}",
+  "note_new_title": "Nueva Nota de {docName}",
+  "discard_changes_title": "¿Salir sin guardar?",
+  "discard_changes_message": "Los cambios se van a perder.",
+  "discard_yes": "Sí, descartar",
+  "discard_no": "Seguir editando",
+
+  "menu_settings": "Configuración",
+  "settings_title": "Configuración",
+  "settings_language": "Idioma",
+  "language_es": "Español",
+  "language_en": "Inglés"
 }

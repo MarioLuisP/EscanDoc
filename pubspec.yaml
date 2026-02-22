@@ -1,7 +1,7 @@
 name: escandoc
 description: "EscanDoc - Scanner de documentos con notas y vencimientos integrados. Diseñado para personas mayores."
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ^3.6.0
@@ -87,7 +87,12 @@ dev_dependencies:
   mocktail: ^1.0.4                   # Mocks para tests
   sqflite_common_ffi: ^2.3.4         # SQLite para tests en desktop
   sqlite3: ^2.4.6                    # Para configurar SQLite con FTS en tests
-  
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # APP ICON
+  # ═══════════════════════════════════════════════════════════════════════════
+  flutter_launcher_icons: ^0.14.4    # Genera iconos para Android e iOS
+
   # ═══════════════════════════════════════════════════════════════════════════
   # LINTING
   # ═══════════════════════════════════════════════════════════════════════════
@@ -108,6 +113,19 @@ flutter:
   #       - asset: assets/fonts/Roboto-Regular.ttf
   #       - asset: assets/fonts/Roboto-Bold.ttf
   #         weight: 700
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# APP ICON CONFIG (flutter_launcher_icons)
+# ═══════════════════════════════════════════════════════════════════════════════
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true             # Apple App Store no permite alpha en iconos
+  # Adaptive icon Android 8+ (API 26+): fondo verde del logo + logo como foreground
+  adaptive_icon_background: "#388E3C"
+  adaptive_icon_foreground: "assets/images/logo.png"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # NOTAS DE ARQUITECTURA

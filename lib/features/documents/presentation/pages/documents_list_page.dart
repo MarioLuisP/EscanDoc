@@ -2,20 +2,45 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:gal/gal.dart';
+import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
-import 'package:escandoc/features/documents/presentation/providers/import_provider.dart';
-import 'package:escandoc/features/scan/presentation/providers/scan_provider.dart';
-import 'package:escandoc/features/documents/presentation/widgets/document_card.dart';
-import 'package:escandoc/features/documents/presentation/widgets/empty_state.dart';
 import 'package:escandoc/features/documents/presentation/widgets/delete_confirmation_dialog.dart';
-import 'package:escandoc/features/scan/presentation/widgets/photo_detected_dialog.dart';
-import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
-import 'package:escandoc/core/user/user_preferences.dart';
 
-/// Página principal que muestra la lista de documentos guardados
-/// HU-001: Ver lista de documentos guardados
+// ---------------------------------------------------------------------------
+// FUTURE-PROOF: cuando DocumentModel tenga campo 'category', reemplazar SOLO
+// esta función por: return doc.category ?? 'documento';
+// ---------------------------------------------------------------------------
+String _docTypeKey(String title) {
+  final first = title
+      .split(' ')
+      .first
+      .toLowerCase()
+      .replaceAll('á', 'a')
+      .replaceAll('é', 'e')
+      .replaceAll('í', 'i')
+      .replaceAll('ó', 'o')
+      .replaceAll('ú', 'u');
+
+  const known = {
+    'factura',
+    'recibo',
+    'contrato',
+    'nota',
+    'informe',
+    'manuscrito',
+    'medico',
+    'medica',
+    'foto',
+    'folleto',
+  };
+  return known.contains(first) ? 'doc_type_$first' : 'doc_type_documento';
+}
+
+// ---------------------------------------------------------------------------
+
+enum _SortOrder { recent, oldest, byName, byType }
+
+/// Pantalla "Ver Todos" — lista completa de documentos con filtro de orden.
 class DocumentsListPage extends StatefulWidget {
   const DocumentsListPage({super.key});
 
@@ -24,433 +49,519 @@ class DocumentsListPage extends StatefulWidget {
 }
 
 class _DocumentsListPageState extends State<DocumentsListPage> {
+  _SortOrder _sort = _SortOrder.recent;
+
   @override
   void initState() {
     super.initState();
-    // Cargar documentos al iniciar la página
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<DocumentsProvider>().loadDocuments();
     });
   }
 
+  List<DocumentModel> _sorted(List<DocumentModel> docs) {
+    final list = [...docs];
+    switch (_sort) {
+      case _SortOrder.recent:
+        return list; // ya viene DESC por created_at
+      case _SortOrder.oldest:
+        return list.reversed.toList();
+      case _SortOrder.byName:
+        return list..sort((a, b) => a.title.compareTo(b.title));
+      case _SortOrder.byType:
+        return list..sort((a, b) =>
+            _docTypeKey(a.title).compareTo(_docTypeKey(b.title)));
+    }
+  }
+
+  String get _sortLabel {
+    switch (_sort) {
+      case _SortOrder.recent:  return 'sort_recent'.tr();
+      case _SortOrder.oldest:  return 'sort_oldest'.tr();
+      case _SortOrder.byName:  return 'sort_name'.tr();
+      case _SortOrder.byType:  return 'sort_type'.tr();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'home_title'.tr(),
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+      backgroundColor: const Color(0xFFF5F0E8),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildCompactHeader(),
+            _buildTitleRow(),
+            _buildSortBar(context),
+            Expanded(child: _buildList(context)),
+            _buildBottomBar(context),
+          ],
         ),
-        actions: [
-          // Botón IMPORTAR documento
-          IconButton(
-            icon: const Icon(Icons.upload_file, size: 28),
-            onPressed: () => _handleImport(context),
-            tooltip: 'import_document_tooltip'.tr(),
-          ),
-          // Botón de búsqueda
-          IconButton(
-            icon: const Icon(Icons.search, size: 28),
-            onPressed: () {
-              Navigator.pushNamed(context, '/search');
-            },
-            tooltip: 'search_button'.tr(),
-          ),
-        ],
-      ),
-      body: Consumer<DocumentsProvider>(
-        builder: (context, provider, child) {
-          // Estado de carga
-          if (provider.isLoading && !provider.hasDocuments) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
-          // Estado vacío
-          if (!provider.hasDocuments) {
-            return const EmptyState();
-          }
-
-          // Lista de documentos
-          return RefreshIndicator(
-            onRefresh: () => provider.loadDocuments(),
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: provider.documents.length,
-              itemBuilder: (context, index) {
-                final document = provider.documents[index];
-
-                return DocumentCard(
-                  document: document,
-                  onTap: () => _navigateToDetail(document.id!),
-                  onLongPress: () => _showDeleteDialog(document.id!),
-                );
-              },
-            ),
-          );
-        },
-      ),
-
-      // Botón flotante ESCANEAR (grande y visible)
-      floatingActionButton: Consumer<ScanProvider>(
-        builder: (context, scanProvider, child) {
-          return FloatingActionButton.extended(
-            onPressed: scanProvider.isBusy ? null : () => _handleScan(context),
-            icon: scanProvider.isBusy
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Icon(Icons.camera_alt, size: 28),
-            label: Text(
-              scanProvider.isBusy
-                  ? (scanProvider.isScanning
-                      ? 'scanning'.tr()
-                      : scanProvider.isSaving
-                          ? 'document_saved'.tr()
-                          : 'processing_text'.tr())
-                  : 'scan_button'.tr(),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            backgroundColor: scanProvider.isBusy
-                ? Colors.grey
-                : Theme.of(context).primaryColor,
-          );
-        },
       ),
     );
   }
 
-  /// Ejecuta flujo de escaneo completo con clasificación
-  Future<void> _handleScan(BuildContext context) async {
-    final scanProvider = context.read<ScanProvider>();
-    final documentsProvider = context.read<DocumentsProvider>();
-    final locale = context.locale.languageCode;
+  // --- Header compacto (logo pequeño, igual en todas las sub-pantallas) ---
 
-    // 1. Preparar escaneo (scanner + convertir + clasificar + normalizar solo si es documento)
-    final preparation = await scanProvider.prepareScan();
-
-    if (preparation == null) {
-      // Usuario canceló o error
-      if (mounted && scanProvider.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'error_scanning'.tr(),
-              style: const TextStyle(fontSize: 16),
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-      return;
-    }
-
-    if (!mounted) return;
-
-    // 2. Si detectó FOTO → Mostrar diálogo especial (guardar en galería O app)
-    if (preparation.classification.type == DocumentType.photo) {
-      final action = await PhotoDetectedDialog.show(
-        context,
-        preparation.thumbnailFile ?? preparation.processedFile,
-        userName: UserPreferences().userName,
-      );
-
-      if (action == PhotoAction.cancel || action == null) {
-        // Usuario canceló
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'scan_cancelled'.tr(),
-                style: const TextStyle(fontSize: 16),
-              ),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-        return;
-      }
-
-      // Guardar en galería (feature oculta)
-      if (action == PhotoAction.saveToGallery) {
-        await _savePhotoToGallery(preparation.processedFile);
-        return;
-      }
-
-      // Si eligió "Guardar en App" → continuar flujo normal
-    }
-
-    if (!mounted) return;
-
-    // 3. Completar escaneo (normalizar si es foto + guardar + OCR)
-    final document = await scanProvider.completeScan(
-      preparation,
-      locale,
-    );
-
-    if (document == null) {
-      // Error al guardar
-      if (mounted && scanProvider.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Error al guardar: ${scanProvider.error}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-      return;
-    }
-
-    // 4. Éxito - recargar lista y mostrar confirmación
-    if (mounted) {
-      documentsProvider.loadDocuments(); // Sin await - carga en background
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'document_saved'.tr(),
-            style: const TextStyle(fontSize: 16),
-          ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 3),
-        ),
-      );
-    }
-  }
-
-  /// Guarda una foto en la galería del teléfono (feature oculta)
-  Future<void> _savePhotoToGallery(File photoFile) async {
-    try {
-      debugPrint('[DocumentsListPage] Guardando foto en galería: ${photoFile.path}');
-
-      // Guardar en galería usando gal
-      await Gal.putImage(photoFile.path);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
+  Widget _buildCompactHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset('assets/images/logo.png', width: 38, height: 38),
+          const SizedBox(width: 8),
+          RichText(
+            text: const TextSpan(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Foto guardada en tu galería ✅',
-                    style: TextStyle(fontSize: 16),
+                TextSpan(
+                  text: 'Escan',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF388E3C),
+                  ),
+                ),
+                TextSpan(
+                  text: 'Docs',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF1B5E20),
                   ),
                 ),
               ],
             ),
-            backgroundColor: Color(0xFF2D5016), // Verde bosque
-            duration: Duration(seconds: 3),
           ),
-        );
-      }
-    } catch (e) {
-      debugPrint('[DocumentsListPage] ERROR al guardar en galería: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Error al guardar en galería: ${e.toString()}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-    }
+        ],
+      ),
+    );
   }
 
-  /// Navega a la vista detalle del documento
-  void _navigateToDetail(int documentId) async {
-    await Navigator.pushNamed(
-      context,
-      '/document/detail',
-      arguments: documentId,
+  Widget _buildTitleRow() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
+      child: Text(
+        'all_documents_title'.tr(),
+        style: const TextStyle(
+          fontSize: 26,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSortBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => _showSortMenu(context),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+                ),
+                borderRadius: BorderRadius.circular(50),
+                border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF9A8060).withOpacity(0.40),
+                    offset: const Offset(0, 3),
+                    blurRadius: 6,
+                    spreadRadius: -1,
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _sortLabel,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF5A4A30),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 18,
+                      color: Color(0xFF5A4A30),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSortMenu(BuildContext context) async {
+    final RenderBox button = context.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(Offset.zero, ancestor: overlay),
+        button.localToGlobal(
+          button.size.bottomRight(Offset.zero),
+          ancestor: overlay,
+        ),
+      ),
+      Offset.zero & overlay.size,
     );
 
-    // Recargar lista al volver (por si se eliminó desde detalle)
-    if (mounted) {
-      context.read<DocumentsProvider>().loadDocuments();
+    final selected = await showMenu<_SortOrder>(
+      context: context,
+      position: position,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: const Color(0xFFFDFAF4),
+      items: [
+        _sortItem(_SortOrder.recent,  Icons.schedule,      'sort_recent'.tr()),
+        _sortItem(_SortOrder.oldest,  Icons.history,       'sort_oldest'.tr()),
+        _sortItem(_SortOrder.byName,  Icons.sort_by_alpha, 'sort_name'.tr()),
+        _sortItem(_SortOrder.byType,  Icons.label_outline, 'sort_type'.tr()),
+      ],
+    );
+
+    if (selected != null && mounted) {
+      setState(() => _sort = selected);
     }
   }
 
-  /// Muestra el diálogo de confirmación de eliminación
+  PopupMenuItem<_SortOrder> _sortItem(
+      _SortOrder value, IconData icon, String label) {
+    final selected = _sort == value;
+    return PopupMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon,
+              size: 18,
+              color: selected
+                  ? const Color(0xFF388E3C)
+                  : const Color(0xFF5A4A30)),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight:
+                  selected ? FontWeight.bold : FontWeight.normal,
+              color: selected
+                  ? const Color(0xFF388E3C)
+                  : const Color(0xFF5A4A30),
+            ),
+          ),
+          if (selected) ...[
+            const Spacer(),
+            const Icon(Icons.check, size: 16, color: Color(0xFF388E3C)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildList(BuildContext context) {
+    return Consumer<DocumentsProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoading && !provider.hasDocuments) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!provider.hasDocuments) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.description_outlined,
+                      size: 80, color: Colors.grey[300]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'documents_empty'.tr(),
+                    style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final docs = _sorted(provider.documents);
+
+        return RefreshIndicator(
+          onRefresh: () => provider.loadDocuments(),
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            itemCount: docs.length,
+            separatorBuilder: (_, __) =>
+                const Divider(height: 1, color: Color(0xFFDDD0B8)),
+            itemBuilder: (context, index) {
+              final doc = docs[index];
+              return _DocItem(
+                document: doc,
+                onTap: () => _navigateToDetail(doc.id!),
+                onLongPress: () => _showDeleteDialog(doc.id!),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F0E8),
+        border: Border(top: BorderSide(color: Colors.grey.shade300, width: 1)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _GradientOutlineButton(
+              icon: Icons.home_outlined,
+              label: 'go_home'.tr(),
+              onTap: () => Navigator.pop(context),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _GradientOutlineButton(
+              icon: Icons.search,
+              label: 'search_button'.tr(),
+              onTap: () => Navigator.pushNamed(context, '/search'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Lógica ---
+
+  void _navigateToDetail(int documentId) async {
+    await Navigator.pushNamed(context, '/document/detail',
+        arguments: documentId);
+    if (mounted) context.read<DocumentsProvider>().loadDocuments();
+  }
+
   void _showDeleteDialog(int documentId) async {
     final confirmed = await DeleteConfirmationDialog.show(context);
-
     if (confirmed == true && mounted) {
-      final provider = context.read<DocumentsProvider>();
-      final success = await provider.deleteDocument(documentId);
-
+      final success =
+          await context.read<DocumentsProvider>().deleteDocument(documentId);
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'document_deleted'.tr(),
-              style: const TextStyle(fontSize: 16),
-            ),
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('document_deleted'.tr(),
+              style: const TextStyle(fontSize: 16)),
+          duration: const Duration(seconds: 3),
+        ));
       }
     }
   }
+}
 
-  /// Ejecuta flujo de importación de documento
-  Future<void> _handleImport(BuildContext context) async {
-    try {
-      // 1. Seleccionar archivo con FilePicker
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'webp'],
-        allowMultiple: false,
-      );
+// ---------------------------------------------------------------------------
+// Widgets privados
+// ---------------------------------------------------------------------------
 
-      if (result == null || result.files.isEmpty) {
-        // Usuario canceló
-        return;
-      }
+class _DocItem extends StatelessWidget {
+  final DocumentModel document;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
-      final filePath = result.files.first.path;
-      if (filePath == null) {
-        throw Exception('No se pudo obtener la ruta del archivo');
-      }
+  const _DocItem({
+    required this.document,
+    required this.onTap,
+    required this.onLongPress,
+  });
 
-      final importedFile = File(filePath);
-      if (!importedFile.existsSync()) {
-        throw Exception('El archivo seleccionado no existe');
-      }
-
-      if (!mounted) return;
-
-      final importProvider = context.read<ImportProvider>();
-      final documentsProvider = context.read<DocumentsProvider>();
-      final locale = context.locale.languageCode;
-
-      // 2. Preparar importación (convertir + clasificar + normalizar solo si es documento)
-      final preparation = await importProvider.prepareImport(importedFile);
-
-      if (preparation == null) {
-        // Error en preparación
-        if (mounted && importProvider.error != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Error al preparar documento: ${importProvider.error}',
-                style: const TextStyle(fontSize: 16),
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            _buildThumbnail(),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    document.title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    _formatDate(document.createdAt),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                ],
               ),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 4),
             ),
-          );
-        }
-        return;
-      }
+            const SizedBox(width: 10),
+            _TypeChip(typeKey: _docTypeKey(document.title)),
+          ],
+        ),
+      ),
+    );
+  }
 
-      if (!mounted) return;
+  Widget _buildThumbnail() {
+    return Container(
+      width: 56,
+      height: 66,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.file(
+          File(document.filePath),
+          width: 56,
+          height: 66,
+          cacheWidth: 140,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Icon(
+            Icons.insert_drive_file,
+            size: 28,
+            color: Colors.grey,
+          ),
+        ),
+      ),
+    );
+  }
 
-      // 3. Si detectó FOTO → Mostrar diálogo (sin opción galería, ya está en galería)
-      if (preparation.classification.type == DocumentType.photo) {
-        final action = await PhotoDetectedDialog.show(
-          context,
-          preparation.thumbnailFile ?? preparation.processedFile,
-          userName: UserPreferences().userName,
-          showGalleryOption: false,
-        );
+  String _formatDate(DateTime date) {
+    const months = [
+      'month_jan', 'month_feb', 'month_mar', 'month_apr',
+      'month_may', 'month_jun', 'month_jul', 'month_aug',
+      'month_sep', 'month_oct', 'month_nov', 'month_dec',
+    ];
+    final month = months[date.month - 1].tr();
+    return '${date.day} $month ${date.year}';
+  }
+}
 
-        if (action == PhotoAction.cancel || action == null) {
-          // Usuario canceló
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'import_cancelled'.tr(),
-                  style: const TextStyle(fontSize: 16),
+class _TypeChip extends StatelessWidget {
+  final String typeKey;
+  const _TypeChip({required this.typeKey});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = typeKey.tr();
+    // Primera letra mayúscula
+    final display = label.isEmpty
+        ? label
+        : label[0].toUpperCase() + label.substring(1);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEE4CC),
+        borderRadius: BorderRadius.circular(50),
+        border: Border.all(color: const Color(0xFFBBAA88), width: 1),
+      ),
+      child: Text(
+        display,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF5A4A30),
+        ),
+      ),
+    );
+  }
+}
+
+/// Botón con gradiente crema + borde + sombra 3D.
+class _GradientOutlineButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _GradientOutlineButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+        ),
+        borderRadius: BorderRadius.circular(50),
+        border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF9A8060).withOpacity(0.45),
+            offset: const Offset(0, 4),
+            blurRadius: 7,
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(50),
+          splashColor: const Color(0xFFBBAA88).withOpacity(0.3),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 20, color: const Color(0xFF5A4A30)),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    color: Color(0xFF5A4A30),
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          }
-          return;
-        }
-
-        // Si eligió "Guardar en App" → continuar flujo normal
-        // (PhotoAction.saveToGallery no debería aparecer aquí por showGalleryOption=false)
-      }
-
-      if (!mounted) return;
-
-      // 4. Completar importación (normalizar si es foto + guardar + OCR)
-      final document = await importProvider.completeImport(
-        preparation,
-        locale,
-      );
-
-      if (document == null) {
-        // Error al guardar
-        if (mounted && importProvider.error != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Error al guardar documento: ${importProvider.error}',
-                style: const TextStyle(fontSize: 16),
-              ),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 4),
+              ],
             ),
-          );
-        }
-        return;
-      }
-
-      // 5. Recargar lista y mostrar confirmación
-      if (mounted) {
-        documentsProvider.loadDocuments();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'document_imported'.tr(),
-              style: const TextStyle(fontSize: 16),
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
           ),
-        );
-      }
-    } catch (e) {
-      debugPrint('[DocumentsListPage] ERROR en _handleImport: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Error al importar: $e',
-              style: const TextStyle(fontSize: 16),
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-    }
+        ),
+      ),
+    );
   }
-
 }

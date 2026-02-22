@@ -25,6 +25,7 @@ class SearchRepositoryImpl implements SearchRepository {
     final docResults = await db.rawQuery('''
       SELECT
         d.id,
+        d.id as document_id,
         d.title,
         'document' as type,
         snippet(documents_fts, 1, '<b>', '</b>', '...', 32) AS snippet,
@@ -36,15 +37,18 @@ class SearchRepositoryImpl implements SearchRepository {
     ''', [sanitizedQuery]);
 
     // Buscar en notas usando FTS4
+    // document_id viene de la tabla intermedia document_notes
     final noteResults = await db.rawQuery('''
       SELECT
         n.id,
+        dn.document_id,
         SUBSTR(n.content, 1, 50) as title,
         'note' as type,
         snippet(notes_fts, 0, '<b>', '</b>', '...', 32) AS snippet,
         n.created_at
       FROM notes n
       JOIN notes_fts ON notes_fts.docid = n.id
+      JOIN document_notes dn ON dn.note_id = n.id
       WHERE notes_fts MATCH ?
       LIMIT 20
     ''', [sanitizedQuery]);

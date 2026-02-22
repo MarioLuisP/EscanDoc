@@ -18,12 +18,19 @@ class SearchResult {
   /// Fecha de creación para ordenamiento
   final DateTime? date;
 
+  /// ID del documento al que pertenece este resultado.
+  /// Para type=='document': igual a [id].
+  /// Para type=='note': el document_id de la nota padre.
+  /// Usado para navegar a DocumentDetailPage desde cualquier tipo de resultado.
+  final int? documentId;
+
   const SearchResult({
     required this.id,
     required this.type,
     required this.title,
     required this.snippet,
     this.date,
+    this.documentId,
   });
 
   /// Crea una copia del resultado con algunos campos modificados
@@ -33,6 +40,7 @@ class SearchResult {
     String? title,
     String? snippet,
     DateTime? date,
+    int? documentId,
   }) {
     return SearchResult(
       id: id ?? this.id,
@@ -40,6 +48,7 @@ class SearchResult {
       title: title ?? this.title,
       snippet: snippet ?? this.snippet,
       date: date ?? this.date,
+      documentId: documentId ?? this.documentId,
     );
   }
 
@@ -62,6 +71,7 @@ class SearchResult {
       title: map['title'] as String,
       snippet: map['snippet'] as String,
       date: map['date'] != null ? DateTime.parse(map['date'] as String) : null,
+      documentId: map['document_id'] as int?,
     );
   }
 

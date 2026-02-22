@@ -6,7 +6,7 @@
   "cancel_button": "CANCEL",
   "delete_button": "DELETE",
   "edit_button": "EDIT",
-  "search_button": "SEARCH",
+  "search_button": "Search",
   "back_button": "BACK",
   "share_button": "SHARE",
 
@@ -114,5 +114,37 @@
   "document_imported": "Document imported successfully",
   "print_tooltip": "Print",
   "result_type_document": "Document",
-  "result_type_note": "Note"
+  "result_type_note": "Note",
+
+  "recent_documents": "Recent documents",
+  "view_all": "View All",
+  "scan_subtitle": "Scan and save your documents.",
+
+  "all_documents_title": "Documents",
+  "go_home": "Home",
+  "sort_recent": "Most recent",
+  "sort_oldest": "Oldest",
+  "sort_name": "By name",
+  "sort_type": "By type",
+  "doc_type_nota": "Note",
+  "doc_type_informe": "Report",
+  "doc_type_manuscrito": "Handwritten",
+  "doc_type_foto": "Photo",
+  "doc_type_folleto": "Brochure",
+
+  "clear_button": "Clear",
+  "no_recent_results": "No recent results",
+
+  "note_edit_title": "Edit Note of {docName}",
+  "note_new_title": "New Note for {docName}",
+  "discard_changes_title": "Leave without saving?",
+  "discard_changes_message": "Your changes will be lost.",
+  "discard_yes": "Yes, discard",
+  "discard_no": "Keep editing",
+
+  "menu_settings": "Settings",
+  "settings_title": "Settings",
+  "settings_language": "Language",
+  "language_es": "Spanish",
+  "language_en": "English"
 }

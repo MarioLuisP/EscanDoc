@@ -43,11 +43,13 @@ import 'features/onboarding/domain/usecases/check_onboarding_status.dart';
 // Pages
 import 'features/onboarding/presentation/pages/onboarding_page.dart';
 import 'features/documents/presentation/pages/documents_list_page.dart';
+import 'features/documents/presentation/pages/home_page.dart';
 import 'features/documents/presentation/pages/document_detail_page.dart';
 import 'features/scan/presentation/pages/camera_page.dart';
 import 'features/scan/presentation/pages/crop_page.dart';
 import 'features/search/presentation/pages/search_page.dart';
 import 'features/notes/presentation/pages/note_editor_page.dart';
+import 'features/settings/presentation/pages/settings_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -226,12 +228,14 @@ class MyApp extends StatelessWidget {
         initialRoute: initialRoute,
         routes: {
           '/onboarding': (context) => const OnboardingPage(),
-          '/home': (context) => const DocumentsListPage(),
+          '/home': (context) => const HomePage(),
+          '/documents': (context) => const DocumentsListPage(),
           '/scan': (context) => const CameraPage(),
           '/scan/crop': (context) => const CropPage(),
           '/document/detail': (context) => const DocumentDetailPage(),
           '/note/edit': (context) => const NoteEditorPage(),
           '/search': (context) => const SearchPage(),
+          '/settings': (context) => const SettingsPage(),
         },
       ),
     );
