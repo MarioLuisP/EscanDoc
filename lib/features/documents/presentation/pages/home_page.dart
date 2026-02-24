@@ -31,110 +31,141 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    context.locale; // Registra dependencia EasyLocalization → rebuild al cambiar idioma
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0E8),
+      bottomNavigationBar: _buildBottomBar(context),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 32),
-                    _buildLogo(context),
-                    const SizedBox(height: 32),
-                    _buildScanButton(context),
-                    const SizedBox(height: 4),
-                    _buildImportButton(context),
-                    const SizedBox(height: 8),
-                    _buildSubtitle(),
-                    const SizedBox(height: 24),
-                    const Divider(height: 1),
-                    const SizedBox(height: 20),
-                    _buildRecentSection(context),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-            ),
-            _buildBottomBar(context),
-          ],
+        bottom: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 32),
+              _buildLogo(),
+              const SizedBox(height: 32),
+              _buildScanButton(context),
+              const SizedBox(height: 8),
+              _buildSubtitle(),
+              const SizedBox(height: 24),
+              const Divider(height: 1),
+              const SizedBox(height: 20),
+              _buildRecentSection(context),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildLogo(BuildContext context) {
+  // --- Logo centrado ---
+
+  Widget _buildLogo() {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // ☰ Menú hamburguesa — acceso a Configuración
-        PopupMenuButton<String>(
-          icon: Icon(Icons.menu, size: 26, color: Colors.grey[500]),
-          onSelected: (value) {
-            if (value == 'settings') {
-              Navigator.pushNamed(context, '/settings');
-            }
-          },
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          color: const Color(0xFFFDFAF4),
-          itemBuilder: (_) => [
-            PopupMenuItem(
-              value: 'settings',
-              child: Row(
-                children: [
-                  const Icon(Icons.settings_outlined,
-                      size: 18, color: Color(0xFF5A4A30)),
-                  const SizedBox(width: 10),
-                  Text(
-                    'menu_settings'.tr(),
-                    style: const TextStyle(
-                        fontSize: 15, color: Color(0xFF5A4A30)),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        // Logo centrado
-        Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+        Image.asset('assets/images/logo.png', width: 64, height: 64),
+        const SizedBox(width: 12),
+        RichText(
+          text: const TextSpan(
             children: [
-              Image.asset('assets/images/logo.png', width: 64, height: 64),
-              const SizedBox(width: 12),
-              RichText(
-                text: const TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'Escan',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF388E3C),
-                      ),
-                    ),
-                    TextSpan(
-                      text: 'Docs',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFF1B5E20),
-                      ),
-                    ),
-                  ],
+              TextSpan(
+                text: 'Escan',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF388E3C),
+                ),
+              ),
+              TextSpan(
+                text: 'Docs',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF1B5E20),
                 ),
               ),
             ],
           ),
         ),
-        // Espacio simétrico al ☰
-        const SizedBox(width: 48),
       ],
     );
   }
+
+  // --- Barra inferior: [Ver Todos] [+] [Buscar] ---
+
+  Widget _buildBottomBar(BuildContext context) {
+    return Container(
+      color: const Color(0xFFF5F0E8),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: _GradientOutlineButton(
+                  icon: Icons.folder_open,
+                  label: 'view_all'.tr(),
+                  onTap: () =>
+                      Navigator.pushNamed(context, '/documents').then((_) {
+                    if (mounted)
+                      context.read<DocumentsProvider>().loadDocuments();
+                  }),
+                ),
+              ),
+              const SizedBox(width: 12),
+              _CenterAddButton(onTap: () => _showActionsMenu(context)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _GradientOutlineButton(
+                  icon: Icons.search,
+                  label: 'search_button'.tr(),
+                  onTap: () => Navigator.pushNamed(context, '/search'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- Bottom sheet de acciones ---
+
+  void _showActionsMenu(BuildContext ctx) {
+    showModalBottomSheet(
+      context: ctx,
+      backgroundColor: const Color(0xFFFDFAF4),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _ActionsSheet(
+        onImport: () {
+          Navigator.pop(ctx);
+          _handleImport(ctx);
+        },
+        onNewNote: () {
+          Navigator.pop(ctx);
+          // TODO: implementar Nueva Nota (post DB-simplification)
+          ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+            content: Text('Próximamente: Nueva nota',
+                style: TextStyle(fontSize: 16)),
+            duration: Duration(seconds: 2),
+          ));
+        },
+        onSettings: () {
+          Navigator.pop(ctx);
+          Navigator.pushNamed(ctx, '/settings');
+        },
+      ),
+    );
+  }
+
+  // --- Botón ESCANEAR ---
 
   Widget _buildScanButton(BuildContext context) {
     return Consumer<ScanProvider>(
@@ -143,9 +174,8 @@ class _HomePageState extends State<HomePage> {
         final gradientColors = busy
             ? [Colors.grey.shade400, Colors.grey.shade600]
             : [const Color(0xFF6FBF6F), const Color(0xFF2E7D32)];
-        final shadowColor = busy
-            ? Colors.grey.shade700
-            : const Color(0xFF1A5C1A);
+        final shadowColor =
+            busy ? Colors.grey.shade700 : const Color(0xFF1A5C1A);
 
         final label = busy
             ? (scanProvider.isScanning
@@ -190,10 +220,12 @@ class _HomePageState extends State<HomePage> {
                             height: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
-                        : const Icon(Icons.camera_alt, size: 28, color: Colors.white),
+                        : const Icon(Icons.camera_alt,
+                            size: 28, color: Colors.white),
                     const SizedBox(width: 10),
                     Text(
                       label,
@@ -213,33 +245,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildImportButton(BuildContext context) {
-    return Consumer<ImportProvider>(
-      builder: (context, importProvider, _) {
-        return TextButton.icon(
-          style: TextButton.styleFrom(
-            foregroundColor: const Color(0xFF6A9E6A),
-            padding: const EdgeInsets.symmetric(vertical: 8),
-          ),
-          onPressed: importProvider.isBusy ? null : () => _handleImport(context),
-          icon: const Icon(Icons.upload_file, size: 20),
-          label: Text(
-            'import_document_tooltip'.tr(),
-            style: const TextStyle(fontSize: 16),
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildSubtitle() {
     return Text(
       'scan_subtitle'.tr(),
       textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 15,
-        color: Colors.grey[600],
-      ),
+      style: TextStyle(fontSize: 15, color: Colors.grey[600]),
     );
   }
 
@@ -291,39 +301,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildBottomBar(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F0E8),
-        border: Border(
-          top: BorderSide(color: Colors.grey.shade300, width: 1),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _GradientOutlineButton(
-              icon: Icons.folder_open,
-              label: 'view_all'.tr(),
-              onTap: () => Navigator.pushNamed(context, '/documents').then((_) {
-                if (mounted) context.read<DocumentsProvider>().loadDocuments();
-              }),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _GradientOutlineButton(
-              icon: Icons.search,
-              label: 'search_button'.tr(),
-              onTap: () => Navigator.pushNamed(context, '/search'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // --- Lógica de negocio ---
 
   Future<void> _handleScan(BuildContext context) async {
@@ -336,7 +313,8 @@ class _HomePageState extends State<HomePage> {
     if (preparation == null) {
       if (mounted && scanProvider.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('error_scanning'.tr(), style: const TextStyle(fontSize: 16)),
+          content: Text('error_scanning'.tr(),
+              style: const TextStyle(fontSize: 16)),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 3),
         ));
@@ -356,7 +334,8 @@ class _HomePageState extends State<HomePage> {
       if (action == PhotoAction.cancel || action == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('scan_cancelled'.tr(), style: const TextStyle(fontSize: 16)),
+            content: Text('scan_cancelled'.tr(),
+                style: const TextStyle(fontSize: 16)),
             duration: const Duration(seconds: 2),
           ));
         }
@@ -376,7 +355,8 @@ class _HomePageState extends State<HomePage> {
     if (document == null) {
       if (mounted && scanProvider.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error al guardar: ${scanProvider.error}', style: const TextStyle(fontSize: 16)),
+          content: Text('Error al guardar: ${scanProvider.error}',
+              style: const TextStyle(fontSize: 16)),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 4),
         ));
@@ -387,7 +367,8 @@ class _HomePageState extends State<HomePage> {
     if (mounted) {
       documentsProvider.loadDocuments();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('document_saved'.tr(), style: const TextStyle(fontSize: 16)),
+        content:
+            Text('document_saved'.tr(), style: const TextStyle(fontSize: 16)),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 3),
       ));
@@ -402,7 +383,9 @@ class _HomePageState extends State<HomePage> {
           content: Row(children: [
             Icon(Icons.check_circle, color: Colors.white),
             SizedBox(width: 12),
-            Expanded(child: Text('Foto guardada en tu galería ✅', style: TextStyle(fontSize: 16))),
+            Expanded(
+                child: Text('Foto guardada en tu galería ✅',
+                    style: TextStyle(fontSize: 16))),
           ]),
           backgroundColor: Color(0xFF2D5016),
           duration: Duration(seconds: 3),
@@ -411,7 +394,8 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error al guardar en galería: $e', style: const TextStyle(fontSize: 16)),
+          content: Text('Error al guardar en galería: $e',
+              style: const TextStyle(fontSize: 16)),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 4),
         ));
@@ -420,7 +404,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _navigateToDetail(int documentId) async {
-    await Navigator.pushNamed(context, '/document/detail', arguments: documentId);
+    await Navigator.pushNamed(context, '/document/detail',
+        arguments: documentId);
     if (mounted) context.read<DocumentsProvider>().loadDocuments();
   }
 
@@ -435,10 +420,12 @@ class _HomePageState extends State<HomePage> {
       if (result == null || result.files.isEmpty) return;
 
       final filePath = result.files.first.path;
-      if (filePath == null) throw Exception('No se pudo obtener la ruta del archivo');
+      if (filePath == null)
+        throw Exception('No se pudo obtener la ruta del archivo');
 
       final importedFile = File(filePath);
-      if (!importedFile.existsSync()) throw Exception('El archivo seleccionado no existe');
+      if (!importedFile.existsSync())
+        throw Exception('El archivo seleccionado no existe');
 
       if (!mounted) return;
 
@@ -450,7 +437,9 @@ class _HomePageState extends State<HomePage> {
       if (preparation == null) {
         if (mounted && importProvider.error != null) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Error al preparar documento: ${importProvider.error}', style: const TextStyle(fontSize: 16)),
+            content: Text(
+                'Error al preparar documento: ${importProvider.error}',
+                style: const TextStyle(fontSize: 16)),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ));
@@ -471,7 +460,8 @@ class _HomePageState extends State<HomePage> {
         if (action == PhotoAction.cancel || action == null) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('import_cancelled'.tr(), style: const TextStyle(fontSize: 16)),
+              content: Text('import_cancelled'.tr(),
+                  style: const TextStyle(fontSize: 16)),
               duration: const Duration(seconds: 2),
             ));
           }
@@ -485,7 +475,9 @@ class _HomePageState extends State<HomePage> {
       if (document == null) {
         if (mounted && importProvider.error != null) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Error al guardar documento: ${importProvider.error}', style: const TextStyle(fontSize: 16)),
+            content: Text(
+                'Error al guardar documento: ${importProvider.error}',
+                style: const TextStyle(fontSize: 16)),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ));
@@ -496,7 +488,8 @@ class _HomePageState extends State<HomePage> {
       if (mounted) {
         documentsProvider.loadDocuments();
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('document_imported'.tr(), style: const TextStyle(fontSize: 16)),
+          content: Text('document_imported'.tr(),
+              style: const TextStyle(fontSize: 16)),
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 3),
         ));
@@ -504,7 +497,8 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error al importar: $e', style: const TextStyle(fontSize: 16)),
+          content: Text('Error al importar: $e',
+              style: const TextStyle(fontSize: 16)),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 4),
         ));
@@ -513,7 +507,221 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-/// Botón con gradiente crema + borde + sombra 3D (Ver Todos / Buscar)
+// ---------------------------------------------------------------------------
+// Bottom sheet de acciones secundarias
+// ---------------------------------------------------------------------------
+
+class _ActionsSheet extends StatelessWidget {
+  final VoidCallback onImport;
+  final VoidCallback onNewNote;
+  final VoidCallback onSettings;
+
+  const _ActionsSheet({
+    required this.onImport,
+    required this.onNewNote,
+    required this.onSettings,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 20),
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          _SheetActionButton(
+            icon: Icons.upload_file,
+            label: 'import_document_tooltip'.tr(),
+            onTap: onImport,
+          ),
+          const SizedBox(height: 10),
+          _SheetActionButton(
+            icon: Icons.edit_note,
+            label: 'Nueva nota', // TODO: i18n al implementar
+            onTap: onNewNote,
+          ),
+          // --- Separador visual: acciones principales / configuración ---
+          const SizedBox(height: 6),
+          Divider(thickness: 1, color: Colors.grey.shade300),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+            child: Text(
+              'menu_settings'.tr().toUpperCase(),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[500],
+                letterSpacing: 1.1,
+              ),
+            ),
+          ),
+          _SheetItem(
+            icon: Icons.settings_outlined,
+            label: 'menu_settings'.tr(),
+            onTap: onSettings,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Botón 3D crema para acciones principales del sheet (Importar, Nueva nota)
+class _SheetActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SheetActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF9A8060).withOpacity(0.40),
+            offset: const Offset(0, 4),
+            blurRadius: 7,
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          splashColor: const Color(0xFFBBAA88).withOpacity(0.3),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            child: Row(
+              children: [
+                Icon(icon, size: 24, color: const Color(0xFF5A4A30)),
+                const SizedBox(width: 14),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Color(0xFF5A4A30),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SheetItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SheetItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+        child: Row(
+          children: [
+            Icon(icon, size: 26, color: const Color(0xFF5A4A30)),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 18,
+                color: Color(0xFF5A4A30),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Botón "+" central — verde degradé, sombra 3D, sin Flutter FAB
+// ---------------------------------------------------------------------------
+
+class _CenterAddButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _CenterAddButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFE8F5E8), Color(0xFFC0D8C0)],
+        ),
+        border: Border.all(color: const Color(0xFF7AAB7A), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4A7A4A).withOpacity(0.38),
+            offset: const Offset(0, 4),
+            blurRadius: 7,
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          splashColor: const Color(0xFF7AAB7A).withOpacity(0.3),
+          child: const Icon(Icons.more_horiz, color: Color(0xFF2E7D32), size: 26),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Botón outline crema con gradiente (Ver Todos / Buscar)
+// ---------------------------------------------------------------------------
+
 class _GradientOutlineButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -575,7 +783,10 @@ class _GradientOutlineButton extends StatelessWidget {
   }
 }
 
-/// Item de documento reciente: thumbnail + nombre + fecha, sin Card
+// ---------------------------------------------------------------------------
+// Item de documento reciente
+// ---------------------------------------------------------------------------
+
 class _RecentDocItem extends StatelessWidget {
   final DocumentModel document;
   final VoidCallback onTap;

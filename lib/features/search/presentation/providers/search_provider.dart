@@ -36,28 +36,23 @@ class SearchProvider with ChangeNotifier {
   bool get hasResults => _results.isNotEmpty;
   bool get hasQuery => _query.isNotEmpty;
 
-  /// Ejecuta búsqueda con debounce de 500ms
+  /// Ejecuta búsqueda con debounce de 300ms — mínimo 3 caracteres
   void search(String query) {
     _query = query;
     _errorMessage = null;
-
-    // Cancelar timer previo
     _debounce?.cancel();
 
-    // Si el query está vacío, limpiar resultados inmediatamente
-    if (query.trim().isEmpty) {
+    if (query.trim().length < 3) {
       _results = [];
       _isLoading = false;
       notifyListeners();
       return;
     }
 
-    // Indicar que está cargando
     _isLoading = true;
     notifyListeners();
 
-    // Crear nuevo timer con debounce de 500ms
-    _debounce = Timer(const Duration(milliseconds: 500), () {
+    _debounce = Timer(const Duration(milliseconds: 300), () {
       _executeSearch(query);
     });
   }

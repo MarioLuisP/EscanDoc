@@ -62,6 +62,7 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    context.locale; // Registra dependencia en EasyLocalization → rebuild al cambiar idioma
     return Consumer<SearchProvider>(
       builder: (context, provider, _) {
         return Scaffold(
@@ -89,15 +90,6 @@ class _SearchPageState extends State<SearchPage> {
             ),
           ),
 
-          // FAB micrófono pequeño — solo cuando hay resultados
-          floatingActionButton: provider.hasResults
-              ? FloatingActionButton(
-                  mini: true,
-                  backgroundColor: const Color(0xFF388E3C),
-                  onPressed: () => _handleVoice(provider),
-                  child: const Icon(Icons.mic, color: Colors.white, size: 22),
-                )
-              : null,
         );
       },
     );
@@ -311,14 +303,19 @@ class _SearchPageState extends State<SearchPage> {
         border: Border(top: BorderSide(color: Colors.grey.shade300, width: 1)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: _GradientOutlineButton(
               icon: Icons.home_outlined,
               label: 'go_home'.tr(),
-              onTap: () => Navigator.pop(context),
+              onTap: () => Navigator.popUntil(context, ModalRoute.withName('/home')),
             ),
           ),
+          if (provider.hasResults) ...[
+            const SizedBox(width: 12),
+            _MicCircleButton(onTap: () => _handleVoice(provider)),
+          ],
           const SizedBox(width: 12),
           Expanded(
             child: _GradientOutlineButton(
@@ -488,6 +485,48 @@ class _GradientOutlineButton extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Botón circular verde 3D para micrófono — aparece en el centro del bottom bar
+/// cuando hay resultados de búsqueda.
+class _MicCircleButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _MicCircleButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 54,
+      height: 54,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF6FBF6F), Color(0xFF2E7D32)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1A5C1A).withOpacity(0.55),
+            offset: const Offset(0, 5),
+            blurRadius: 8,
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          splashColor: Colors.white24,
+          child: const Icon(Icons.mic, color: Colors.white, size: 28),
         ),
       ),
     );

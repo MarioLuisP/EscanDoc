@@ -32,6 +32,7 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    context.locale; // Registra dependencia en EasyLocalization → rebuild al cambiar idioma
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0E8),
       body: SafeArea(

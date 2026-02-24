@@ -141,6 +141,13 @@
   "discard_changes_message": "Los cambios se van a perder.",
   "discard_yes": "Sí, descartar",
   "discard_no": "Seguir editando",
+  "note_clear_title": "¿Borrar toda la nota?",
+  "note_clear_message": "El contenido se perderá.",
+  "note_clear_confirm": "Borrar todo",
+  "note_dictate": "Dictar",
+  "note_listening": "Escuchando...",
+  "note_voice_error": "No pude escucharte, intentá de nuevo",
+  "note_voice_unavailable": "Micrófono no disponible",
 
   "menu_settings": "Configuración",
   "settings_title": "Configuración",

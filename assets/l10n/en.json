@@ -141,6 +141,13 @@
   "discard_changes_message": "Your changes will be lost.",
   "discard_yes": "Yes, discard",
   "discard_no": "Keep editing",
+  "note_clear_title": "Clear the note?",
+  "note_clear_message": "The content will be lost.",
+  "note_clear_confirm": "Clear all",
+  "note_dictate": "Dictate",
+  "note_listening": "Listening...",
+  "note_voice_error": "Couldn't hear you, try again",
+  "note_voice_unavailable": "Microphone unavailable",
 
   "menu_settings": "Settings",
   "settings_title": "Settings",
