@@ -64,6 +64,7 @@ class SaveScannedDocument {
     final document = DocumentModel(
       title: documentName,
       filePath: scannedFile.path,
+      documentType: tfliteClass,
       ocrText: null,
       extractedDate: null,
       createdAt: date,

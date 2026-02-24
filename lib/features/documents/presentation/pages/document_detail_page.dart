@@ -7,7 +7,6 @@ import 'package:escandoc/features/documents/presentation/providers/documents_pro
 import 'package:escandoc/features/documents/presentation/widgets/delete_confirmation_dialog.dart';
 import 'package:escandoc/features/documents/presentation/pages/photo_fullscreen_page.dart';
 import 'package:escandoc/features/documents/presentation/pages/ocr_fullscreen_page.dart';
-import 'package:escandoc/features/notes/presentation/providers/note_provider.dart';
 
 /// Detalle de documento — fondo crema, imagen completa, cards de notas y OCR.
 class DocumentDetailPage extends StatefulWidget {
@@ -25,7 +24,6 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
       final documentId = ModalRoute.of(context)?.settings.arguments as int?;
       if (documentId != null) {
         context.read<DocumentsProvider>().selectDocument(documentId);
-        context.read<NoteProvider>().loadNoteByDocument(documentId);
       }
     });
   }
@@ -67,13 +65,11 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                         const SizedBox(height: 14),
 
                         // Card Notas
-                        Consumer<NoteProvider>(
-                          builder: (context, noteProvider, _) =>
-                              _buildNotesCard(
-                            context,
-                            noteProvider.currentNote?.content,
-                            document.id!,
-                          ),
+                        _buildNotesCard(
+                          context,
+                          document.noteContent,
+                          document.id!,
+                          document.title,
                         ),
                         const SizedBox(height: 14),
 
@@ -182,11 +178,11 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
   // --- Card Notas ---
 
   Widget _buildNotesCard(
-      BuildContext context, String? noteContent, int documentId) {
+      BuildContext context, String? noteContent, int documentId, String documentTitle) {
     final hasNote = noteContent != null && noteContent.isNotEmpty;
 
     return _SectionCard(
-      onTap: () => _openNoteEditor(context, documentId),
+      onTap: () => _openNoteEditor(context, documentId, documentTitle, noteContent),
       icon: Icons.sticky_note_2_outlined,
       iconColor: const Color(0xFFF9A825),
       title: 'note_section_title'.tr(),
@@ -245,21 +241,21 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
 
   // --- Lógica ---
 
-  void _openNoteEditor(BuildContext context, int documentId) async {
-    final hasNote = context.read<NoteProvider>().hasNote;
-    final docTitle =
-        context.read<DocumentsProvider>().selectedDocument?.title ?? '';
+  void _openNoteEditor(BuildContext context, int documentId, String documentTitle, String? noteContent) async {
+    final hasNote = noteContent != null && noteContent.isNotEmpty;
     final result = await Navigator.pushNamed(
       context,
       '/note/edit',
       arguments: {
         'documentId': documentId,
         'isEditing': hasNote,
-        'documentTitle': docTitle,
+        'documentTitle': documentTitle,
+        'initialContent': noteContent ?? '',
       },
     );
     if (result == true && mounted) {
-      context.read<NoteProvider>().loadNoteByDocument(documentId);
+      // Recargar documento para reflejar la nota actualizada
+      context.read<DocumentsProvider>().selectDocument(documentId);
     }
   }
 

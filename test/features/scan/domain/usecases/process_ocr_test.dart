@@ -9,20 +9,16 @@ import 'package:escandoc/core/services/ocr_analysis.dart';
 import 'package:escandoc/core/services/document_classifier.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
-import 'package:escandoc/features/notes/data/models/note_model.dart';
-import 'package:escandoc/features/notes/data/repositories/note_repository.dart';
 
 // Mocks
 class MockOCRService extends Mock implements OCRService {}
 class MockDocumentClassifier extends Mock implements DocumentClassifier {}
 class MockDocumentRepository extends Mock implements DocumentRepository {}
-class MockNoteRepository extends Mock implements NoteRepository {}
 class MockRefineClassification extends Mock implements RefineClassification {}
 
 // Fakes para registerFallbackValue
 class FakeDocumentModel extends Fake implements DocumentModel {}
 class FakeFile extends Fake implements File {}
-class FakeNoteModel extends Fake implements NoteModel {}
 class FakeOcrAnalysis extends Fake implements OcrAnalysis {}
 
 void main() {
@@ -30,7 +26,6 @@ void main() {
   late MockOCRService mockOCRService;
   late MockDocumentClassifier mockClassifier;
   late MockDocumentRepository mockRepository;
-  late MockNoteRepository mockNoteRepository;
   late MockRefineClassification mockRefinement;
   late Directory tempDir;
   late File testJpgFile;
@@ -39,7 +34,6 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
     registerFallbackValue(FakeDocumentModel());
     registerFallbackValue(FakeFile());
-    registerFallbackValue(FakeNoteModel());
     registerFallbackValue(FakeOcrAnalysis());
   });
 
@@ -47,7 +41,6 @@ void main() {
     mockOCRService = MockOCRService();
     mockClassifier = MockDocumentClassifier();
     mockRepository = MockDocumentRepository();
-    mockNoteRepository = MockNoteRepository();
     mockRefinement = MockRefineClassification();
 
     // Create temporary directory and test JPG file
@@ -59,18 +52,8 @@ void main() {
       mockOCRService,
       mockClassifier,
       mockRepository,
-      mockNoteRepository,
       mockRefinement,
     );
-
-    // Stub default para createNote (siempre se crea nota de extracto)
-    when(() => mockNoteRepository.createNote(any(), any()))
-        .thenAnswer((_) async => NoteModel(
-              id: 1,
-              content: '',
-              createdAt: DateTime(2026),
-              updatedAt: DateTime(2026),
-            ));
   });
 
   tearDown(() async {
@@ -172,7 +155,7 @@ void main() {
       verify(() => mockRefinement.call('manuscrito', any())).called(1);
     });
 
-    test('siempre crea nota de extracto (impreso: primeros 150 chars)', () async {
+    test('nota de impreso: guarda primeros 150 chars en note_content', () async {
       // Arrange
       const text = 'Este es el texto extraído con OCR del documento impreso';
       final testDoc = createTestDocument();
@@ -189,14 +172,14 @@ void main() {
       // Act
       await useCase.call(1);
 
-      // Assert: se crea nota con el texto del documento
+      // Assert: noteContent en el documento actualizado
       final captured =
-          verify(() => mockNoteRepository.createNote(captureAny(), 1))
-              .captured.single as NoteModel;
-      expect(captured.content, text);
+          verify(() => mockRepository.updateDocument(captureAny()))
+              .captured.single as DocumentModel;
+      expect(captured.noteContent, text);
     });
 
-    test('nota de impreso: texto largo → truncado a 150 chars', () async {
+    test('nota de impreso: texto largo → note_content truncado a 150 chars', () async {
       // Arrange
       final longText = 'A' * 200;
       final testDoc = createTestDocument();
@@ -213,14 +196,14 @@ void main() {
       // Act
       await useCase.call(1);
 
-      // Assert: nota truncada a 150 chars
+      // Assert: noteContent truncado a 150 chars
       final captured =
-          verify(() => mockNoteRepository.createNote(captureAny(), 1))
-              .captured.single as NoteModel;
-      expect(captured.content?.length, 150);
+          verify(() => mockRepository.updateDocument(captureAny()))
+              .captured.single as DocumentModel;
+      expect(captured.noteContent?.length, 150);
     });
 
-    test('nota de manuscrito: empieza con "Nota manuscrita de"', () async {
+    test('nota de manuscrito: note_content empieza con "Nota manuscrita de"', () async {
       // Arrange
       final testDoc = createTestDocument();
       when(() => mockRepository.getDocumentById(1))
@@ -241,12 +224,12 @@ void main() {
 
       // Assert
       final captured =
-          verify(() => mockNoteRepository.createNote(captureAny(), 1))
-              .captured.single as NoteModel;
-      expect(captured.content, 'Nota manuscrita de Hospital Central');
+          verify(() => mockRepository.updateDocument(captureAny()))
+              .captured.single as DocumentModel;
+      expect(captured.noteContent, 'Nota manuscrita de Hospital Central');
     });
 
-    test('nota de manuscrito sin palabras reconocibles: "Nota manuscrita"', () async {
+    test('nota de manuscrito sin palabras reconocibles: note_content = "Nota manuscrita"', () async {
       // Arrange
       final testDoc = createTestDocument();
       when(() => mockRepository.getDocumentById(1))
@@ -267,12 +250,12 @@ void main() {
 
       // Assert
       final captured =
-          verify(() => mockNoteRepository.createNote(captureAny(), 1))
-              .captured.single as NoteModel;
-      expect(captured.content, 'Nota manuscrita');
+          verify(() => mockRepository.updateDocument(captureAny()))
+              .captured.single as DocumentModel;
+      expect(captured.noteContent, 'Nota manuscrita');
     });
 
-    test('OCR vacío → no crea nota', () async {
+    test('OCR vacío → note_content es null en el documento actualizado', () async {
       // Arrange
       final testDoc = createTestDocument();
       when(() => mockRepository.getDocumentById(1))
@@ -288,8 +271,11 @@ void main() {
       // Act
       await useCase.call(1);
 
-      // Assert: texto vacío → no se crea nota
-      verifyNever(() => mockNoteRepository.createNote(any(), any()));
+      // Assert: texto vacío → noteContent null
+      final captured =
+          verify(() => mockRepository.updateDocument(captureAny()))
+              .captured.single as DocumentModel;
+      expect(captured.noteContent, isNull);
     });
 
     test('debe extraer fecha de vencimiento si existe', () async {

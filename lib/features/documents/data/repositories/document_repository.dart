@@ -78,7 +78,7 @@ class DocumentRepository {
       final fileDeleted = await _deleteFile(document.filePath);
       if (!fileDeleted) return false;
 
-      // 3. Eliminar registro de BD (triggers eliminan automáticamente de FTS4)
+      // 3. Eliminar registro de BD
       final db = await _dbHelper.database;
       final rowsDeleted = await db.delete(
         'documents',
@@ -90,6 +90,17 @@ class DocumentRepository {
     } catch (e) {
       return false;
     }
+  }
+
+  /// Actualiza el campo note_content de un documento
+  Future<void> updateNote(int documentId, String? content) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'documents',
+      {'note_content': content},
+      where: 'id = ?',
+      whereArgs: [documentId],
+    );
   }
 
   /// Cuenta documentos cuyo título empieza con [prefix] creados en [date]

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:escandoc/features/notes/presentation/providers/note_provider.dart';
+import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
 import 'package:escandoc/core/services/speech_service_impl.dart';
 
 /// Página de edición/creación de notas.
@@ -46,8 +46,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _documentTitle = args?['documentTitle'] as String? ?? '';
 
     if (_isEditing) {
-      final content =
-          context.read<NoteProvider>().currentNote?.content ?? '';
+      final content = args?['initialContent'] as String? ?? '';
       _contentController.text = content;
       _originalContent = content;
     }
@@ -151,17 +150,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   // --- Guardar ---
 
   Future<void> _saveNote() async {
-    final noteProvider = context.read<NoteProvider>();
-    bool success;
-
-    if (_isEditing) {
-      success = await noteProvider.updateNote(content: _contentController.text);
-    } else {
-      success = await noteProvider.createNote(
-        content: _contentController.text,
-        documentId: _documentId,
-      );
-    }
+    final content = _contentController.text;
+    final success = await context
+        .read<DocumentsProvider>()
+        .updateNote(_documentId, content.isEmpty ? null : content);
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

@@ -6,34 +6,14 @@ import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
 import 'package:escandoc/features/documents/presentation/widgets/delete_confirmation_dialog.dart';
 
-// ---------------------------------------------------------------------------
-// FUTURE-PROOF: cuando DocumentModel tenga campo 'category', reemplazar SOLO
-// esta función por: return doc.category ?? 'documento';
-// ---------------------------------------------------------------------------
-String _docTypeKey(String title) {
-  final first = title
-      .split(' ')
-      .first
-      .toLowerCase()
-      .replaceAll('á', 'a')
-      .replaceAll('é', 'e')
-      .replaceAll('í', 'i')
-      .replaceAll('ó', 'o')
-      .replaceAll('ú', 'u');
-
+/// Retorna la clave i18n del tipo de documento a partir del campo documentType.
+String _docTypeKey(String? documentType) {
   const known = {
-    'factura',
-    'recibo',
-    'contrato',
-    'nota',
-    'informe',
-    'manuscrito',
-    'medico',
-    'medica',
-    'foto',
-    'folleto',
+    'factura', 'recibo', 'contrato', 'nota', 'informe',
+    'manuscrito', 'medico', 'medica', 'foto', 'folleto', 'documento',
   };
-  return known.contains(first) ? 'doc_type_$first' : 'doc_type_documento';
+  final type = documentType?.toLowerCase() ?? '';
+  return known.contains(type) ? 'doc_type_$type' : 'doc_type_documento';
 }
 
 // ---------------------------------------------------------------------------
@@ -70,7 +50,7 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
         return list..sort((a, b) => a.title.compareTo(b.title));
       case _SortOrder.byType:
         return list..sort((a, b) =>
-            _docTypeKey(a.title).compareTo(_docTypeKey(b.title)));
+            _docTypeKey(a.documentType).compareTo(_docTypeKey(b.documentType)));
     }
   }
 
@@ -430,7 +410,7 @@ class _DocItem extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            _TypeChip(typeKey: _docTypeKey(document.title)),
+            _TypeChip(typeKey: _docTypeKey(document.documentType)),
           ],
         ),
       ),

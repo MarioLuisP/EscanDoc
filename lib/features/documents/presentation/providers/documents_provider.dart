@@ -9,7 +9,8 @@ import 'package:escandoc/features/documents/domain/usecases/rename_document.dart
 /// Provider para gestionar estado de la lista de documentos
 /// Conecta los UseCases (Domain) con la UI (Presentation)
 class DocumentsProvider extends ChangeNotifier {
-  // Dependencies (UseCases)
+  // Dependencies
+  late final DocumentRepository _repository;
   late final GetDocuments _getDocuments;
   late final GetDocumentById _getDocumentById;
   late final DeleteDocument _deleteDocument;
@@ -31,6 +32,7 @@ class DocumentsProvider extends ChangeNotifier {
   // Constructor con dependency injection
   DocumentsProvider({DocumentRepository? repository}) {
     final repo = repository ?? DocumentRepository();
+    _repository = repo;
     _getDocuments = GetDocuments(repository: repo);
     _getDocumentById = GetDocumentById(repository: repo);
     _deleteDocument = DeleteDocument(repository: repo);
@@ -118,6 +120,26 @@ class DocumentsProvider extends ChangeNotifier {
       return success;
     } catch (e) {
       _errorMessage = 'Error al renombrar documento';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Actualiza la nota del documento seleccionado
+  Future<bool> updateNote(int documentId, String? content) async {
+    try {
+      await _repository.updateNote(documentId, content);
+      if (_selectedDocument?.id == documentId) {
+        _selectedDocument = _selectedDocument!.copyWith(noteContent: content);
+      }
+      final index = _documents.indexWhere((d) => d.id == documentId);
+      if (index != -1) {
+        _documents[index] = _documents[index].copyWith(noteContent: content);
+      }
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Error al guardar nota';
       notifyListeners();
       return false;
     }

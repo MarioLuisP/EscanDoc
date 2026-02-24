@@ -4,8 +4,6 @@ import 'package:escandoc/core/services/ocr_service.dart';
 import 'package:escandoc/core/services/document_classifier.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
-import 'package:escandoc/features/notes/data/models/note_model.dart';
-import 'package:escandoc/features/notes/data/repositories/note_repository.dart';
 import 'package:escandoc/features/scan/domain/usecases/refine_classification.dart';
 
 /// UseCase para procesar OCR en documento escaneado (SIMPLIFICADO - JPG only)
@@ -14,23 +12,22 @@ import 'package:escandoc/features/scan/domain/usecases/refine_classification.dar
 /// 1. Obtener documento de BD (filePath apunta al JPG)
 /// 2. Extraer análisis OCR (texto + blockCount + avgConfidence)
 /// 3. Refinar clasificación TFLite con métricas OCR (2° paso)
-/// 4. Si hubo reclasificación → guardar nota de corrección
+/// 4. Si hubo reclasificación → actualizar título
 /// 5. Extraer fecha de vencimiento si existe
-/// 6. Actualizar documento en BD con texto OCR
+/// 6. Guardar nota de extracto en note_content
+/// 7. Actualizar documento en BD con texto OCR
 ///
 /// Se ejecuta en background después de SaveScannedDocument
 class ProcessOCR {
   final OCRService _ocrService;
   final DocumentClassifier _classifier;
   final DocumentRepository _repository;
-  final NoteRepository _noteRepository;
   final RefineClassification _refinement;
 
   ProcessOCR(
     this._ocrService,
     this._classifier,
     this._repository,
-    this._noteRepository,
     this._refinement,
   );
 
@@ -110,24 +107,18 @@ class ProcessOCR {
       final extractedDate = _classifier.extractDueDate(ocrText);
       debugPrint('[ProcessOCR] Fecha extraída: $extractedDate');
 
-      // 7. Actualizar documento con texto OCR (y título si hubo reclasificación)
+      // 7. Construir nota de extracto
+      final noteContent = _buildExtractNote(
+          refinement.refinedClass, extractedText, ocrAnalysis.topConfidenceText);
+      debugPrint('[ProcessOCR] 📝 Nota de extracto: ${noteContent.substring(0, noteContent.length.clamp(0, 60))}...');
+
+      // 8. Actualizar documento con texto OCR, nota y título (si hubo reclasificación)
       final updatedDocument = document.copyWith(
         title: updatedTitle,
         ocrText: ocrText,
         extractedDate: extractedDate,
+        noteContent: noteContent.isNotEmpty ? noteContent : null,
       );
-
-      // 8. Crear nota de extracto con el contenido del OCR
-      final noteContent = _buildExtractNote(
-          refinement.refinedClass, extractedText, ocrAnalysis.topConfidenceText);
-      if (noteContent.isNotEmpty) {
-        final now = DateTime.now();
-        await _noteRepository.createNote(
-          NoteModel(content: noteContent, createdAt: now, updatedAt: now),
-          documentId,
-        );
-        debugPrint('[ProcessOCR] 📝 Nota de extracto creada: ${noteContent.substring(0, noteContent.length.clamp(0, 60))}...');
-      }
 
       final startDBUpdate = DateTime.now();
       debugPrint(

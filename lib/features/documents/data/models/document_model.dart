@@ -4,6 +4,8 @@ class DocumentModel {
   final int? id;
   final String title;
   final String filePath;
+  final String? documentType;
+  final String? noteContent;
   final String? ocrText;
   final DateTime? extractedDate;
   final DateTime createdAt;
@@ -13,6 +15,8 @@ class DocumentModel {
     this.id,
     required this.title,
     required this.filePath,
+    this.documentType,
+    this.noteContent,
     this.ocrText,
     this.extractedDate,
     required this.createdAt,
@@ -25,6 +29,8 @@ class DocumentModel {
       id: map['id'] as int?,
       title: map['title'] as String,
       filePath: map['file_path'] as String,
+      documentType: map['document_type'] as String?,
+      noteContent: map['note_content'] as String?,
       ocrText: map['ocr_text'] as String?,
       extractedDate: map['extracted_date'] != null
           ? DateTime.parse(map['extracted_date'] as String)
@@ -42,6 +48,8 @@ class DocumentModel {
       if (id != null) 'id': id,
       'title': title,
       'file_path': filePath,
+      'document_type': documentType,
+      'note_content': noteContent,
       'ocr_text': ocrText,
       'extracted_date': extractedDate?.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
@@ -54,6 +62,8 @@ class DocumentModel {
     int? id,
     String? title,
     String? filePath,
+    String? documentType,
+    String? noteContent,
     String? ocrText,
     DateTime? extractedDate,
     DateTime? createdAt,
@@ -63,6 +73,8 @@ class DocumentModel {
       id: id ?? this.id,
       title: title ?? this.title,
       filePath: filePath ?? this.filePath,
+      documentType: documentType ?? this.documentType,
+      noteContent: noteContent ?? this.noteContent,
       ocrText: ocrText ?? this.ocrText,
       extractedDate: extractedDate ?? this.extractedDate,
       createdAt: createdAt ?? this.createdAt,
@@ -78,6 +90,8 @@ class DocumentModel {
         other.id == id &&
         other.title == title &&
         other.filePath == filePath &&
+        other.documentType == documentType &&
+        other.noteContent == noteContent &&
         other.ocrText == ocrText &&
         other.extractedDate == extractedDate &&
         other.createdAt == createdAt &&
@@ -90,6 +104,8 @@ class DocumentModel {
       id,
       title,
       filePath,
+      documentType,
+      noteContent,
       ocrText,
       extractedDate,
       createdAt,

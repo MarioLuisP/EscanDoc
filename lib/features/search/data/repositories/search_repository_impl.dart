@@ -4,11 +4,12 @@ import 'package:escandoc/features/search/data/repositories/search_repository.dar
 
 /// Implementación del repositorio de búsqueda.
 ///
-/// Estrategia en dos pasos:
-/// 1. FTS4 prefix search  → "nota*" matchea nota, notas, notación, etc.
-/// 2. LIKE fallback        → si FTS no da resultados, búsqueda parcial en título
+/// Estrategia: LIKE normalizado sobre tabla documents.
+/// Busca en título y note_content. Sin JOINs, sin FTS.
 ///
 /// El query se normaliza antes de buscar: minúsculas + tildes eliminadas.
+/// Las columnas también se normalizan en SQL con REPLACE() anidado,
+/// para que "nóta" matchee "nota", "NOTA", "Nota", etc.
 class SearchRepositoryImpl implements SearchRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
@@ -20,132 +21,71 @@ class SearchRepositoryImpl implements SearchRepository {
     final normalized = _normalizeText(query.trim());
     if (normalized.isEmpty) return [];
 
-    final ftsQuery = _buildFtsQuery(normalized);
+    final likePattern = '%$normalized%';
+    final titleExpr = _normalizeSqlExpr('d.title');
+    final noteExpr = _normalizeSqlExpr('d.note_content');
 
-    List<Map<String, Object?>> docResults = [];
-    List<Map<String, Object?>> noteResults = [];
+    final rows = await db.rawQuery('''
+      SELECT
+        d.id,
+        d.title,
+        d.note_content,
+        CASE
+          WHEN $titleExpr LIKE ? THEN 'document'
+          ELSE 'note'
+        END as type,
+        d.created_at
+      FROM documents d
+      WHERE $titleExpr LIKE ?
+         OR $noteExpr LIKE ?
+      ORDER BY d.created_at DESC
+      LIMIT 20
+    ''', [likePattern, likePattern, likePattern]);
 
-    // --- Paso 1: FTS prefix search ---
-    try {
-      docResults = await db.rawQuery('''
-        SELECT
-          d.id,
-          d.id as document_id,
-          d.title,
-          'document' as type,
-          snippet(documents_fts, 1, '<b>', '</b>', '...', 32) AS snippet,
-          d.created_at
-        FROM documents d
-        JOIN documents_fts ON documents_fts.docid = d.id
-        WHERE documents_fts MATCH ?
-        LIMIT 20
-      ''', [ftsQuery]);
-
-      noteResults = await db.rawQuery('''
-        SELECT
-          n.id,
-          dn.document_id,
-          SUBSTR(n.content, 1, 50) as title,
-          'note' as type,
-          snippet(notes_fts, 0, '<b>', '</b>', '...', 32) AS snippet,
-          n.created_at
-        FROM notes n
-        JOIN notes_fts ON notes_fts.docid = n.id
-        JOIN document_notes dn ON dn.note_id = n.id
-        WHERE notes_fts MATCH ?
-        LIMIT 20
-      ''', [ftsQuery]);
-    } catch (_) {
-      // FTS puede fallar con queries especiales — cae al LIKE
-    }
-
-    // --- Paso 2: LIKE fallback si FTS no encontró nada ---
-    if (docResults.isEmpty && noteResults.isEmpty) {
-      final likePattern = '%$normalized%';
-
-      docResults = await db.rawQuery('''
-        SELECT
-          d.id,
-          d.id as document_id,
-          d.title,
-          'document' as type,
-          d.title AS snippet,
-          d.created_at
-        FROM documents d
-        WHERE LOWER(d.title) LIKE ?
-        LIMIT 20
-      ''', [likePattern]);
-
-      noteResults = await db.rawQuery('''
-        SELECT
-          n.id,
-          dn.document_id,
-          SUBSTR(n.content, 1, 50) as title,
-          'note' as type,
-          SUBSTR(n.content, 1, 100) AS snippet,
-          n.created_at
-        FROM notes n
-        JOIN document_notes dn ON dn.note_id = n.id
-        WHERE LOWER(n.content) LIKE ?
-        LIMIT 20
-      ''', [likePattern]);
-    }
-
-    // --- Combinar y deduplicar ---
     final List<SearchResult> results = [];
-    final seenIds = <String>{};
 
-    for (final row in docResults) {
-      final key = 'doc_${row['id']}';
-      if (seenIds.add(key)) {
-        results.add(SearchResult(
-          id: row['id'] as int,
-          documentId: row['document_id'] as int,
-          type: row['type'] as String,
-          title: row['title'] as String,
-          snippet: (row['snippet'] as String?) ?? '',
-          date: row['created_at'] != null
-              ? DateTime.parse(row['created_at'] as String)
-              : null,
-        ));
-      }
+    for (final row in rows) {
+      final id = row['id'] as int;
+      final type = row['type'] as String;
+      final title = row['title'] as String;
+      final noteContent = row['note_content'] as String?;
+
+      // Snippet: para 'note' mostrar los primeros 100 chars de la nota
+      final snippet = type == 'note' && noteContent != null
+          ? noteContent.substring(0, noteContent.length.clamp(0, 100))
+          : title;
+
+      results.add(SearchResult(
+        id: id,
+        documentId: id,
+        type: type,
+        title: title,
+        snippet: snippet,
+        date: row['created_at'] != null
+            ? DateTime.parse(row['created_at'] as String)
+            : null,
+      ));
     }
 
-    for (final row in noteResults) {
-      final key = 'note_${row['id']}';
-      if (seenIds.add(key)) {
-        results.add(SearchResult(
-          id: row['id'] as int,
-          documentId: row['document_id'] as int,
-          type: row['type'] as String,
-          title: row['title'] as String,
-          snippet: (row['snippet'] as String?) ?? '',
-          date: row['created_at'] != null
-              ? DateTime.parse(row['created_at'] as String)
-              : null,
-        ));
-      }
-    }
-
-    results.sort((a, b) {
-      if (a.date == null && b.date == null) return 0;
-      if (a.date == null) return 1;
-      if (b.date == null) return -1;
-      return b.date!.compareTo(a.date!);
-    });
-
-    return results.take(20).toList();
+    return results;
   }
 
-  /// Construye query FTS4 con prefijos por palabra.
-  /// "nota reun" → "nota* reun*"  (cada término matchea prefijos)
-  static String _buildFtsQuery(String normalized) {
-    return normalized
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((w) => w.isNotEmpty)
-        .map((w) => '$w*')
-        .join(' ');
+  /// Genera expresión SQL que normaliza una columna (minúsculas + sin tildes).
+  /// Permite comparar con LIKE independientemente de acentos y mayúsculas.
+  static String _normalizeSqlExpr(String col) {
+    var expr = 'LOWER($col)';
+    const replacements = [
+      ['á', 'a'], ['à', 'a'], ['â', 'a'], ['ã', 'a'], ['ä', 'a'],
+      ['é', 'e'], ['è', 'e'], ['ê', 'e'], ['ë', 'e'],
+      ['í', 'i'], ['ì', 'i'], ['î', 'i'], ['ï', 'i'],
+      ['ó', 'o'], ['ò', 'o'], ['ô', 'o'], ['õ', 'o'], ['ö', 'o'],
+      ['ú', 'u'], ['ù', 'u'], ['û', 'u'], ['ü', 'u'],
+      ['ñ', 'n'], ['ç', 'c'],
+    ];
+    for (final r in replacements) {
+      expr = "REPLACE($expr, '${r[0]}', '${r[1]}')";
+    }
+    return expr;
   }
 
   /// Normaliza texto para búsqueda: minúsculas + tildes → base.

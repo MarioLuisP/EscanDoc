@@ -9,7 +9,6 @@ import 'features/scan/presentation/providers/scan_provider.dart';
 import 'features/documents/presentation/providers/documents_provider.dart';
 import 'features/documents/presentation/providers/import_provider.dart';
 import 'features/search/presentation/providers/search_provider.dart';
-import 'features/notes/presentation/providers/note_provider.dart';
 
 // Scan dependencies
 import 'features/scan/domain/usecases/scan_document.dart';
@@ -20,7 +19,6 @@ import 'core/services/document_scanner_service.dart';
 import 'core/services/document_classifier.dart';
 import 'core/services/ocr_service.dart';
 import 'features/documents/data/repositories/document_repository.dart';
-import 'features/notes/data/repositories/note_repository.dart';
 
 // Image processing dependencies (Épica 6 - OCR-first)
 import 'features/image_processing/normalize_image/domain/normalize_image_use_case.dart';
@@ -112,7 +110,6 @@ class MyApp extends StatelessWidget {
             final classifier = DocumentClassifier();
             final ocrService = OCRServiceImpl();
             final documentRepository = DocumentRepository();
-            final noteRepository = NoteRepository();
             final thumbnailGenerator = ThumbnailGeneratorImpl();
 
             // Crear UseCases
@@ -129,7 +126,6 @@ class MyApp extends StatelessWidget {
               ocrService,
               classifier,
               documentRepository,
-              noteRepository,
               RefineClassification(),
             );
 
@@ -153,7 +149,6 @@ class MyApp extends StatelessWidget {
             final classifier = DocumentClassifier();
             final ocrService = OCRServiceImpl();
             final documentRepository = DocumentRepository();
-            final noteRepository = NoteRepository();
             final thumbnailGenerator = ThumbnailGeneratorImpl();
 
             // Crear UseCases
@@ -169,7 +164,6 @@ class MyApp extends StatelessWidget {
               ocrService,
               classifier,
               documentRepository,
-              noteRepository,
               RefineClassification(),
             );
 
@@ -197,7 +191,6 @@ class MyApp extends StatelessWidget {
             );
           },
         ),
-        ChangeNotifierProvider(create: (_) => NoteProvider()),
       ],
       child: MaterialApp(
         title: 'EscanDoc',
