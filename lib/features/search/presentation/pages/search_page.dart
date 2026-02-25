@@ -45,7 +45,9 @@ class _SearchPageState extends State<SearchPage> {
     final messenger = ScaffoldMessenger.of(context);
     await provider.searchByVoice();
 
-    if (provider.errorMessage != null && mounted) {
+    if (!mounted) return;
+
+    if (provider.errorMessage != null) {
       messenger.showSnackBar(SnackBar(
         content: Text(provider.errorMessage!,
             style: const TextStyle(fontSize: 16)),
@@ -54,8 +56,7 @@ class _SearchPageState extends State<SearchPage> {
       provider.clearError();
     }
 
-    // Sincronizar controller si voz escribió algo
-    if (mounted && provider.query != _controller.text) {
+    if (provider.query != _controller.text) {
       _controller.text = provider.query;
     }
   }
@@ -144,7 +145,7 @@ class _SearchPageState extends State<SearchPage> {
           border: Border.all(color: const Color(0xFFDDD0B8), width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               offset: const Offset(0, 2),
               blurRadius: 6,
             ),
@@ -216,7 +217,7 @@ class _SearchPageState extends State<SearchPage> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF1A5C1A).withOpacity(0.5),
+                    color: const Color(0xFF1A5C1A).withValues(alpha: 0.5),
                     offset: const Offset(0, 5),
                     blurRadius: 10,
                     spreadRadius: -1,
@@ -454,7 +455,7 @@ class _GradientOutlineButton extends StatelessWidget {
         border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF9A8060).withOpacity(0.45),
+            color: const Color(0xFF9A8060).withValues(alpha: 0.45),
             offset: const Offset(0, 4),
             blurRadius: 7,
             spreadRadius: -1,
@@ -466,7 +467,7 @@ class _GradientOutlineButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(50),
-          splashColor: const Color(0xFFBBAA88).withOpacity(0.3),
+          splashColor: const Color(0xFFBBAA88).withValues(alpha: 0.3),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Row(
@@ -512,7 +513,7 @@ class _MicCircleButton extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1A5C1A).withOpacity(0.55),
+            color: const Color(0xFF1A5C1A).withValues(alpha: 0.55),
             offset: const Offset(0, 5),
             blurRadius: 8,
             spreadRadius: -1,

@@ -151,19 +151,18 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   Future<void> _saveNote() async {
     final content = _contentController.text;
-    final success = await context
-        .read<DocumentsProvider>()
-        .updateNote(_documentId, content.isEmpty ? null : content);
+    final provider = context.read<DocumentsProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final success = await provider.updateNote(_documentId, content.isEmpty ? null : content);
 
-    if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content:
-            Text('note_saved'.tr(), style: const TextStyle(fontSize: 16)),
-        duration: const Duration(milliseconds: 1500),
-      ));
-      await Future.delayed(const Duration(milliseconds: 1500));
-      if (mounted) Navigator.pop(context, true);
-    }
+    if (!success || !mounted) return;
+    messenger.showSnackBar(SnackBar(
+      content: Text('note_saved'.tr(), style: const TextStyle(fontSize: 16)),
+      duration: const Duration(milliseconds: 1500),
+    ));
+    await Future.delayed(const Duration(milliseconds: 1500));
+    if (!mounted) return;
+    Navigator.pop(context, true);
   }
 
   // --- Confirm discard ---
@@ -210,10 +209,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
         final shouldDiscard = await _confirmDiscard();
-        if (shouldDiscard && mounted) {
-          setState(() => _hasChanges = false);
-          if (mounted) Navigator.pop(context);
-        }
+        if (!shouldDiscard) return;
+        if (!mounted) return;
+        setState(() => _hasChanges = false);
+        Navigator.pop(context);
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F0E8),
@@ -248,7 +247,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             color: Colors.black87,
             onPressed: () async {
               final shouldPop = await _confirmDiscard();
-              if (shouldPop && mounted) Navigator.pop(context);
+              if (!shouldPop || !mounted) return;
+              Navigator.pop(context);
             },
           ),
           Expanded(
@@ -282,7 +282,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           border: Border.all(color: const Color(0xFFDDD0B8), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               offset: const Offset(0, 3),
               blurRadius: 8,
             ),
@@ -360,7 +360,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF9A8060).withOpacity(0.45),
+            color: const Color(0xFF9A8060).withValues(alpha: 0.45),
             offset: const Offset(0, 4),
             blurRadius: 7,
             spreadRadius: -1,
@@ -372,7 +372,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         child: InkWell(
           onTap: _handleClearAll,
           borderRadius: BorderRadius.circular(50),
-          splashColor: const Color(0xFFBBAA88).withOpacity(0.3),
+          splashColor: const Color(0xFFBBAA88).withValues(alpha: 0.3),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Row(
@@ -408,7 +408,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         borderRadius: BorderRadius.circular(50),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1A5C1A).withOpacity(0.50),
+            color: const Color(0xFF1A5C1A).withValues(alpha: 0.50),
             offset: const Offset(0, 4),
             blurRadius: 8,
             spreadRadius: -1,
@@ -479,7 +479,7 @@ class _DictateCircleButton extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: shadowColor.withOpacity(0.55),
+            color: shadowColor.withValues(alpha: 0.55),
             offset: const Offset(0, 5),
             blurRadius: 8,
             spreadRadius: -1,

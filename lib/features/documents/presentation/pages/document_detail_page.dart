@@ -152,7 +152,7 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.12),
+              color: Colors.black.withValues(alpha: 0.12),
               offset: const Offset(0, 4),
               blurRadius: 10,
               spreadRadius: -2,
@@ -253,10 +253,8 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
         'initialContent': noteContent ?? '',
       },
     );
-    if (result == true && mounted) {
-      // Recargar documento para reflejar la nota actualizada
-      context.read<DocumentsProvider>().selectDocument(documentId);
-    }
+    if (result != true || !mounted) return;
+    context.read<DocumentsProvider>().selectDocument(documentId);
   }
 
   void _showRenameDialog(
@@ -303,7 +301,8 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
       ),
     );
 
-    if (confirmed == true && mounted) {
+    if (confirmed == true) {
+      if (!mounted) return;
       await provider.renameDocument(document.id!, controller.text);
     }
     controller.dispose();
@@ -315,17 +314,16 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
     if (documentId == null) return;
 
     final confirmed = await DeleteConfirmationDialog.show(context);
-    if (confirmed == true && mounted) {
-      final success = await provider.deleteDocument(documentId);
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('document_deleted'.tr(),
-              style: const TextStyle(fontSize: 16)),
-          duration: const Duration(seconds: 3),
-        ));
-        Navigator.pop(context);
-      }
-    }
+    if (confirmed != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final success = await provider.deleteDocument(documentId);
+    if (!success || !mounted) return;
+    messenger.showSnackBar(SnackBar(
+      content: Text('document_deleted'.tr(),
+          style: const TextStyle(fontSize: 16)),
+      duration: const Duration(seconds: 3),
+    ));
+    Navigator.pop(context);
   }
 }
 
@@ -356,7 +354,7 @@ class _SectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
+            color: Colors.black.withValues(alpha: 0.07),
             offset: const Offset(0, 3),
             blurRadius: 8,
             spreadRadius: -1,

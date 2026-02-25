@@ -21,6 +21,9 @@ void main() {
     // Setup default mocks para permisos e inicialización
     when(() => mockSpeechService.initialize())
         .thenAnswer((_) async => true);
+    // Stub por defecto para listen — evita MissingStubError en verifyNever
+    when(() => mockSpeechService.listen(timeoutSeconds: any(named: 'timeoutSeconds')))
+        .thenAnswer((_) async => null);
   });
 
   group('VoiceSearch UseCase', () {

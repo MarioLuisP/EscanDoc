@@ -152,7 +152,7 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
                 border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF9A8060).withOpacity(0.40),
+                    color: const Color(0xFF9A8060).withValues(alpha: 0.40),
                     offset: const Offset(0, 3),
                     blurRadius: 6,
                     spreadRadius: -1,
@@ -216,9 +216,8 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
       ],
     );
 
-    if (selected != null && mounted) {
-      setState(() => _sort = selected);
-    }
+    if (selected == null || !mounted) return;
+    setState(() => _sort = selected);
   }
 
   PopupMenuItem<_SortOrder> _sortItem(
@@ -342,22 +341,22 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
   void _navigateToDetail(int documentId) async {
     await Navigator.pushNamed(context, '/document/detail',
         arguments: documentId);
-    if (mounted) context.read<DocumentsProvider>().loadDocuments();
+    if (!mounted) return;
+    context.read<DocumentsProvider>().loadDocuments();
   }
 
   void _showDeleteDialog(int documentId) async {
+    final messenger = ScaffoldMessenger.of(context);
     final confirmed = await DeleteConfirmationDialog.show(context);
-    if (confirmed == true && mounted) {
-      final success =
-          await context.read<DocumentsProvider>().deleteDocument(documentId);
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('document_deleted'.tr(),
-              style: const TextStyle(fontSize: 16)),
-          duration: const Duration(seconds: 3),
-        ));
-      }
-    }
+    if (confirmed != true || !mounted) return;
+    final success =
+        await context.read<DocumentsProvider>().deleteDocument(documentId);
+    if (!success || !mounted) return;
+    messenger.showSnackBar(SnackBar(
+      content: Text('document_deleted'.tr(),
+          style: const TextStyle(fontSize: 16)),
+      duration: const Duration(seconds: 3),
+    ));
   }
 }
 
@@ -510,7 +509,7 @@ class _GradientOutlineButton extends StatelessWidget {
         border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF9A8060).withOpacity(0.45),
+            color: const Color(0xFF9A8060).withValues(alpha: 0.45),
             offset: const Offset(0, 4),
             blurRadius: 7,
             spreadRadius: -1,
@@ -522,7 +521,7 @@ class _GradientOutlineButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(50),
-          splashColor: const Color(0xFFBBAA88).withOpacity(0.3),
+          splashColor: const Color(0xFFBBAA88).withValues(alpha: 0.3),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Row(

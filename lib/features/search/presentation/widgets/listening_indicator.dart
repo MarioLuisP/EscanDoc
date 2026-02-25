@@ -98,7 +98,7 @@ class _PulsingCircleState extends State<_PulsingCircle>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: Colors.white.withOpacity(1 - _animation.value),
+              color: Colors.white.withValues(alpha: 1 - _animation.value),
               width: 2,
             ),
           ),

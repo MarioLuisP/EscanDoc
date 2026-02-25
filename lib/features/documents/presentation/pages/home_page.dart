@@ -110,11 +110,11 @@ class _HomePageState extends State<HomePage> {
                 child: _GradientOutlineButton(
                   icon: Icons.folder_open,
                   label: 'view_all'.tr(),
-                  onTap: () =>
-                      Navigator.pushNamed(context, '/documents').then((_) {
-                    if (mounted)
-                      context.read<DocumentsProvider>().loadDocuments();
-                  }),
+                  onTap: () async {
+                    await Navigator.pushNamed(context, '/documents');
+                    if (!mounted) return;
+                    context.read<DocumentsProvider>().loadDocuments();
+                  },
                 ),
               ),
               const SizedBox(width: 12),
@@ -196,7 +196,7 @@ class _HomePageState extends State<HomePage> {
             borderRadius: BorderRadius.circular(50),
             boxShadow: [
               BoxShadow(
-                color: shadowColor.withOpacity(0.55),
+                color: shadowColor.withValues(alpha: 0.55),
                 offset: const Offset(0, 5),
                 blurRadius: 8,
                 spreadRadius: -1,
@@ -307,12 +307,13 @@ class _HomePageState extends State<HomePage> {
     final scanProvider = context.read<ScanProvider>();
     final documentsProvider = context.read<DocumentsProvider>();
     final locale = context.locale.languageCode;
+    final messenger = ScaffoldMessenger.of(context);
 
     final preparation = await scanProvider.prepareScan();
 
     if (preparation == null) {
-      if (mounted && scanProvider.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      if (scanProvider.error != null) {
+        messenger.showSnackBar(SnackBar(
           content: Text('error_scanning'.tr(),
               style: const TextStyle(fontSize: 16)),
           backgroundColor: Colors.red,
@@ -325,6 +326,7 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) return;
 
     if (preparation.classification.type == DocumentType.photo) {
+      if (!mounted) return;
       final action = await PhotoDetectedDialog.show(
         context,
         preparation.thumbnailFile ?? preparation.processedFile,
@@ -332,13 +334,11 @@ class _HomePageState extends State<HomePage> {
       );
 
       if (action == PhotoAction.cancel || action == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('scan_cancelled'.tr(),
-                style: const TextStyle(fontSize: 16)),
-            duration: const Duration(seconds: 2),
-          ));
-        }
+        messenger.showSnackBar(SnackBar(
+          content: Text('scan_cancelled'.tr(),
+              style: const TextStyle(fontSize: 16)),
+          duration: const Duration(seconds: 2),
+        ));
         return;
       }
 
@@ -353,8 +353,8 @@ class _HomePageState extends State<HomePage> {
     final document = await scanProvider.completeScan(preparation, locale);
 
     if (document == null) {
-      if (mounted && scanProvider.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      if (scanProvider.error != null) {
+        messenger.showSnackBar(SnackBar(
           content: Text('Error al guardar: ${scanProvider.error}',
               style: const TextStyle(fontSize: 16)),
           backgroundColor: Colors.red,
@@ -364,15 +364,13 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    if (mounted) {
-      documentsProvider.loadDocuments();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content:
-            Text('document_saved'.tr(), style: const TextStyle(fontSize: 16)),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 3),
-      ));
-    }
+    if (!mounted) return;
+    documentsProvider.loadDocuments();
+    messenger.showSnackBar(SnackBar(
+      content: Text('document_saved'.tr(), style: const TextStyle(fontSize: 16)),
+      backgroundColor: Colors.green,
+      duration: const Duration(seconds: 3),
+    ));
   }
 
   Future<void> _savePhotoToGallery(File photoFile) async {
@@ -406,10 +404,15 @@ class _HomePageState extends State<HomePage> {
   void _navigateToDetail(int documentId) async {
     await Navigator.pushNamed(context, '/document/detail',
         arguments: documentId);
-    if (mounted) context.read<DocumentsProvider>().loadDocuments();
+    if (!mounted) return;
+    context.read<DocumentsProvider>().loadDocuments();
   }
 
   Future<void> _handleImport(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final importProvider = context.read<ImportProvider>();
+    final documentsProvider = context.read<DocumentsProvider>();
+    final locale = context.locale.languageCode;
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -420,23 +423,19 @@ class _HomePageState extends State<HomePage> {
       if (result == null || result.files.isEmpty) return;
 
       final filePath = result.files.first.path;
-      if (filePath == null)
+      if (filePath == null) {
         throw Exception('No se pudo obtener la ruta del archivo');
+      }
 
       final importedFile = File(filePath);
-      if (!importedFile.existsSync())
+      if (!importedFile.existsSync()) {
         throw Exception('El archivo seleccionado no existe');
-
-      if (!mounted) return;
-
-      final importProvider = context.read<ImportProvider>();
-      final documentsProvider = context.read<DocumentsProvider>();
-      final locale = context.locale.languageCode;
+      }
 
       final preparation = await importProvider.prepareImport(importedFile);
       if (preparation == null) {
-        if (mounted && importProvider.error != null) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        if (importProvider.error != null) {
+          messenger.showSnackBar(SnackBar(
             content: Text(
                 'Error al preparar documento: ${importProvider.error}',
                 style: const TextStyle(fontSize: 16)),
@@ -447,9 +446,8 @@ class _HomePageState extends State<HomePage> {
         return;
       }
 
-      if (!mounted) return;
-
       if (preparation.classification.type == DocumentType.photo) {
+        if (!mounted) return;
         final action = await PhotoDetectedDialog.show(
           context,
           preparation.thumbnailFile ?? preparation.processedFile,
@@ -458,13 +456,11 @@ class _HomePageState extends State<HomePage> {
         );
 
         if (action == PhotoAction.cancel || action == null) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('import_cancelled'.tr(),
-                  style: const TextStyle(fontSize: 16)),
-              duration: const Duration(seconds: 2),
-            ));
-          }
+          messenger.showSnackBar(SnackBar(
+            content: Text('import_cancelled'.tr(),
+                style: const TextStyle(fontSize: 16)),
+            duration: const Duration(seconds: 2),
+          ));
           return;
         }
       }
@@ -473,8 +469,8 @@ class _HomePageState extends State<HomePage> {
 
       final document = await importProvider.completeImport(preparation, locale);
       if (document == null) {
-        if (mounted && importProvider.error != null) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        if (importProvider.error != null) {
+          messenger.showSnackBar(SnackBar(
             content: Text(
                 'Error al guardar documento: ${importProvider.error}',
                 style: const TextStyle(fontSize: 16)),
@@ -485,24 +481,21 @@ class _HomePageState extends State<HomePage> {
         return;
       }
 
-      if (mounted) {
-        documentsProvider.loadDocuments();
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('document_imported'.tr(),
-              style: const TextStyle(fontSize: 16)),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 3),
-        ));
-      }
+      if (!mounted) return;
+      documentsProvider.loadDocuments();
+      messenger.showSnackBar(SnackBar(
+        content: Text('document_imported'.tr(),
+            style: const TextStyle(fontSize: 16)),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
+      ));
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error al importar: $e',
-              style: const TextStyle(fontSize: 16)),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-        ));
-      }
+      messenger.showSnackBar(SnackBar(
+        content: Text('Error al importar: $e',
+            style: const TextStyle(fontSize: 16)),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 4),
+      ));
     }
   }
 }
@@ -601,7 +594,7 @@ class _SheetActionButton extends StatelessWidget {
         border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF9A8060).withOpacity(0.40),
+            color: const Color(0xFF9A8060).withValues(alpha: 0.40),
             offset: const Offset(0, 4),
             blurRadius: 7,
             spreadRadius: -1,
@@ -613,7 +606,7 @@ class _SheetActionButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(14),
-          splashColor: const Color(0xFFBBAA88).withOpacity(0.3),
+          splashColor: const Color(0xFFBBAA88).withValues(alpha: 0.3),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             child: Row(
@@ -697,7 +690,7 @@ class _CenterAddButton extends StatelessWidget {
         border: Border.all(color: const Color(0xFF7AAB7A), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF4A7A4A).withOpacity(0.38),
+            color: const Color(0xFF4A7A4A).withValues(alpha: 0.38),
             offset: const Offset(0, 4),
             blurRadius: 7,
             spreadRadius: -1,
@@ -710,7 +703,7 @@ class _CenterAddButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           customBorder: const CircleBorder(),
-          splashColor: const Color(0xFF7AAB7A).withOpacity(0.3),
+          splashColor: const Color(0xFF7AAB7A).withValues(alpha: 0.3),
           child: const Icon(Icons.more_horiz, color: Color(0xFF2E7D32), size: 26),
         ),
       ),
@@ -746,7 +739,7 @@ class _GradientOutlineButton extends StatelessWidget {
         border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF9A8060).withOpacity(0.45),
+            color: const Color(0xFF9A8060).withValues(alpha: 0.45),
             offset: const Offset(0, 4),
             blurRadius: 7,
             spreadRadius: -1,
@@ -758,7 +751,7 @@ class _GradientOutlineButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(50),
-          splashColor: const Color(0xFFBBAA88).withOpacity(0.3),
+          splashColor: const Color(0xFFBBAA88).withValues(alpha: 0.3),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Row(

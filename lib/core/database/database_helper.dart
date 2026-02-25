@@ -128,4 +128,9 @@ class DatabaseHelper {
     final db = await database;
     await db.close();
   }
+
+  /// Solo para tests: resetea la instancia cacheada de la BD
+  static void resetForTesting() {
+    _database = null;
+  }
 }

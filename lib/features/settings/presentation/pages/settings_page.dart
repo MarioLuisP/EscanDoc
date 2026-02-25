@@ -68,7 +68,7 @@ class SettingsPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.07),
+              color: Colors.black.withValues(alpha: 0.07),
               offset: const Offset(0, 3),
               blurRadius: 8,
               spreadRadius: -1,
@@ -112,7 +112,7 @@ class SettingsPage extends StatelessWidget {
         border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF9A8060).withOpacity(0.35),
+            color: const Color(0xFF9A8060).withValues(alpha: 0.35),
             offset: const Offset(0, 3),
             blurRadius: 6,
             spreadRadius: -1,

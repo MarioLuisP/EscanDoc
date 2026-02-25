@@ -1,0 +1,565 @@
+C:\Users\Mario\Documents\escandoc\lib>dir /s
+ El volumen de la unidad C no tiene etiqueta.
+ El número de serie del volumen es: C62D-0816
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib
+
+24/02/2026  19:26    <DIR>          .
+24/02/2026  19:26    <DIR>          ..
+18/02/2026  14:27            15.039 blocks_to_markdown.dart
+17/02/2026  00:22    <DIR>          core
+22/02/2026  14:17    <DIR>          features
+24/02/2026  19:26             9.341 main.dart
+               2 archivos         24.380 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\core
+
+17/02/2026  00:22    <DIR>          .
+17/02/2026  00:22    <DIR>          ..
+23/01/2026  14:00    <DIR>          constants
+24/02/2026  19:57    <DIR>          database
+23/01/2026  14:00    <DIR>          localization
+18/02/2026  22:10    <DIR>          services
+17/02/2026  00:22    <DIR>          user
+23/01/2026  14:00    <DIR>          utils
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\core\constants
+
+23/01/2026  14:00    <DIR>          .
+23/01/2026  14:00    <DIR>          ..
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\core\database
+
+24/02/2026  19:57    <DIR>          .
+24/02/2026  19:57    <DIR>          ..
+24/02/2026  19:57             4.759 database_helper.dart
+               1 archivos          4.759 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\core\localization
+
+23/01/2026  14:00    <DIR>          .
+23/01/2026  14:00    <DIR>          ..
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\core\services
+
+18/02/2026  22:10    <DIR>          .
+18/02/2026  22:10    <DIR>          ..
+18/02/2026  22:10            15.945 blocks_to_markdown.dart
+17/02/2026  15:41             4.750 document_classifier.dart
+07/02/2026  14:37             4.015 document_scanner_service.dart
+18/02/2026  12:13             1.514 ocr_analysis.dart
+18/02/2026  21:32             5.081 ocr_service.dart
+05/02/2026  11:53             4.283 pdf_converter_service.dart
+07/02/2026  12:11             6.561 pdf_generator.dart
+24/01/2026  13:40               796 speech_service.dart
+29/01/2026  15:16             4.165 speech_service_impl.dart
+               9 archivos         47.110 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\core\user
+
+17/02/2026  00:22    <DIR>          .
+17/02/2026  00:22    <DIR>          ..
+17/02/2026  00:22               320 user_preferences.dart
+               1 archivos            320 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\core\utils
+
+23/01/2026  14:00    <DIR>          .
+23/01/2026  14:00    <DIR>          ..
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features
+
+22/02/2026  14:17    <DIR>          .
+22/02/2026  14:17    <DIR>          ..
+23/01/2026  14:01    <DIR>          documents
+16/02/2026  13:58    <DIR>          image_processing
+23/01/2026  14:01    <DIR>          notes
+25/01/2026  13:30    <DIR>          onboarding
+23/01/2026  14:01    <DIR>          scan
+23/01/2026  14:01    <DIR>          search
+22/02/2026  14:17    <DIR>          settings
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\documents
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+23/01/2026  14:01    <DIR>          data
+23/01/2026  14:01    <DIR>          domain
+23/01/2026  14:01    <DIR>          presentation
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\documents\data
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+24/02/2026  19:19    <DIR>          models
+24/02/2026  19:20    <DIR>          repositories
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\documents\data\models
+
+24/02/2026  19:19    <DIR>          .
+24/02/2026  19:19    <DIR>          ..
+24/02/2026  19:19             3.409 document_model.dart
+               1 archivos          3.409 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\documents\data\repositories
+
+24/02/2026  19:20    <DIR>          .
+24/02/2026  19:20    <DIR>          ..
+24/02/2026  19:20             4.201 document_repository.dart
+               1 archivos          4.201 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\documents\domain
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+18/02/2026  11:23    <DIR>          usecases
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\documents\domain\usecases
+
+18/02/2026  11:23    <DIR>          .
+18/02/2026  11:23    <DIR>          ..
+02/02/2026  19:37               875 delete_document.dart
+24/01/2026  12:35               885 get_documents.dart
+24/01/2026  12:36               808 get_document_by_id.dart
+16/02/2026  14:32             5.737 import_document.dart
+18/02/2026  11:23               905 rename_document.dart
+               5 archivos          9.210 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\documents\presentation
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+24/02/2026  19:32    <DIR>          pages
+24/02/2026  19:22    <DIR>          providers
+18/02/2026  21:33    <DIR>          widgets
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\documents\presentation\pages
+
+24/02/2026  19:32    <DIR>          .
+24/02/2026  19:32    <DIR>          ..
+24/02/2026  19:32            17.470 documents_list_page.dart
+24/02/2026  19:26            13.524 document_detail_page.dart
+24/02/2026  14:07            27.931 home_page.dart
+18/02/2026  21:33             4.357 ocr_fullscreen_page.dart
+11/02/2026  00:02             4.158 photo_fullscreen_page.dart
+               5 archivos         67.440 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\documents\presentation\providers
+
+24/02/2026  19:22    <DIR>          .
+24/02/2026  19:22    <DIR>          ..
+24/02/2026  19:22             5.110 documents_provider.dart
+18/02/2026  12:20            12.626 import_provider.dart
+               2 archivos         17.736 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\documents\presentation\widgets
+
+18/02/2026  21:33    <DIR>          .
+18/02/2026  21:33    <DIR>          ..
+24/01/2026  12:42             3.067 delete_confirmation_dialog.dart
+09/02/2026  22:52             4.351 document_card.dart
+24/01/2026  12:42             1.513 empty_state.dart
+01/02/2026  15:09             2.531 note_preview_section.dart
+18/02/2026  21:33             3.067 ocr_preview_section.dart
+09/02/2026  22:33             3.674 photo_preview_section.dart
+               6 archivos         18.203 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\image_processing
+
+16/02/2026  13:58    <DIR>          .
+16/02/2026  13:58    <DIR>          ..
+05/02/2026  13:57    <DIR>          classification
+05/02/2026  13:40    <DIR>          format_converter
+04/02/2026  15:57    <DIR>          normalize_image
+16/02/2026  13:59    <DIR>          thumbnail
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\image_processing\classification
+
+05/02/2026  13:57    <DIR>          .
+05/02/2026  13:57    <DIR>          ..
+16/02/2026  00:09    <DIR>          data
+13/02/2026  23:12    <DIR>          domain
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\image_processing\classification\data
+
+16/02/2026  00:09    <DIR>          .
+16/02/2026  00:09    <DIR>          ..
+16/02/2026  00:09            10.270 tflite_image_classifier.dart
+               1 archivos         10.270 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\image_processing\classification\domain
+
+13/02/2026  23:12    <DIR>          .
+13/02/2026  23:12    <DIR>          ..
+13/02/2026  23:12             2.595 classification_result.dart
+07/02/2026  12:07             1.238 image_classifier.dart
+               2 archivos          3.833 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\image_processing\format_converter
+
+05/02/2026  13:40    <DIR>          .
+05/02/2026  13:40    <DIR>          ..
+05/02/2026  15:04    <DIR>          data
+05/02/2026  13:39    <DIR>          domain
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\image_processing\format_converter\data
+
+05/02/2026  15:04    <DIR>          .
+05/02/2026  15:04    <DIR>          ..
+05/02/2026  15:04             5.903 image_format_converter_impl.dart
+               1 archivos          5.903 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\image_processing\format_converter\domain
+
+05/02/2026  13:39    <DIR>          .
+05/02/2026  13:39    <DIR>          ..
+05/02/2026  13:39             1.999 image_format_converter.dart
+               1 archivos          1.999 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\image_processing\normalize_image
+
+04/02/2026  15:57    <DIR>          .
+04/02/2026  15:57    <DIR>          ..
+10/02/2026  22:56    <DIR>          data
+09/02/2026  21:26    <DIR>          domain
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\image_processing\normalize_image\data
+
+10/02/2026  22:56    <DIR>          .
+10/02/2026  22:56    <DIR>          ..
+10/02/2026  22:56             9.888 image_normalizer_service_impl.dart
+               1 archivos          9.888 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\image_processing\normalize_image\domain
+
+09/02/2026  21:26    <DIR>          .
+09/02/2026  21:26    <DIR>          ..
+09/02/2026  21:21             1.325 image_normalizer_service.dart
+09/02/2026  21:26             2.143 normalize_image_use_case.dart
+               2 archivos          3.468 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\image_processing\thumbnail
+
+16/02/2026  13:59    <DIR>          .
+16/02/2026  13:59    <DIR>          ..
+16/02/2026  15:00    <DIR>          data
+16/02/2026  13:58    <DIR>          domain
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\image_processing\thumbnail\data
+
+16/02/2026  15:00    <DIR>          .
+16/02/2026  15:00    <DIR>          ..
+16/02/2026  15:00             3.633 thumbnail_generator_impl.dart
+               1 archivos          3.633 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\image_processing\thumbnail\domain
+
+16/02/2026  13:58    <DIR>          .
+16/02/2026  13:58    <DIR>          ..
+16/02/2026  13:58               806 thumbnail_generator.dart
+               1 archivos            806 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\notes
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+23/01/2026  14:01    <DIR>          data
+23/01/2026  14:01    <DIR>          domain
+23/01/2026  14:01    <DIR>          presentation
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\notes\data
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+24/02/2026  19:27    <DIR>          models
+24/02/2026  19:27    <DIR>          repositories
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\notes\data\models
+
+24/02/2026  19:27    <DIR>          .
+24/02/2026  19:27    <DIR>          ..
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\notes\data\repositories
+
+24/02/2026  19:27    <DIR>          .
+24/02/2026  19:27    <DIR>          ..
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\notes\domain
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+24/02/2026  19:27    <DIR>          usecases
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\notes\domain\usecases
+
+24/02/2026  19:27    <DIR>          .
+24/02/2026  19:27    <DIR>          ..
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\notes\presentation
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+24/02/2026  19:25    <DIR>          pages
+24/02/2026  19:27    <DIR>          providers
+24/02/2026  19:27    <DIR>          widgets
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\notes\presentation\pages
+
+24/02/2026  19:25    <DIR>          .
+24/02/2026  19:25    <DIR>          ..
+24/02/2026  19:25            15.676 note_editor_page.dart
+               1 archivos         15.676 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\notes\presentation\providers
+
+24/02/2026  19:27    <DIR>          .
+24/02/2026  19:27    <DIR>          ..
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\notes\presentation\widgets
+
+24/02/2026  19:27    <DIR>          .
+24/02/2026  19:27    <DIR>          ..
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\onboarding
+
+25/01/2026  13:30    <DIR>          .
+25/01/2026  13:30    <DIR>          ..
+25/01/2026  13:30    <DIR>          domain
+23/01/2026  14:01    <DIR>          presentation
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\onboarding\domain
+
+25/01/2026  13:30    <DIR>          .
+25/01/2026  13:30    <DIR>          ..
+25/01/2026  13:30    <DIR>          usecases
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\onboarding\domain\usecases
+
+25/01/2026  13:30    <DIR>          .
+25/01/2026  13:30    <DIR>          ..
+25/01/2026  13:30               440 check_onboarding_status.dart
+25/01/2026  13:30               396 complete_onboarding.dart
+               2 archivos            836 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\onboarding\presentation
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+25/01/2026  13:32    <DIR>          pages
+25/01/2026  13:32    <DIR>          widgets
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\onboarding\presentation\pages
+
+25/01/2026  13:32    <DIR>          .
+25/01/2026  13:32    <DIR>          ..
+25/01/2026  13:32             4.749 onboarding_page.dart
+               1 archivos          4.749 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\onboarding\presentation\widgets
+
+25/01/2026  13:32    <DIR>          .
+25/01/2026  13:32    <DIR>          ..
+25/01/2026  13:32             1.425 onboarding_step.dart
+               1 archivos          1.425 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\scan
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+23/01/2026  14:01    <DIR>          data
+23/01/2026  14:01    <DIR>          domain
+23/01/2026  14:01    <DIR>          presentation
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\scan\data
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+23/01/2026  14:01    <DIR>          repositories
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\scan\data\repositories
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\scan\domain
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+24/02/2026  19:23    <DIR>          usecases
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\scan\domain\usecases
+
+24/02/2026  19:23    <DIR>          .
+24/02/2026  19:23    <DIR>          ..
+24/02/2026  19:23             7.294 process_ocr.dart
+17/02/2026  16:05             4.510 refine_classification.dart
+24/02/2026  19:22             3.200 save_scanned_document.dart
+25/01/2026  12:52               813 scan_document.dart
+               4 archivos         15.817 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\scan\presentation
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+10/02/2026  23:59    <DIR>          pages
+18/02/2026  12:19    <DIR>          providers
+17/02/2026  00:23    <DIR>          widgets
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\scan\presentation\pages
+
+10/02/2026  23:59    <DIR>          .
+10/02/2026  23:59    <DIR>          ..
+10/02/2026  23:59               501 camera_page.dart
+10/02/2026  23:59               505 crop_page.dart
+               2 archivos          1.006 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\scan\presentation\providers
+
+18/02/2026  12:19    <DIR>          .
+18/02/2026  12:19    <DIR>          ..
+18/02/2026  12:19            13.361 scan_provider.dart
+               1 archivos         13.361 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\scan\presentation\widgets
+
+17/02/2026  00:23    <DIR>          .
+17/02/2026  00:23    <DIR>          ..
+17/02/2026  00:23             9.671 photo_detected_dialog.dart
+               1 archivos          9.671 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\search
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+24/01/2026  13:39    <DIR>          data
+23/01/2026  14:01    <DIR>          domain
+23/01/2026  14:01    <DIR>          presentation
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\search\data
+
+24/01/2026  13:39    <DIR>          .
+24/01/2026  13:39    <DIR>          ..
+21/02/2026  20:59    <DIR>          models
+24/02/2026  19:24    <DIR>          repositories
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\search\data\models
+
+21/02/2026  20:59    <DIR>          .
+21/02/2026  20:59    <DIR>          ..
+21/02/2026  20:59             2.663 search_result.dart
+               1 archivos          2.663 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\search\data\repositories
+
+24/02/2026  19:24    <DIR>          .
+24/02/2026  19:24    <DIR>          ..
+02/02/2026  19:36               494 search_repository.dart
+24/02/2026  19:24             3.654 search_repository_impl.dart
+               2 archivos          4.148 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\search\domain
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+02/02/2026  19:37    <DIR>          usecases
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\search\domain\usecases
+
+02/02/2026  19:37    <DIR>          .
+02/02/2026  19:37    <DIR>          ..
+02/02/2026  19:37               876 search_documents.dart
+29/01/2026  15:16             1.591 voice_search.dart
+               2 archivos          2.467 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\search\presentation
+
+23/01/2026  14:01    <DIR>          .
+23/01/2026  14:01    <DIR>          ..
+24/02/2026  12:08    <DIR>          pages
+24/02/2026  12:14    <DIR>          providers
+11/02/2026  00:00    <DIR>          widgets
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\search\presentation\pages
+
+24/02/2026  12:08    <DIR>          .
+24/02/2026  12:08    <DIR>          ..
+24/02/2026  12:08            16.916 search_page.dart
+               1 archivos         16.916 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\search\presentation\providers
+
+24/02/2026  12:14    <DIR>          .
+24/02/2026  12:14    <DIR>          ..
+24/02/2026  12:14             3.420 search_provider.dart
+               1 archivos          3.420 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\search\presentation\widgets
+
+11/02/2026  00:00    <DIR>          .
+11/02/2026  00:00    <DIR>          ..
+24/01/2026  16:07             2.856 listening_indicator.dart
+24/01/2026  16:08             1.396 no_results_message.dart
+11/02/2026  00:00             2.099 search_bar_widget.dart
+10/02/2026  23:59             4.181 search_result_card.dart
+24/01/2026  16:12             1.020 voice_button.dart
+               5 archivos         11.552 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\settings
+
+22/02/2026  14:17    <DIR>          .
+22/02/2026  14:17    <DIR>          ..
+22/02/2026  14:17    <DIR>          presentation
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\settings\presentation
+
+22/02/2026  14:17    <DIR>          .
+22/02/2026  14:17    <DIR>          ..
+22/02/2026  14:18    <DIR>          pages
+               0 archivos              0 bytes
+
+ Directorio de C:\Users\Mario\Documents\escandoc\lib\features\settings\presentation\pages
+
+22/02/2026  14:18    <DIR>          .
+22/02/2026  14:18    <DIR>          ..
+22/02/2026  14:18             4.600 settings_page.dart
+               1 archivos          4.600 bytes
+
+     Total de archivos en la lista:
+              69 archivos        344.875 bytes
+             209 dirs  11.770.163.200 bytes libres

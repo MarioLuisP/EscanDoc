@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:escandoc/core/database/database_helper.dart';
@@ -10,10 +11,16 @@ void main() {
   late DocumentRepository repository;
 
   // Inicializar FFI para tests en desktop
-  setUpAll(() {
+  setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+
+    // Borrar DB existente (puede tener schema viejo) y resetear singleton
+    final dbPath = await databaseFactory.getDatabasesPath();
+    final file = File('$dbPath/escandoc.db');
+    if (file.existsSync()) await file.delete();
+    DatabaseHelper.resetForTesting();
   });
 
   setUp(() async {
