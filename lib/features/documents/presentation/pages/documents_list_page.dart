@@ -532,7 +532,7 @@ class _GradientOutlineButton extends StatelessWidget {
                 Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 22,
+                    fontSize: 20,
                     color: Color(0xFF5A4A30),
                     fontWeight: FontWeight.w500,
                   ),

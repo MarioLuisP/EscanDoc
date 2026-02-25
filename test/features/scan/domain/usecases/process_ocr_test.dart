@@ -454,6 +454,46 @@ void main() {
       expect(result.ocrText, isNot(contains('⚠️')));
     });
 
+    test('reclasificación actualiza documentType en DB', () async {
+      // Arrange: documento con tipo inicial 'documento'
+      final testDoc = DocumentModel(
+        id: 1,
+        title: 'documento_25_Ene_2026',
+        filePath: testJpgFile.path,
+        documentType: 'documento',
+        createdAt: DateTime(2026, 1, 25),
+        updatedAt: DateTime(2026, 1, 25),
+      );
+      when(() => mockRepository.getDocumentById(1))
+          .thenAnswer((_) async => testDoc);
+      when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
+          .thenAnswer((_) async => makeAnalysis('texto borroso'));
+      // Refinador cambia 'documento' → 'manuscrito'
+      when(() => mockRefinement.call(any(), any()))
+          .thenReturn(RefinementResult(
+            refinedClass: 'manuscrito',
+            correctionNote: 'documento → manuscrito',
+          ));
+      when(() => mockClassifier.getTypeDisplayName(any(), any()))
+          .thenReturn('Manuscrito');
+      when(() => mockRepository.countByTypePrefix(any(), any()))
+          .thenAnswer((_) async => 0);
+      when(() => mockClassifier.generateDocumentName(any(), any(), any(), any()))
+          .thenReturn('Manuscrito_25_Ene_2026');
+      when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
+      when(() => mockRepository.updateDocument(any()))
+          .thenAnswer((_) async => 1);
+
+      // Act
+      await useCase.call(1, tfliteClass: 'documento');
+
+      // Assert: documentType en el doc guardado debe ser 'manuscrito'
+      final captured =
+          verify(() => mockRepository.updateDocument(captureAny()))
+              .captured.single as DocumentModel;
+      expect(captured.documentType, 'manuscrito');
+    });
+
     test('debe lanzar excepción si documento no existe', () async {
       // Arrange
       when(() => mockRepository.getDocumentById(999))

@@ -32,6 +32,7 @@ dependencies:
   path_provider: ^2.1.5              # Rutas de storage
   shared_preferences: ^2.3.2         # Preferencias (onboarding, settings)
   file_picker: ^10.3.10              # Seleccionar archivos/imágenes de galería (importar)
+  receive_sharing_intent: ^1.8.1    # Recibir archivos compartidos desde otras apps (intent)
 
   # ═══════════════════════════════════════════════════════════════════════════
   # DOCUMENT SCANNING (UI Nativa - ML Kit Android / VisionKit iOS)
@@ -69,6 +70,7 @@ dependencies:
   # MARKDOWN RENDERING
   # ═══════════════════════════════════════════════════════════════════════════
   flutter_markdown_plus: ^1.0.7        # Renderizado Markdown en UI
+  google_fonts: ^6.2.1                 # Dancing Script para pergamino de notas
 
   # ═══════════════════════════════════════════════════════════════════════════
   # UTILITIES

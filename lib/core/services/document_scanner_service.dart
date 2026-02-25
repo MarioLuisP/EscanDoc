@@ -72,7 +72,7 @@ class DocumentScannerServiceImpl implements DocumentScannerService {
         return null;
       }
 
-      if (filePath == null || filePath.isEmpty) {
+      if (filePath.isEmpty) {
         debugPrint('[DocumentScanner] ERROR: No se pudo extraer el path del resultado');
         return null;
       }

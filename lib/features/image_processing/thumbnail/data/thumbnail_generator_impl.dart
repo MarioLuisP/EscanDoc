@@ -73,7 +73,7 @@ class ThumbnailGeneratorImpl implements ThumbnailGenerator {
 
       final totalDuration = DateTime.now().difference(startTime).inMilliseconds;
       final thumbnailSize = (jpgBytes.length / 1024).toStringAsFixed(1);
-      debugPrint('[ThumbnailGenerator] ✅ Thumbnail generado: ${thumbnailSize} KB');
+      debugPrint('[ThumbnailGenerator] ✅ Thumbnail generado: $thumbnailSize KB');
       debugPrint('[ThumbnailGenerator] ⏱️ TOTAL: ${totalDuration}ms');
 
       return File(thumbnailPath);

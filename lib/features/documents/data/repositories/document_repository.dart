@@ -66,6 +66,22 @@ class DocumentRepository {
     );
   }
 
+  /// Crea un documento de tipo nota (pergamino) y retorna el ID generado.
+  Future<int> createNoteDocument({
+    required String title,
+    required String filePath,
+    required String noteContent,
+  }) {
+    final doc = DocumentModel(
+      title: title,
+      filePath: filePath,
+      documentType: 'nota',
+      noteContent: noteContent,
+      createdAt: DateTime.now(),
+    );
+    return insertDocument(doc);
+  }
+
   /// Elimina un documento de la BD y sus archivos asociados
   /// Retorna true si se eliminó correctamente
   Future<bool> deleteDocument(int id) async {

@@ -32,21 +32,37 @@ lib/
 3. **Enfoque:** TDD clásico: Test RED → Code → Test GREEN
 4. **Sin texto hardcodeado:** Usar claves de localización
 5. **Domain no conoce Flutter:** Solo lógica pura
-6. Refactorizar, sin duda. respetaremos clea**Una feature completa antes de la siguiente**
+6. **Refactorizar sin miedo:** Si el código verde puede ser más limpio, refactorizar antes de avanzar.
+7. **Una feature completa antes de la siguiente:** No empezar nueva feature con tests en rojo o lógica incompleta.
+
+
+## Flujo TDD
+
+**Ciclo obligatorio:** RED → GREEN → REFACTOR
+
+1. Escribir test que falla (RED) — verificar que falla por la razón correcta
+2. Escribir el mínimo código para pasarlo (GREEN)
+3. Refactorizar si corresponde
+   **IMPORTANTE:** Este proyecto usa FVM (Flutter Version Manager).
+4. **Yo corro los tests** con `fvm flutter test` y te paso el output — vos no podés ejecutarlos
+
+**Qué se testea con TDD:**
+- Domain: UseCases, entidades, lógica de negocio — **siempre, sin excepción**
+- Data: repositorios y modelos que no dependan de plugins nativos
+- Presentation: providers con lógica de estado
+
+**Qué NO se testea:**
+- Cualquier clase que dependa directamente de flutter_doc_scanner o google_mlkit
+- Estas capas se verifican manualmente en dispositivo
+
+**Mocks:** usar mocktail para dependencias externas. No mockear clases de dominio.
+
+**Antes de marcar cualquier tarea como completa:** pedirme que corra los tests y confirmar GREEN.
 
 ## Flujo de Escaneo
 
 ```
 Botón ESCANEAR → Scanner nativo → OCR post-scan → Clasificar → Generar nombre → Guardar
 ```
-
-## Documentación
-IMPORTANTE: SOLO LEER CUANDO SE PIDE EXPRESAMENTE
-Todo en `.context/`: 
-
-## Testing
-
-**IMPORTANTE:** Este proyecto usa FVM (Flutter Version Manager).
-
-Tu no puedes correr 'fvm test ....' asi que me tienes que pedir a mi 
-que los corra en otra terminal y te pase los resultados
+## Lecciones del proyecto
+Ver `tasks/lessons.md` — leer al inicio de cada sesión.

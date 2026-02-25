@@ -23,8 +23,8 @@ String blocksToMarkdown(
   if (blocks.isEmpty) return '';
 
   // ── 1. imageSize desde max de bboxes ────────────────────────────────────
-  final imageWidth = blocks.map((b) => b.boundingBox?.right ?? 0.0).reduce(max);
-  final imageHeight = blocks.map((b) => b.boundingBox?.bottom ?? 0.0).reduce(max);
+  final imageWidth = blocks.map((b) => b.boundingBox.right).reduce(max);
+  final imageHeight = blocks.map((b) => b.boundingBox.bottom).reduce(max);
 
   // ── 2. Rotación dominante (mediana de ángulos de TextLine) ───────────────
   final allAngles = <double>[];
@@ -41,7 +41,6 @@ String blocksToMarkdown(
   for (final block in blocks) {
     for (final line in block.lines) {
       final bbox = line.boundingBox;
-      if (bbox == null) continue;
       final (readTop, readLeft) = _transform(
         bbox.top, bbox.left, bbox.bottom, bbox.right,
         rotation, imageWidth, imageHeight,

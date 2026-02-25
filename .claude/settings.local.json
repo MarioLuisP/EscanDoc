@@ -2,7 +2,7 @@
   "env": {
     "DISABLE_PROMPT_CACHING": "0",
     "DISABLE_COST_WARNINGS": "0",
-    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
+    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "0",
     "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "8192",
     "BASH_MAX_OUTPUT_LENGTH": "50000"
   },
@@ -16,6 +16,7 @@
       "Bash(yarn:*)",
       "Bash(pnpm:*)",
       "Read(**/*.md)",
+      "Read(**/*.dart)",
       "Read(**/*.json)",
       "Read(**/*.js)",
       "Read(**/*.ts)",
@@ -23,9 +24,7 @@
       "Read(**/*.tsx)",
       "Read(**/*.py)",
       "Bash(flutter pub get:*)",
-      "Bash(flutter analyze:*)",
-      "Bash(flutter test:*)",
-      "1"
+      "Bash(flutter analyze:*)"
     ],
     "deny": [
       "Read(.env*)",

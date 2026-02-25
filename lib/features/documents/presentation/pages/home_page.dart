@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:gal/gal.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
 import 'package:escandoc/features/documents/presentation/providers/import_provider.dart';
@@ -21,12 +23,40 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  StreamSubscription? _intentSub;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<DocumentsProvider>().loadDocuments();
+      _initSharingIntent();
     });
+  }
+
+  void _initSharingIntent() {
+    // App ya abierta — llega un archivo compartido
+    _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen(
+      (List<SharedMediaFile> files) {
+        if (files.isEmpty) return;
+        _processImportedFile(File(files.first.path));
+      },
+    );
+
+    // App cerrada — se abrió desde un archivo compartido (cold start)
+    ReceiveSharingIntent.instance.getInitialMedia().then(
+      (List<SharedMediaFile> files) {
+        if (files.isEmpty) return;
+        _processImportedFile(File(files.first.path));
+        ReceiveSharingIntent.instance.reset();
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _intentSub?.cancel();
+    super.dispose();
   }
 
   @override
@@ -111,9 +141,10 @@ class _HomePageState extends State<HomePage> {
                   icon: Icons.folder_open,
                   label: 'view_all'.tr(),
                   onTap: () async {
+                    final provider = context.read<DocumentsProvider>();
                     await Navigator.pushNamed(context, '/documents');
                     if (!mounted) return;
-                    context.read<DocumentsProvider>().loadDocuments();
+                    provider.loadDocuments();
                   },
                 ),
               ),
@@ -146,16 +177,12 @@ class _HomePageState extends State<HomePage> {
       builder: (_) => _ActionsSheet(
         onImport: () {
           Navigator.pop(ctx);
-          _handleImport(ctx);
+          _handleImport();
         },
         onNewNote: () {
           Navigator.pop(ctx);
-          // TODO: implementar Nueva Nota (post DB-simplification)
-          ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
-            content: Text('Próximamente: Nueva nota',
-                style: TextStyle(fontSize: 16)),
-            duration: Duration(seconds: 2),
-          ));
+          Navigator.pushNamed(ctx, '/note/edit',
+              arguments: {'isNewNote': true});
         },
         onSettings: () {
           Navigator.pop(ctx);
@@ -194,6 +221,10 @@ class _HomePageState extends State<HomePage> {
               colors: gradientColors,
             ),
             borderRadius: BorderRadius.circular(50),
+            border: Border.all(
+              color: Colors.black.withValues(alpha: 0.35),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
                 color: shadowColor.withValues(alpha: 0.55),
@@ -327,8 +358,8 @@ class _HomePageState extends State<HomePage> {
 
     if (preparation.classification.type == DocumentType.photo) {
       if (!mounted) return;
-      final action = await PhotoDetectedDialog.show(
-        context,
+      // ignore: use_build_context_synchronously
+      final action = await PhotoDetectedDialog.show(context,
         preparation.thumbnailFile ?? preparation.processedFile,
         userName: UserPreferences().userName,
       );
@@ -408,28 +439,26 @@ class _HomePageState extends State<HomePage> {
     context.read<DocumentsProvider>().loadDocuments();
   }
 
-  Future<void> _handleImport(BuildContext context) async {
+  Future<void> _handleImport() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'webp', 'heic', 'heif'],
+      allowMultiple: false,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final filePath = result.files.first.path;
+    if (filePath == null) return;
+    await _processImportedFile(File(filePath));
+  }
+
+  Future<void> _processImportedFile(File importedFile) async {
     final messenger = ScaffoldMessenger.of(context);
     final importProvider = context.read<ImportProvider>();
     final documentsProvider = context.read<DocumentsProvider>();
     final locale = context.locale.languageCode;
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'webp'],
-        allowMultiple: false,
-      );
-
-      if (result == null || result.files.isEmpty) return;
-
-      final filePath = result.files.first.path;
-      if (filePath == null) {
-        throw Exception('No se pudo obtener la ruta del archivo');
-      }
-
-      final importedFile = File(filePath);
       if (!importedFile.existsSync()) {
-        throw Exception('El archivo seleccionado no existe');
+        throw Exception('El archivo no existe: ${importedFile.path}');
       }
 
       final preparation = await importProvider.prepareImport(importedFile);
@@ -448,8 +477,8 @@ class _HomePageState extends State<HomePage> {
 
       if (preparation.classification.type == DocumentType.photo) {
         if (!mounted) return;
-        final action = await PhotoDetectedDialog.show(
-          context,
+        // ignore: use_build_context_synchronously
+        final action = await PhotoDetectedDialog.show(context,
           preparation.thumbnailFile ?? preparation.processedFile,
           userName: UserPreferences().userName,
           showGalleryOption: false,
@@ -678,8 +707,8 @@ class _CenterAddButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 52,
-      height: 52,
+      width: 42,
+      height: 42,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: const LinearGradient(
@@ -704,7 +733,7 @@ class _CenterAddButton extends StatelessWidget {
           onTap: onTap,
           customBorder: const CircleBorder(),
           splashColor: const Color(0xFF7AAB7A).withValues(alpha: 0.3),
-          child: const Icon(Icons.more_horiz, color: Color(0xFF2E7D32), size: 26),
+          child: const Icon(Icons.more_horiz, color: Color(0xFF2E7D32), size: 25),
         ),
       ),
     );
@@ -762,7 +791,7 @@ class _GradientOutlineButton extends StatelessWidget {
                 Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 22,
+                    fontSize: 20,
                     color: Color(0xFF5A4A30),
                     fontWeight: FontWeight.w500,
                   ),

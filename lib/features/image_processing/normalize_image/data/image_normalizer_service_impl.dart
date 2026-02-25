@@ -59,7 +59,7 @@ class ImageNormalizerServiceImpl implements ImageNormalizerService {
     final resizedSize = getFileSize(resizedPath);
     final resizedKB = (resizedSize / 1024).toStringAsFixed(1);
     final resizeReduction = ((1 - resizedSize / originalSize) * 100).toStringAsFixed(1);
-    print('📐 Redimensionado: $resizedKB KB (${resizeReduction}% reducción)');
+    print('📐 Redimensionado: $resizedKB KB ($resizeReduction% reducción)');
 
     // 2️⃣ PROBE: Comprimir a quality 85
     final directory = path.dirname(resizedPath);

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
+import 'package:escandoc/features/notes/data/services/parchment_image_generator.dart';
+import 'package:escandoc/features/notes/domain/note_title.dart';
 import 'package:escandoc/core/services/speech_service_impl.dart';
 
 /// Página de edición/creación de notas.
@@ -22,11 +25,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   final _focusNode = FocusNode();
 
   late bool _isEditing;
+  late bool _isNewNote;
   late int _documentId;
   String _documentTitle = '';
   String _originalContent = '';
   bool _initialized = false;
   bool _hasChanges = false;
+  bool _isSaving = false;
 
   // Voz
   SpeechServiceImpl? _speechService;
@@ -43,6 +48,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     _documentId = args?['documentId'] as int? ?? 0;
     _isEditing = args?['isEditing'] as bool? ?? false;
+    _isNewNote = args?['isNewNote'] as bool? ?? false;
     _documentTitle = args?['documentTitle'] as String? ?? '';
 
     if (_isEditing) {
@@ -150,11 +156,53 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   // --- Guardar ---
 
   Future<void> _saveNote() async {
-    final content = _contentController.text;
-    final provider = context.read<DocumentsProvider>();
+    if (_isSaving) return;
+    final content = _contentController.text.trim();
     final messenger = ScaffoldMessenger.of(context);
-    final success = await provider.updateNote(_documentId, content.isEmpty ? null : content);
 
+    if (_isNewNote) {
+      await _saveNewNote(content, messenger);
+    } else {
+      await _saveExistingNote(content, messenger);
+    }
+  }
+
+  Future<void> _saveNewNote(String content, ScaffoldMessengerState messenger) async {
+    setState(() => _isSaving = true);
+    try {
+      final imageFile = await ParchmentImageGenerator.generate(content, context);
+      final title = NoteTitle.generate(content, DateTime.now());
+      final repo = DocumentRepository();
+      await repo.createNoteDocument(
+        title: title,
+        filePath: imageFile.path,
+        noteContent: content.isEmpty ? '' : content,
+      );
+      if (!mounted) return;
+      await context.read<DocumentsProvider>().loadDocuments();
+      messenger.showSnackBar(SnackBar(
+        content: Text('note_saved'.tr(), style: const TextStyle(fontSize: 16)),
+        duration: const Duration(milliseconds: 1500),
+      ));
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(
+        content: Text('Error al guardar nota: $e',
+            style: const TextStyle(fontSize: 16)),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 4),
+      ));
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _saveExistingNote(String content, ScaffoldMessengerState messenger) async {
+    final provider = context.read<DocumentsProvider>();
+    final success = await provider.updateNote(_documentId, content.isEmpty ? null : content);
     if (!success || !mounted) return;
     messenger.showSnackBar(SnackBar(
       content: Text('note_saved'.tr(), style: const TextStyle(fontSize: 16)),
@@ -200,19 +248,21 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   @override
   Widget build(BuildContext context) {
     context.locale;
-    final pageTitle = _isEditing
-        ? 'note_edit_title'.tr(namedArgs: {'docName': _documentTitle})
-        : 'note_new_title'.tr(namedArgs: {'docName': _documentTitle});
+    final pageTitle = _isNewNote
+        ? 'Nueva nota'
+        : _isEditing
+            ? 'note_edit_title'.tr(namedArgs: {'docName': _documentTitle})
+            : 'note_new_title'.tr(namedArgs: {'docName': _documentTitle});
 
     return PopScope(
       canPop: !_hasChanges,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
+        final navigator = Navigator.of(context);
         final shouldDiscard = await _confirmDiscard();
-        if (!shouldDiscard) return;
-        if (!mounted) return;
+        if (!shouldDiscard || !mounted) return;
         setState(() => _hasChanges = false);
-        Navigator.pop(context);
+        navigator.pop();
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F0E8),
@@ -246,9 +296,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             icon: const Icon(Icons.arrow_back, size: 26),
             color: Colors.black87,
             onPressed: () async {
+              final navigator = Navigator.of(context);
               final shouldPop = await _confirmDiscard();
               if (!shouldPop || !mounted) return;
-              Navigator.pop(context);
+              navigator.pop();
             },
           ),
           Expanded(
@@ -418,7 +469,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: _saveNote,
+          onTap: _isSaving ? null : _saveNote,
           borderRadius: BorderRadius.circular(50),
           splashColor: Colors.white24,
           child: Padding(

@@ -73,8 +73,9 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                         ),
                         const SizedBox(height: 14),
 
-                        // Card Texto Extraído
-                        _buildOcrCard(context, document.ocrText),
+                        // Card Texto Extraído (oculta para notas)
+                        if (document.documentType != 'nota')
+                          _buildOcrCard(context, document.ocrText),
                       ],
                     ),
                   ),
@@ -164,6 +165,7 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
           child: Image.file(
             File(filePath),
             fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
             errorBuilder: (_, __, ___) => Container(
               color: Colors.grey[200],
               child: const Icon(Icons.broken_image,
@@ -182,7 +184,7 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
     final hasNote = noteContent != null && noteContent.isNotEmpty;
 
     return _SectionCard(
-      onTap: () => _openNoteEditor(context, documentId, documentTitle, noteContent),
+      onTap: () => _openNoteEditor(documentId, documentTitle, noteContent),
       icon: Icons.sticky_note_2_outlined,
       iconColor: const Color(0xFFF9A825),
       title: 'note_section_title'.tr(),
@@ -241,8 +243,9 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
 
   // --- Lógica ---
 
-  void _openNoteEditor(BuildContext context, int documentId, String documentTitle, String? noteContent) async {
+  void _openNoteEditor(int documentId, String documentTitle, String? noteContent) async {
     final hasNote = noteContent != null && noteContent.isNotEmpty;
+    final provider = context.read<DocumentsProvider>();
     final result = await Navigator.pushNamed(
       context,
       '/note/edit',
@@ -254,7 +257,7 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
       },
     );
     if (result != true || !mounted) return;
-    context.read<DocumentsProvider>().selectDocument(documentId);
+    provider.selectDocument(documentId);
   }
 
   void _showRenameDialog(
@@ -313,17 +316,20 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
     final documentId = provider.selectedDocument?.id;
     if (documentId == null) return;
 
-    final confirmed = await DeleteConfirmationDialog.show(context);
-    if (confirmed != true || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final confirmed = await DeleteConfirmationDialog.show(context);
+    if (confirmed != true) return;
+    if (!mounted) return;
     final success = await provider.deleteDocument(documentId);
-    if (!success || !mounted) return;
+    if (!success) return;
+    if (!mounted) return;
     messenger.showSnackBar(SnackBar(
       content: Text('document_deleted'.tr(),
           style: const TextStyle(fontSize: 16)),
       duration: const Duration(seconds: 3),
     ));
-    Navigator.pop(context);
+    navigator.pop();
   }
 }
 
