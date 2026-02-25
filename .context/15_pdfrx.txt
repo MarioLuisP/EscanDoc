@@ -1,0 +1,227 @@
+pdfrx 2.2.24 copy "pdfrx: ^2.2.24" to clipboard
+Published 22 days ago • verified publisherespresso3389.jp
+SDKFlutterPlatformAndroidiOSLinuxmacOSwebWindows
+299
+Readme
+Changelog
+Example
+Installing
+Versions
+Scores
+pdfrx
+Build Test
+
+pdfrx is a rich and fast PDF viewer and manipulation plugin for Flutter. It provides ready-to-use widgets for displaying and editing PDF documents, including page manipulation, document combining, and image import in your Flutter applications.
+
+This plugin is built on top of pdfrx_engine, which handles the low-level PDF rendering and manipulation using PDFium. The separation allows for a clean architecture where:
+
+pdfrx (this package) - Provides Flutter widgets, UI components, platform integration, and PDF editing features (page manipulation, combining, image import)
+pdfrx_engine - Handles PDF parsing, rendering, and manipulation without Flutter dependencies
+The plugin supports Android, iOS, Windows, macOS, Linux, and Web.
+
+Interactive Demo
+A demo site using Flutter Web
+
+pdfrx
+
+Multi-platform support
+Android
+iOS
+Windows
+macOS
+Linux (even on Raspberry Pi)
+Web (WASM)
+Example Code
+The following fragment illustrates the easiest way to show a PDF file in assets:
+
+import 'package:pdfrx/pdfrx.dart';
+
+...
+
+class _MyAppState extends State<MyApp> {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Pdfrx example'),
+        ),
+        body: PdfViewer.asset('assets/hello.pdf'),
+      ),
+    );
+  }
+}
+Anyway, please follow the instructions below to install on your environment.
+
+Getting Started
+Installation
+Add this to your package's pubspec.yaml file and execute flutter pub get:
+
+dependencies:
+  pdfrx: ^2.2.20
+Note: You only need to add pdfrx to your dependencies. The pdfrx_engine package is automatically included as a dependency of pdfrx.
+
+Initialization
+If you access the document API directly (for example, opening a PdfDocument before any pdfrx widget is built), call pdfrxFlutterInitialize once during app startup:
+
+import 'package:flutter/widgets.dart';
+import 'package:pdfrx/pdfrx.dart';
+
+Future<void> main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  pdfrxFlutterInitialize(); // Required when using engine APIs before widgets
+  runApp(const MyApp());
+}
+For more information, see pdfrx Initialization
+
+Tip: To silence debug-time WASM warnings, call pdfrxFlutterInitialize(dismissPdfiumWasmWarnings: true) during startup.
+
+Note for Windows
+REQUIRED: You must enable Developer Mode to build pdfrx on Windows.
+
+The build process uses symbolic links which requires Developer Mode to be enabled. If Developer Mode is not enabled:
+
+The build will fail with an error message
+You will see a link to Microsoft's official instructions
+You must enable Developer Mode and restart your computer before building
+Please follow Microsoft's official guide to enable Developer Mode as the exact steps may vary depending on your Windows version.
+
+Note for Building Release Builds
+Please note that the section is not applicable to Web.
+
+Because the plugin contains WASM binaries as its assets and they increase the size of the app regardless of the platform. This is normally OK for development or debugging but you may want to remove them when building release builds.
+
+To do this, do dart run pdfrx:remove_wasm_modules between flutter pub get and flutter build ... on your app project's root directory:
+
+flutter pub get
+dart run pdfrx:remove_wasm_modules
+flutter build ...
+To restore the WASM binaries, run the following command:
+
+dart run pdfrx:remove_wasm_modules --revert
+Note for iOS/macOS: Using CoreGraphics Instead of PDFium
+For iOS and macOS apps, you can optionally use pdfrx_coregraphics to render PDFs with Apple's native CoreGraphics/PDFKit instead of the bundled PDFium library. This can significantly reduce your app size by removing PDFium dependencies on Darwin platforms.
+
+⚠️ Note: pdfrx_coregraphics is experimental and has some limitations. See the package documentation for details.
+
+To use CoreGraphics rendering:
+
+Add pdfrx_coregraphics to your dependencies
+Set the CoreGraphics entry functions before initializing pdfrx
+Optionally remove PDFium dependencies to reduce app size
+For complete installation instructions and app size reduction steps, see the pdfrx_coregraphics README.
+
+PdfViewer constructors
+For opening PDF files from various sources, there are several constructors available in PdfViewer:
+
+PdfViewer.asset - Load from Flutter assets
+PdfViewer.file - Load from local file
+PdfViewer.data - Load from memory (Uint8List)
+PdfViewer.uri - Load from network URL
+Customizations/Features
+You can customize the behaviors and the viewer look and feel by configuring PdfViewerParams.
+
+PdfViewer.asset(
+  'assets/test.pdf',
+  params: const PdfViewerParams(
+    scrollPhysics: FixedOverscrollPhysics(maxOverscroll: 120),
+    scrollPhysicsScale: BouncingScrollPhysics(),
+  ),
+);
+The scrollPhysics and scrollPhysicsScale hooks let you plug in your own ScrollPhysics (or the bundled FixedOverscrollPhysics) to tune drag and zoom behavior per platform.
+
+Deal with Password Protected PDF Files
+PdfViewer.asset(
+  'assets/test.pdf',
+  // The easiest way to supply a password
+  passwordProvider: () => createSimplePasswordProvider('password'),
+
+  ...
+),
+See Deal with Password Protected PDF Files using PasswordProvider for more information.
+
+Text Selection
+The text selection feature is enabled by default, allowing users to select text in the PDF viewer. You can customize the text selection behavior using PdfTextSelectionParams.
+
+The following example shows how to disable text selection in the PDF viewer:
+
+PdfViewer.asset(
+  'assets/test.pdf',
+  params: PdfViewerParams(
+    textSelectionParams: PdfTextSelectionParams(
+      enabled: false,
+      ...
+    ),
+  ),
+  ...
+),
+The text selection feature supports various customizations, such as:
+
+Context Menu Customization using PdfViewerParams.buildContextMenu
+Text Selection Magnifier Customization using PdfTextSelectionParams.magnifier
+For more text selection customization, see Text Selection.
+
+PDF Feature Support
+PDF Link Handling
+Document Outline (a.k.a Bookmarks)
+Text Search
+Viewer Customization
+Page Layout (Horizontal Scroll View/Facing Pages)
+Showing Scroll Thumbs
+Dark/Night Mode Support
+Document Loading Indicator
+Viewer Customization using Widget Overlay
+Custom Scroll Physics for Drag/Zoom
+Additional Customizations
+Double-tap to Zoom
+Adding Page Number on Page Bottom
+Per-page Customization using Widget Overlay
+Per-page Customization using Canvas
+Additional Widgets
+PdfDocumentViewBuilder/PdfPageView
+PdfPageView is just another PDF widget that shows only one page. It accepts PdfDocument and page number to show a page within the document.
+
+PdfDocumentViewBuilder is used to safely manage PdfDocument inside widget tree and it accepts builder parameter that creates child widgets.
+
+The following fragment is a typical use of these widgets:
+
+PdfDocumentViewBuilder.asset(
+  'asset/test.pdf',
+  builder: (context, document) => ListView.builder(
+    itemCount: document?.pages.length ?? 0,
+    itemBuilder: (context, index) {
+      return Container(
+        margin: const EdgeInsets.all(8),
+        height: 240,
+        child: Column(
+          children: [
+            SizedBox(
+              height: 220,
+              child: PdfPageView(
+                document: document,
+                pageNumber: index + 1,
+                alignment: Alignment.center,
+              ),
+            ),
+            Text(
+              '${index + 1}',
+            ),
+          ],
+        ),
+      );
+    },
+  ),
+),
+PdfDocument Management
+PdfDocumentViewBuilder can accept PdfDocumentRef from PdfViewer to safely share the same PdfDocument instance. For more information, see example/viewer/lib/thumbnails_view.dart.
+
+API Documentation
+Flutter Widgets (pdfrx)
+PdfViewer - Main PDF viewer widget
+PdfDocumentViewBuilder - Builder for safe async document loading
+PdfPageView - Single page display widget
+Low-Level PDF API (pdfrx_engine)
+For advanced use cases requiring direct PDF manipulation without Flutter widgets, see the pdfrx_engine API reference. This includes:
+
+PdfDocument - Core document interface
+PdfPage - Page rendering and manipulation

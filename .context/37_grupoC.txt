@@ -1,0 +1,622 @@
+
+
+grupo de estudiantes
+
+
+  -:45:55.136   -   - [ScanProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: 291ms
+  -:45:55.136   -   - [ScanProvider] 🟢 START: Clasificar imagen - 1770821155136
+  -:45:55.136   -   - [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770821155136
+  -:45:55.136   -   - [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/177162639281883.jpg
+  -:45:55.218   - TextDetector    -  📊 Píxeles blancos: 176835 / 286720 (ratio: 0.6168)
+  -:45:55.218   - TextDetector    -  📊 Píxeles negros: 574 / 286720 (ratio: 0.0020)
+  -:45:55.222   - TextDetector    -  📊 Total contornos encontrados: 267
+  -:45:55.223   - TextDetector    -  ✅ Válidos: 50 | ❌ Por área: 217 | ❌ Por aspect ratio: 0
+  -:45:55.223   - TextDetector    -  📦 Retornando Map: variance=1720.2683427606187, hasText=true, whiteRatio=0.6167515345982143, darkRatio=0.002001953125, contourCount=50
+  -:45:55.228   -   - [ImageClassifier] 📦 Map recibido: {variance: 1720.2683427606187, hasText: true, whiteRatio: 0.6167515345982143, darkRatio: 0.002001953125, contourCount: 50}
+  -:45:55.228   -   - [ImageClassifier] 🔍 whiteRatio: 0.6168 (61.68%)
+  -:45:55.228   -   - [ImageClassifier] 🔍 darkRatio: 0.0020 (0.20%)
+  -:45:55.228   -   - [ImageClassifier] Varianza Laplaciana: 1720.27
+  -:45:55.228   -   - [ImageClassifier] Threshold: 600.0
+  -:45:55.228   -   - [ImageClassifier] White Ratio: 0.6168 (61.68%)
+  -:45:55.228   -   - [ImageClassifier] Dark Ratio: 0.0020 (0.20%)
+  -:45:55.228   -   - [ImageClassifier] Contornos válidos: 50
+  -:45:55.228   -   - [ImageClassifier] Tiene texto: true
+  -:45:55.228   -   - [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 92ms
+  -:45:55.228   -   - [ImageClassifier] ✅ Clasificado como: DOCUMENT (confianza: 100.0%)
+  -:45:55.228   -   - [ScanProvider] 🔴 END: Clasificar imagen - Duración: 92ms
+  -:45:55.228   -   - [ScanProvider] Clasificación: ClassificationResult(type: DocumentType.document, confidence: 100.0%, metadata: {method: opencv_multicondition_v2, variance: 1720.2683427606187, threshold: 600.0, whiteRatio: 0.6167515345982143, darkRatio: 0.002001953125, contourCount: 50, hasText: true, durationMs: 92})
+  -:45:55.228   -   - [ScanProvider] Es documento → comprimiendo a <850KB ahora
+  -:45:55.228   -   - [ImportDocument] 🟢 Normalizar JPG
+  -:45:55.229   -   - [ScanProvider] Comprimido en 0ms
+  -:45:55.229   -   - [ScanProvider] 🔴 END: Preparación completa - Duración TOTAL: 8085ms
+  -:45:55.229   -   - [ScanProvider] 🟢 START: Completar escaneo - 1770821155229
+  -:45:55.237   -   - [ScanProvider] Directorio de docs: /data/user/0/com.example.escandoc/app_flutter
+  -:45:55.237   -   - [ScanProvider] 🟢 START: Guardar documento - 1770821155237
+  -:45:55.237   -   - [SaveScannedDocument] 🟢 START: Guardado (JPG only) - 1770821155237
+  -:45:55.237   -   - [SaveScannedDocument] JPG: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/177162639281883.jpg
+  -:45:55.237   -   - [SaveScannedDocument] Tipo detectado: documento
+  -:45:55.237   -   - [SaveScannedDocument] Nombre generado: documento_11_Feb_2026
+  -:45:55.237   -   - [SaveScannedDocument] 🟢 START: Insertar en BD - 1770821155237
+  -:45:55.251   -   - [SaveScannedDocument] 🔴 END: Insertar en BD - Duración: 13ms - ID: 16
+  -:45:55.251   -   - [SaveScannedDocument] 🔴 END: Guardado (JPG only) - Duración TOTAL: 13ms
+  -:45:55.251   -   - [ScanProvider] 🔴 END: Guardar documento - Duración: 13ms
+  -:45:55.251   -   - [ScanProvider] Documento guardado exitosamente. ID: 16
+  -:45:55.251   -   - [ScanProvider] 🔴 END: Completar escaneo - Duración TOTAL: 21ms
+  -:45:55.251   -   - [ScanProvider] 🟢 START: Procesamiento OCR background - 1770821155251
+  -:45:55.251   -   - [ProcessOCR] 🟢 START: OCR (JPG only) - 1770821155251
+  -:45:55.252   -   - [ProcessOCR] JPG path: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/177162639281883.jpg
+  -:45:55.252   -   - [ProcessOCR] 🟢 START: OCR extractText - 1770821155252
+  -:45:55.818  6435-8769  PipelineManager         com.example.escandoc                com.example.escandoc                 D  OCR process succeeded via visionkit pipeline.
+  -:45:55.822   -   - [ProcessOCR] 🔴 END: OCR extractText - Duración: 569ms - 3 caracteres
+  -:45:55.822   -   - [ProcessOCR] Tipo detectado: documento
+  -:45:55.822   -   - [ProcessOCR] Fecha extraída: null
+  -:45:55.822   -   - [ProcessOCR] 🟢 START: Update DB con OCR - 1770821155822
+  -:45:55.824  6435-7063  TransportR...EventStore com.example.escandoc                com.example.escandoc                 D  Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+  -:45:55.825  6435-7063  TransportR...oScheduler com.example.escandoc                com.example.escandoc                 D  Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+  -:45:55.829   -   - [ProcessOCR] 🔴 END: Update DB con OCR - Duración: 7ms
+  -:45:55.829   -   - [ProcessOCR] 🔴 END: OCR (JPG only) - Duración TOTAL: 578ms
+  -:45:55.829   -   - [ScanProvider] 🔴 END: Procesamiento OCR background - Duración: 578ms
+  -:45:55.830  6435-7063  TransportR...EventStore com.example.escandoc                com.example.escandoc                 D  Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+  -:45:55.831  6435-7063  TransportR...oScheduler com.example.escandoc                com.example.escandoc                 D  Upload for context TransportContext(cct, VERY_LOW, MSRodHRwczovL2ZpcmViYXNlbG9nZ2luZy5nb29nbGVhcGlzLmNvbS92MGNjL2xvZy9iYXRjaD9mb3JtYXQ9anNvbl9wcm90bzNc) is already scheduled. Returning...
+  -:46:47.873  6435-7063  TransportR...ortBackend com.example.escandoc                com.example.escandoc                 D  Making request to: https://firebaselogging.googleapis.com/v0cc/log/batch?format=json_proto3
+  -:46:48.062  6435-7063  TransportR...ortBackend com.example.escandoc                com.example.escandoc                 I  Status Code: 200
+  -:46:48.062  6435-7063  TransportR...ortBackend com.example.escandoc                com.example.escandoc                 I  Content-Type: application/json; charset=UTF-8
+  -:46:48.062  6435-7063  TransportR...ortBackend com.example.escandoc                com.example.escandoc                 I  Content-Encoding: gzip
+
+
+
+
+foto de una ruina
+
+
+
+
+
+  -:50:43.937   -   - [ScanProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: 340ms
+  -:50:43.937   -   - [ScanProvider] 🟢 START: Clasificar imagen - 1770821443937
+  -:50:43.937   -   - [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770821443937
+  -:50:43.937   -   - [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/177451366270124.jpg
+  -:50:44.043   - TextDetector    -  📊 Píxeles blancos: 247529 / 376960 (ratio: 0.6566)
+  -:50:44.043   - TextDetector    -  📊 Píxeles negros: 4466 / 376960 (ratio: 0.0118)
+  -:50:44.046   - TextDetector    -  📊 Total contornos encontrados: 59
+  -:50:44.046   - TextDetector    -  ✅ Válidos: 12 | ❌ Por área: 47 | ❌ Por aspect ratio: 0
+  -:50:44.046   - TextDetector    -  📦 Retornando Map: variance=2938.1460537437906, hasText=true, whiteRatio=0.6566452674023769, darkRatio=0.011847410865874363, contourCount=12
+  -:50:44.048   -   - [ImageClassifier] 📦 Map recibido: {variance: 2938.1460537437906, hasText: true, whiteRatio: 0.6566452674023769, darkRatio: 0.011847410865874363, contourCount: 12}
+  -:50:44.048   -   - [ImageClassifier] 🔍 whiteRatio: 0.6566 (65.66%)
+  -:50:44.048   -   - [ImageClassifier] 🔍 darkRatio: 0.0118 (1.18%)
+  -:50:44.048   -   - [ImageClassifier] Varianza Laplaciana: 2938.15
+  -:50:44.048   -   - [ImageClassifier] Threshold: 600.0
+  -:50:44.048   -   - [ImageClassifier] White Ratio: 0.6566 (65.66%)
+  -:50:44.048   -   - [ImageClassifier] Dark Ratio: 0.0118 (1.18%)
+  -:50:44.048   -   - [ImageClassifier] Contornos válidos: 12
+  -:50:44.048   -   - [ImageClassifier] Tiene texto: true
+  -:50:44.048   -   - [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 111ms
+  -:50:44.048   -   - [ImageClassifier] ✅ Clasificado como: DOCUMENT (confianza: 100.0%)
+  -:50:44.048   -   - [ScanProvider] 🔴 END: Clasificar imagen - Duración: 111ms
+  -:50:44.048   -   - [ScanProvider] Clasificación: ClassificationResult(type: DocumentType.document, confidence: 100.0%, metadata: {method: opencv_multicondition_v2, variance: 2938.1460537437906, threshold: 600.0, whiteRatio: 0.6566452674023769, darkRatio: 0.011847410865874363, contourCount: 12, hasText: true, durationMs: 111})
+  -:50:44.049   -   - [ScanProvider] Es documento → comprimiendo a <850KB ahora
+  -:50:44.049   -   - [ImportDocument] 🟢 Normalizar JPG
+  -:50:44.049   -   - [ScanProvider] Comprimido en 0ms
+  -:50:44.049   -   - [ScanProvider] 🔴 END: Preparación completa - Duración TOTAL: 17999ms
+  -:50:44.049   -   - [ScanProvider] 🟢 START: Completar escaneo - 1770821444049
+  -:50:44.057   -   - [ScanProvider] Directorio de docs: /data/user/0/com.example.escandoc/app_flutter
+  -:50:44.057   -   - [ScanProvider] 🟢 START: Guardar documento - 1770821444057
+  -:50:44.057   -   - [SaveScannedDocument] 🟢 START: Guardado (JPG only) - 1770821444057
+  -:50:44.057   -   - [SaveScannedDocument] JPG: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/177451366270124.jpg
+  -:50:44.057   -   - [SaveScannedDocument] Tipo detectado: documento
+  -:50:44.057   -   - [SaveScannedDocument] Nombre generado: documento_11_Feb_2026
+  -:50:44.057   -   - [SaveScannedDocument] 🟢 START: Insertar en BD - 1770821444057
+  -:50:44.065   -   - [SaveScannedDocument] 🔴 END: Insertar en BD - Duración: 7ms - ID: 17
+  -:50:44.065   -   - [SaveScannedDocument] 🔴 END: Guardado (JPG only) - Duración TOTAL: 7ms
+  -:50:44.065   -   - [ScanProvider] 🔴 END: Guardar documento - Duración: 7ms
+  -:50:44.065   -   - [ScanProvider] Documento guardado exitosamente. ID: 17
+  -:50:44.065   -   - [ScanProvider] 🔴 END: Completar escaneo - Duración TOTAL: 15ms
+  -:50:44.065   -   - [ScanProvider] 🟢 START: Procesamiento OCR background - 1770821444065
+  -:50:44.065   -   - [ProcessOCR] 🟢 START: OCR (JPG only) - 1770821444065
+  -:50:44.066   -   - [ProcessOCR] JPG path: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/177451366270124.jpg
+  -:50:44.066   -   - [ProcessOCR] 🟢 START: OCR extractText - 1770821444066
+
+
+
+
+
+caja de balanza con luz artificial
+
+
+
+  -:54:45.452   -   - [ScanProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: 355ms
+  -:54:45.452   -   - [ScanProvider] 🟢 START: Clasificar imagen - 1770821685452
+  -:54:45.452   -   - [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770821685452
+  -:54:45.452   -   - [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/177692863558557.jpg
+  -:54:45.508   -   - [ImageClassifier] 📦 Map recibido: {variance: 520.4467880486768, hasText: false, whiteRatio: 0.0, darkRatio: 0.0, contourCount: 0}
+  -:54:45.508   -   - [ImageClassifier] 🔍 whiteRatio: 0.0000 (0.00%)
+  -:54:45.508   -   - [ImageClassifier] 🔍 darkRatio: 0.0000 (0.00%)
+  -:54:45.508   -   - [ImageClassifier] Varianza Laplaciana: 520.45
+  -:54:45.508   -   - [ImageClassifier] Threshold: 600.0
+  -:54:45.508   -   - [ImageClassifier] White Ratio: 0.0000 (0.00%)
+  -:54:45.508   -   - [ImageClassifier] Dark Ratio: 0.0000 (0.00%)
+  -:54:45.508   -   - [ImageClassifier] Contornos válidos: 0
+  -:54:45.508   -   - [ImageClassifier] Tiene texto: false
+  -:54:45.508   -   - [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 55ms
+  -:54:45.508   -   - [ImageClassifier] ✅ Clasificado como: PHOTO (confianza: 100.0%)
+  -:54:45.508   -   - [ScanProvider] 🔴 END: Clasificar imagen - Duración: 55ms
+  -:54:45.508   -   - [ScanProvider] Clasificación: ClassificationResult(type: DocumentType.photo, confidence: 100.0%, metadata: {method: opencv_multicondition_v2, variance: 520.4467880486768, threshold: 600.0, whiteRatio: 0.0, darkRatio: 0.0, contourCount: 0, hasText: false, durationMs: 55})
+  -:54:45.508   -   - [ScanProvider] Es foto → saltando compresión (se hará si usuario acepta)
+  -:54:45.508   -   - [ScanProvider] 🔴 END: Preparación completa - Duración TOTAL: 33303ms
+
+luz buena natural
+
+
+  -:02:41.531   -   - [DocumentScanner] Tamaño: 336.61 KB
+  -:02:41.531   -   - [DocumentScanner] ✅ Scanner retornó archivo sin procesar (será clasificado y normalizado después)
+  -:02:41.531   -   - [ScanProvider] 🔴 END: Scanner nativo - Duración: 8364ms
+  -:02:41.531   -   - [ScanProvider] Archivo escaneado: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/178169324900188.jpg
+  -:02:41.531   -   - [ScanProvider] 🟢 START: Convertir JPG + Resize A4 - 1770822161531
+  -:02:41.531   -   - [ImportDocument] 🟢 Convertir a JPG y redimensionar A4
+  -:02:41.531   -   - [ImportDocument] Archivo: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/178169324900188.jpg
+  -:02:41.531   -   - [FormatConverter] Converting jpg to JPG: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/178169324900188.jpg
+  -:02:41.531   -   - [FormatConverter] Already JPG, skipping conversion
+  -:02:41.781   -   - [ScanProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: 249ms
+  -:02:41.781   -   - [ScanProvider] 🟢 START: Clasificar imagen - 1770822161781
+  -:02:41.781   -   - [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770822161781
+  -:02:41.781   -   - [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/178169324900188.jpg
+  -:02:41.880   - TextDetector    -  📊 Píxeles blancos: 199126 / 298880 (ratio: 0.6662)
+  -:02:41.880   - TextDetector    -  📊 Píxeles negros: 3849 / 298880 (ratio: 0.0129)
+  -:02:41.883   - TextDetector    -  📊 Total contornos encontrados: 252
+  -:02:41.883   - TextDetector    -  ✅ Válidos: 43 | ❌ Por área: 205 | ❌ Por aspect ratio: 4
+  -:02:41.883   - TextDetector    -  📦 Retornando Map: variance=1137.9465074875961, hasText=true, whiteRatio=0.6662406316916488, darkRatio=0.012878078158458244, contourCount=43
+  -:02:41.884   -   - [ImageClassifier] 📦 Map recibido: {variance: 1137.9465074875961, hasText: true, whiteRatio: 0.6662406316916488, darkRatio: 0.012878078158458244, contourCount: 43}
+  -:02:41.884   -   - [ImageClassifier] 🔍 whiteRatio: 0.6662 (66.62%)
+  -:02:41.884   -   - [ImageClassifier] 🔍 darkRatio: 0.0129 (1.29%)
+  -:02:41.884   -   - [ImageClassifier] Varianza Laplaciana: 1137.95
+  -:02:41.884   -   - [ImageClassifier] Threshold: 600.0
+  -:02:41.884   -   - [ImageClassifier] White Ratio: 0.6662 (66.62%)
+  -:02:41.884   -   - [ImageClassifier] Dark Ratio: 0.0129 (1.29%)
+  -:02:41.884   -   - [ImageClassifier] Contornos válidos: 43
+  -:02:41.884   -   - [ImageClassifier] Tiene texto: true
+  -:02:41.884   -   - [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 103ms
+  -:02:41.884   -   - [ImageClassifier] ✅ Clasificado como: DOCUMENT (confianza: 100.0%)
+  -:02:41.884   -   - [ScanProvider] 🔴 END: Clasificar imagen - Duración: 103ms
+  -:02:41.884   -   - [ScanProvider] Clasificación: ClassificationResult(type: DocumentType.document, confidence: 100.0%, metadata: {method: opencv_multicondition_v2, variance: 1137.9465074875961, threshold: 600.0, whiteRatio: 0.6662406316916488, darkRatio: 0.012878078158458244, contourCount: 43, hasText: true, durationMs: 103})
+  -:02:41.884   -   - [ScanProvider] Es documento → comprimiendo a <850KB ahora
+  -:02:41.884   -   - [ImportDocument] 🟢 Normalizar JPG
+  -:02:41.884   -   - [ScanProvider] Comprimido en 0ms
+  -:02:41.884   -   - [ScanProvider] 🔴 END: Preparación completa - Duración TOTAL: 8718ms
+  -:02:41.884   -   - [ScanProvider] 🟢 START: Completar escaneo - 1770822161884
+  -:02:41.887   -   - [ScanProvider] Directorio de docs: /data/user/0/com.example.escandoc/app_flutter
+  -:02:41.887   -   - [ScanProvider] 🟢 START: Guardar documento - 1770822161887
+  -:02:41.887   -   - [SaveScannedDocument] 🟢 START: Guardado (JPG only) - 1770822161887
+  -:02:41.887   -   - [SaveScannedDocument] JPG: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/178169324900188.jpg
+  -:02:41.887   -   - [SaveScannedDocument] Tipo detectado: documento
+  -:02:41.887   -   - [SaveScannedDocument] Nombre generado: documento_11_Feb_2026
+  -:02:41.888   -   - [SaveScannedDocument] 🟢 START: Insertar en BD - 1770822161888
+  -:02:41.904   -   - [SaveScannedDocument] 🔴 END: Insertar en BD - Duración: 16ms - ID: 19
+  -:02:41.905   -   - [SaveScannedDocument] 🔴 END: Guardado (JPG only) - Duración TOTAL: 17ms
+  -:02:41.905   -   - [ScanProvider] 🔴 END: Guardar documento - Duración: 17ms
+  -:02:41.905   -   - [ScanProvider] Documento guardado exitosamente. ID: 19
+  -:02:41.905   -   - [ScanProvider] 🔴 END: Completar escaneo - Duración TOTAL: 20ms
+  -:02:41.905   -   - [ScanProvider] 🟢 START: Procesamiento OCR background - 1770822161905
+  -:02:41.905   -   - [ProcessOCR] 🟢 START: OCR (JPG only) - 1770822161905
+  -:02:41.913   -   - [ProcessOCR] JPG path: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/178169324900188.jpg
+  -:02:41.913   -   - [ProcessOCR] 🟢 START: OCR extractText - 1770822161913
+
+
+
+
+
+persona completa fondo oscuro luz artificial
+
+
+
+
+  -:56:58.608   -   - [ScanProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: 265ms
+  -:56:58.608   -   - [ScanProvider] 🟢 START: Clasificar imagen - 1770821818608
+  -:56:58.608   -   - [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770821818608
+  -:56:58.608   -   - [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/177826095307558.jpg
+  -:56:58.697   -   - [ImageClassifier] 📦 Map recibido: {variance: 125.13720985605829, hasText: false, whiteRatio: 0.0, darkRatio: 0.0, contourCount: 0}
+  -:56:58.697   -   - [ImageClassifier] 🔍 whiteRatio: 0.0000 (0.00%)
+  -:56:58.697   -   - [ImageClassifier] 🔍 darkRatio: 0.0000 (0.00%)
+  -:56:58.697   -   - [ImageClassifier] Varianza Laplaciana: 125.14
+  -:56:58.697   -   - [ImageClassifier] Threshold: 600.0
+  -:56:58.697   -   - [ImageClassifier] White Ratio: 0.0000 (0.00%)
+  -:56:58.697   -   - [ImageClassifier] Dark Ratio: 0.0000 (0.00%)
+  -:56:58.697   -   - [ImageClassifier] Contornos válidos: 0
+  -:56:58.697   -   - [ImageClassifier] Tiene texto: false
+  -:56:58.697   -   - [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 88ms
+  -:56:58.697   -   - [ImageClassifier] ✅ Clasificado como: PHOTO (confianza: 100.0%)
+  -:56:58.697   -   - [ScanProvider] 🔴 END: Clasificar imagen - Duración: 89ms
+  -:56:58.697   -   - [ScanProvider] Clasificación: ClassificationResult(type: DocumentType.photo, confidence: 100.0%, metadata: {method: opencv_multicondition_v2, variance: 125.13720985605829, threshold: 600.0, whiteRatio: 0.0, darkRatio: 0.0, contourCount: 0, hasText: false, durationMs: 88})
+  -:56:58.697   -   - [ScanProvider] Es foto → saltando compresión (se hará si usuario acepta)
+  -:56:58.697   -   - [ScanProvider] 🔴 END: Preparación completa - Duración TOTAL: 14075ms
+
+
+
+con luz natural fuerte
+
+
+
+  -:59:36.560   -   - [DocumentScanner] Tamaño: 403.75 KB
+  -:59:36.560   -   - [DocumentScanner] ✅ Scanner retornó archivo sin procesar (será clasificado y normalizado después)
+  -:59:36.560   -   - [ScanProvider] 🔴 END: Scanner nativo - Duración: 14134ms
+  -:59:36.560   -   - [ScanProvider] Archivo escaneado: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/177984263510034.jpg
+  -:59:36.560   -   - [ScanProvider] 🟢 START: Convertir JPG + Resize A4 - 1770821976560
+  -:59:36.560   -   - [ImportDocument] 🟢 Convertir a JPG y redimensionar A4
+  -:59:36.560   -   - [ImportDocument] Archivo: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/177984263510034.jpg
+  -:59:36.560   -   - [FormatConverter] Converting jpg to JPG: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/177984263510034.jpg
+  -:59:36.560   -   - [FormatConverter] Already JPG, skipping conversion
+  -:59:36.576   - SurfaceSyncer           com.example.escandoc                com.example.escandoc                 E  Failed to find sync for id=4
+  -:59:36.791   -   - [ScanProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: 230ms
+  -:59:36.791   -   - [ScanProvider] 🟢 START: Clasificar imagen - 1770821976791
+  -:59:36.791   -   - [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770821976791
+  -:59:36.791   -   - [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/177984263510034.jpg
+  -:59:36.870   - TextDetector    -  📊 Píxeles blancos: 164808 / 284160 (ratio: 0.5800)
+  -:59:36.870   - TextDetector    -  📊 Píxeles negros: 410 / 284160 (ratio: 0.0014)
+  -:59:36.875   - TextDetector    -  📊 Total contornos encontrados: 315
+  -:59:36.875   - TextDetector    -  ✅ Válidos: 64 | ❌ Por área: 249 | ❌ Por aspect ratio: 2
+  -:59:36.875   - TextDetector    -  📦 Retornando Map: variance=2380.236966667166, hasText=true, whiteRatio=0.5799831081081082, darkRatio=0.001442849099099099, contourCount=64
+  -:59:36.876   -   - [ImageClassifier] 📦 Map recibido: {variance: 2380.236966667166, hasText: true, whiteRatio: 0.5799831081081082, darkRatio: 0.001442849099099099, contourCount: 64}
+  -:59:36.876   -   - [ImageClassifier] 🔍 whiteRatio: 0.5800 (58.00%)
+  -:59:36.876   -   - [ImageClassifier] 🔍 darkRatio: 0.0014 (0.14%)
+  -:59:36.876   -   - [ImageClassifier] Varianza Laplaciana: 2380.24
+  -:59:36.876   -   - [ImageClassifier] Threshold: 600.0
+  -:59:36.876   -   - [ImageClassifier] White Ratio: 0.5800 (58.00%)
+  -:59:36.876   -   - [ImageClassifier] Dark Ratio: 0.0014 (0.14%)
+  -:59:36.876   -   - [ImageClassifier] Contornos válidos: 64
+  -:59:36.876   -   - [ImageClassifier] Tiene texto: true
+  -:59:36.876   -   - [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 85ms
+  -:59:36.877   -   - [ImageClassifier] ✅ Clasificado como: DOCUMENT (confianza: 100.0%)
+  -:59:36.877   -   - [ScanProvider] 🔴 END: Clasificar imagen - Duración: 85ms
+  -:59:36.877   -   - [ScanProvider] Clasificación: ClassificationResult(type: DocumentType.document, confidence: 100.0%, metadata: {method: opencv_multicondition_v2, variance: 2380.236966667166, threshold: 600.0, whiteRatio: 0.5799831081081082, darkRatio: 0.001442849099099099, contourCount: 64, hasText: true, durationMs: 85})
+  -:59:36.877   -   - [ScanProvider] Es documento → comprimiendo a <850KB ahora
+  -:59:36.877   -   - [ImportDocument] 🟢 Normalizar JPG
+  -:59:36.877   -   - [ScanProvider] Comprimido en 0ms
+  -:59:36.877   -   - [ScanProvider] 🔴 END: Preparación completa - Duración TOTAL: 14452ms
+  -:59:36.877   -   - [ScanProvider] 🟢 START: Completar escaneo - 1770821976877
+  -:59:36.884   -   - [ScanProvider] Directorio de docs: /data/user/0/com.example.escandoc/app_flutter
+  -:59:36.884   -   - [ScanProvider] 🟢 START: Guardar documento - 1770821976884
+  -:59:36.884   -   - [SaveScannedDocument] 🟢 START: Guardado (JPG only) - 1770821976884
+  -:59:36.884   -   - [SaveScannedDocument] JPG: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/177984263510034.jpg
+  -:59:36.884   -   - [SaveScannedDocument] Tipo detectado: documento
+  -:59:36.884   -   - [SaveScannedDocument] Nombre generado: documento_11_Feb_2026
+  -:59:36.885   -   - [SaveScannedDocument] 🟢 START: Insertar en BD - 1770821976884
+  -:59:36.892   -   - [SaveScannedDocument] 🔴 END: Insertar en BD - Duración: 7ms - ID: 18
+  -:59:36.892   -   - [SaveScannedDocument] 🔴 END: Guardado (JPG only) - Duración TOTAL: 8ms
+  -:59:36.892   -   - [ScanProvider] 🔴 END: Guardar documento - Duración: 8ms
+  -:59:36.893   -   - [ScanProvider] Documento guardado exitosamente. ID: 18
+  -:59:36.893   -   - [ScanProvider] 🔴 END: Completar escaneo - Duración TOTAL: 15ms
+  -:59:36.893   -   - [ScanProvider] 🟢 START: Procesamiento OCR background - 1770821976893
+  -:59:36.893   -   - [ProcessOCR] 🟢 START: OCR (JPG only) - 1770821976893
+  -:59:36.895   -   - [ProcessOCR] JPG path: /data/user/0/com.example.escandoc/cache/mlkit_docscan_ui_client/177984263510034.jpg
+  -:59:36.895   -   - [ProcessOCR] 🟢 START: OCR extractText - 1770821976895
+
+  -:59:37.268   -   - [ProcessOCR] 🔴 END: OCR extractText - Duración: 373ms - 0 caracteres
+  -:59:37.268   -   - [ProcessOCR] Tipo detectado: documento
+  -:59:37.268   -   - [ProcessOCR] Fecha extraída: null
+  -:59:37.268   -   - [ProcessOCR] 🟢 START: Update DB con OCR - 1770821977268
+  -:59:37.269  6435-7063  TransportR...EventStore com.example.escandoc                com.example.escandoc                 D  Storing event with priority=VERY_LOW, name=FIREBASE_ML_SDK for destination cct
+  -:59:37.271   -   - [ProcessOCR] 🔴 END: Update DB con OCR - Duración: 2ms
+  -:59:37.271   -   - [ProcessOCR] 🔴 END: OCR (JPG only) - Duración TOTAL: 378ms
+  -:59:37.271   -   - [ScanProvider] 🔴 END: Procesamiento OCR background - Duración: 378ms
+
+
+
+
+pasto con pata de silla, antes de la doble condicion 
+
+  -22:22:44.651   -               I  [ImportProvider] 🟢 START: Preparación de importación - 1770772964650
+  -22:22:44.651   -               I  [ImportProvider] 🟢 START: Convertir JPG + Resize A4 - 1770772964651
+  -22:22:44.651   -               I  [ImportDocument] 🟢 Convertir a JPG y redimensionar A4
+  -22:22:44.651   -               I  [ImportDocument] Archivo: /data/user/0/com.example.escandoc/cache/file_picker/1770772964546/IMG_20251206_180543340.jpg
+  -22:22:44.652   -               I  [FormatConverter] Converting jpg to JPG: /data/user/0/com.example.escandoc/cache/file_picker/1770772964546/IMG_20251206_180543340.jpg
+  -22:22:44.653   -               I  [FormatConverter] Already JPG, skipping conversion
+  -22:22:45.960   -               I  [ImportProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: 1308ms
+  -22:22:45.962   -               I  [ImportProvider] 🟢 START: Clasificar imagen - 1770772965961
+  -22:22:45.962   -               I  [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770772965962
+  -22:22:45.963   -               I  [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/file_picker/1770772964546/IMG_20251206_180543340_resized.jpg
+  -22:22:46.122 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  📊 Píxeles blancos: 170530 / 307840 (ratio: 0.5540)
+  -22:22:46.126 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  📊 Total contornos encontrados: 180
+  -22:22:46.127 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  ✅ Válidos: 55 | ❌ Por área: 125 | ❌ Por aspect ratio: 0
+  -22:22:46.127 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  📦 Retornando Map: variance=1445.5372456495272, hasText=false, whiteRatio=0.5539566008316008, contourCount=55
+  -22:22:46.128   -               I  [ImageClassifier] 📦 Map recibido: {variance: 1445.5372456495272, hasText: false, whiteRatio: 0.5539566008316008, contourCount: 55}
+  -22:22:46.128   -               I  [ImageClassifier] 🔍 whiteRatio: 0.5540 (55.40%)
+  -22:22:46.128   -               I  [ImageClassifier] Varianza Laplaciana: 1445.54
+  -22:22:46.129   -               I  [ImageClassifier] Threshold: 600.0
+  -22:22:46.129   -               I  [ImageClassifier] White Ratio: 0.5540 (55.40%)
+  -22:22:46.129   -               I  [ImageClassifier] Contornos válidos: 55
+  -22:22:46.129   -               I  [ImageClassifier] Tiene texto: false
+  -22:22:46.129   -               I  [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 166ms
+  -22:22:46.129   -               I  [ImageClassifier] ✅ Clasificado como: PHOTO (confianza: 100.0%)
+  -22:22:46.129   -               I  [ImportProvider] 🔴 END: Clasificar imagen - Duración: 167ms
+  -22:22:46.129   -               I  [ImportProvider] Clasificación: ClassificationResult(type: DocumentType.photo, confidence: 100.0%, metadata: {method: opencv_laplacian_whitepixels, variance: 1445.5372456495272, threshold: 600.0, whiteRatio: 0.5539566008316008, contourCount: 55, hasText: false, durationMs: 166})
+  -22:22:46.130   -               I  [ImportProvider] Es foto → saltando compresión (se hará si usuario acepta)
+  -22:22:46.130   -               I  [ImportProvider] 🔴 END: Preparación completa - Duración TOTAL: 1479ms
+
+
+
+ahora
+
+[ImportProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: 1261ms
+2026-02-11 12:29:01.059   - [ImportProvider] 🟢 START: Clasificar imagen - 1770823741059
+2026-02-11 12:29:01.059   - [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770823741059
+2026-02-11 12:29:01.059   - [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/file_picker/1770823739721/IMG_20251206_180543340_resized.jpg
+2026-02-11 12:29:01.209    - 📊 Píxeles blancos: 170530 / 307840 (ratio: 0.5540)
+2026-02-11 12:29:01.209    - 📊 Píxeles negros: 3855 / 307840 (ratio: 0.0125)
+2026-02-11 12:29:01.213    - 📊 Total contornos encontrados: 180
+2026-02-11 12:29:01.213    - ✅ Válidos: 55 | ❌ Por área: 125 | ❌ Por aspect ratio: 0
+2026-02-11 12:29:01.213    - 📦 Retornando Map: variance=1445.5372456495272, hasText=true, whiteRatio=0.5539566008316008, darkRatio=0.012522739085239085, contourCount=55
+2026-02-11 12:29:01.215   - [ImageClassifier] 📦 Map recibido: {variance: 1445.5372456495272, hasText: true, whiteRatio: 0.5539566008316008, darkRatio: 0.012522739085239085, contourCount: 55}
+2026-02-11 12:29:01.215   - [ImageClassifier] 🔍 whiteRatio: 0.5540 (55.40%)
+2026-02-11 12:29:01.215   - [ImageClassifier] 🔍 darkRatio: 0.0125 (1.25%)
+2026-02-11 12:29:01.215   - [ImageClassifier] Varianza Laplaciana: 1445.54
+2026-02-11 12:29:01.215   - [ImageClassifier] Threshold: 600.0
+2026-02-11 12:29:01.215   - [ImageClassifier] White Ratio: 0.5540 (55.40%)
+2026-02-11 12:29:01.215   - [ImageClassifier] Dark Ratio: 0.0125 (1.25%)
+2026-02-11 12:29:01.215   - [ImageClassifier] Contornos válidos: 55
+2026-02-11 12:29:01.215   - [ImageClassifier] Tiene texto: true
+2026-02-11 12:29:01.215   - [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 155ms
+2026-02-11 12:29:01.215   - [ImageClassifier] ✅ Clasificado como: DOCUMENT (confianza: 100.0%)
+2026-02-11 12:29:01.215   - [ImportProvider] 🔴 END: Clasificar imagen - Duración: 156ms
+2026-02-11 12:29:01.215   - [ImportProvider] Clasificación: ClassificationResult(type: DocumentType.document, confidence: 100.0%, metadata: {method: opencv_multicondition_v2, variance: 1445.5372456495272, threshold: 600.0, whiteRatio: 0.5539566008316008, darkRatio: 0.012522739085239085, contourCount: 55, hasText: true, durationMs: 155})
+2026-02-11 12:29:01.215   - [ImportProvider] Es documento → comprimiendo a <850KB ahora
+
+
+
+
+frente casa con gazebo con nombre antes
+
+[ImportProvider] 🟢 START: Preparación de importación - 1770773016271
+  -22:23:36.272   -               I  [ImportProvider] 🟢 START: Convertir JPG + Resize A4 - 1770773016272
+  -22:23:36.272   -               I  [ImportDocument] 🟢 Convertir a JPG y redimensionar A4
+  -22:23:36.273   -               I  [ImportDocument] Archivo: /data/user/0/com.example.escandoc/cache/file_picker/1770773016091/IMG_20251204_125116568.jpg
+  -22:23:36.273   -               I  [FormatConverter] Converting jpg to JPG: /data/user/0/com.example.escandoc/cache/file_picker/1770773016091/IMG_20251204_125116568.jpg
+  -22:23:36.273   -               I  [FormatConverter] Already JPG, skipping conversion
+  -22:23:37.133   -               I  [ImportProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: 860ms
+  -22:23:37.133   -               I  [ImportProvider] 🟢 START: Clasificar imagen - 1770773017133
+  -22:23:37.133   -               I  [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770773017133
+  -22:23:37.134   -               I  [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/file_picker/1770773016091/IMG_20251204_125116568.jpg
+  -22:23:37.365 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  📊 Píxeles blancos: 197114 / 307840 (ratio: 0.6403)
+  -22:23:37.372 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  📊 Total contornos encontrados: 497
+  -22:23:37.374 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  ✅ Válidos: 93 | ❌ Por área: 404 | ❌ Por aspect ratio: 0
+  -22:23:37.374 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  📦 Retornando Map: variance=1895.681451146693, hasText=false, whiteRatio=0.6403131496881497, contourCount=93
+  -22:23:37.375   -               I  [ImageClassifier] 📦 Map recibido: {variance: 1895.681451146693, hasText: false, whiteRatio: 0.6403131496881497, contourCount: 93}
+  -22:23:37.375   -               I  [ImageClassifier] 🔍 whiteRatio: 0.6403 (64.03%)
+  -22:23:37.375   -               I  [ImageClassifier] Varianza Laplaciana: 1895.68
+  -22:23:37.375   -               I  [ImageClassifier] Threshold: 600.0
+  -22:23:37.375   -               I  [ImageClassifier] White Ratio: 0.6403 (64.03%)
+  -22:23:37.375   -               I  [ImageClassifier] Contornos válidos: 93
+  -22:23:37.375   -               I  [ImageClassifier] Tiene texto: false
+  -22:23:37.375   -               I  [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 241ms
+  -22:23:37.376   -               I  [ImageClassifier] ✅ Clasificado como: PHOTO (confianza: 100.0%)
+  -22:23:37.376   -               I  [ImportProvider] 🔴 END: Clasificar imagen - Duración: 242ms
+  -22:23:37.376   -               I  [ImportProvider] Clasificación: ClassificationResult(type: DocumentType.photo, confidence: 100.0%, metadata: {method: opencv_laplacian_whitepixels, variance: 1895.681451146693, threshold: 600.0, whiteRatio: 0.6403131496881497, contourCount: 93, hasText: false, durationMs: 241})
+  -22:23:37.376   -               I  [ImportProvider] Es foto → saltando compresión (se hará si usuario acepta)
+  -22:23:37.376   -               I  [ImportProvider] 🔴 END: Preparación completa - Duración TOTAL: 1104ms
+  -22:23:37.425 22039-22039 OnBackInvokedCallback   com.example.escandoc                com.example.escandoc                 W  OnBackInvokedCallback is not enabled for the application.
+                                                                                                                                        Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+
+ahora
+
+
+
+
+2026-02-11 12:29:12.012   - [ImportProvider] 🟢 START: Preparación de importación - 1770823752011
+2026-02-11 12:29:12.012   - [ImportProvider] 🟢 START: Convertir JPG + Resize A4 - 1770823752012
+2026-02-11 12:29:12.012   - [ImportDocument] 🟢 Convertir a JPG y redimensionar A4
+2026-02-11 12:29:12.012   - [ImportDocument] Archivo: /data/user/0/com.example.escandoc/cache/file_picker/1770823751930/IMG_20251204_125116568.jpg
+2026-02-11 12:29:12.012   - [FormatConverter] Converting jpg to JPG: /data/user/0/com.example.escandoc/cache/file_picker/1770823751930/IMG_20251204_125116568.jpg
+2026-02-11 12:29:12.012   - [FormatConverter] Already JPG, skipping conversion
+2026-02-11 12:29:12.784   - [ImportProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: 771ms
+2026-02-11 12:29:12.784   - [ImportProvider] 🟢 START: Clasificar imagen - 1770823752784
+2026-02-11 12:29:12.784   - [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770823752784
+2026-02-11 12:29:12.784   - [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/file_picker/1770823751930/IMG_20251204_125116568.jpg
+2026-02-11 12:29:13.026    - 📊 Píxeles blancos: 197114 / 307840 (ratio: 0.6403)
+2026-02-11 12:29:13.026    - 📊 Píxeles negros: 14566 / 307840 (ratio: 0.0473)
+2026-02-11 12:29:13.030    - 📊 Total contornos encontrados: 497
+2026-02-11 12:29:13.030    - ✅ Válidos: 93 | ❌ Por área: 404 | ❌ Por aspect ratio: 0
+2026-02-11 12:29:13.031    - 📦 Retornando Map: variance=1895.681451146693, hasText=true, whiteRatio=0.6403131496881497, darkRatio=0.04731678794178794, contourCount=93
+2026-02-11 12:29:13.031   - [ImageClassifier] 📦 Map recibido: {variance: 1895.681451146693, hasText: true, whiteRatio: 0.6403131496881497, darkRatio: 0.04731678794178794, contourCount: 93}
+2026-02-11 12:29:13.031   - [ImageClassifier] 🔍 whiteRatio: 0.6403 (64.03%)
+2026-02-11 12:29:13.031   - [ImageClassifier] 🔍 darkRatio: 0.0473 (4.73%)
+2026-02-11 12:29:13.031   - [ImageClassifier] Varianza Laplaciana: 1895.68
+2026-02-11 12:29:13.031   - [ImageClassifier] Threshold: 600.0
+2026-02-11 12:29:13.031   - [ImageClassifier] White Ratio: 0.6403 (64.03%)
+2026-02-11 12:29:13.031   - [ImageClassifier] Dark Ratio: 0.0473 (4.73%)
+2026-02-11 12:29:13.031   - [ImageClassifier] Contornos válidos: 93
+2026-02-11 12:29:13.031   - [ImageClassifier] Tiene texto: true
+2026-02-11 12:29:13.031   - [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 247ms
+2026-02-11 12:29:13.031   - [ImageClassifier] ✅ Clasificado como: DOCUMENT (confianza: 100.0%)
+
+
+
+
+
+mitad piso mosaicos mitad paisaje antes
+
+
+[ImportProvider] 🟢 START: Preparación de importación - 1770773086286
+  -22:24:46.287   -               I  [ImportProvider] 🟢 START: Convertir JPG + Resize A4 - 1770773086287
+  -22:24:46.288   -               I  [ImportDocument] 🟢 Convertir a JPG y redimensionar A4
+  -22:24:46.288   -               I  [ImportDocument] Archivo: /data/user/0/com.example.escandoc/cache/file_picker/1770773086070/IMG_20251126_113034927.jpg
+  -22:24:46.288   -               I  [FormatConverter] Converting jpg to JPG: /data/user/0/com.example.escandoc/cache/file_picker/1770773086070/IMG_20251126_113034927.jpg
+  -22:24:46.289   -               I  [FormatConverter] Already JPG, skipping conversion
+  -22:24:47.197   -               I  [ImportProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: 909ms
+  -22:24:47.199   -               I  [ImportProvider] 🟢 START: Clasificar imagen - 1770773087198
+  -22:24:47.200   -               I  [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770773087200
+  -22:24:47.201   -               I  [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/file_picker/1770773086070/IMG_20251126_113034927.jpg
+  -22:24:47.458 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  📊 Píxeles blancos: 183985 / 307840 (ratio: 0.5977)
+  -22:24:47.468 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  📊 Total contornos encontrados: 884
+  -22:24:47.470 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  ✅ Válidos: 114 | ❌ Por área: 770 | ❌ Por aspect ratio: 0
+  -22:24:47.470 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  📦 Retornando Map: variance=2699.2319154180886, hasText=false, whiteRatio=0.5976643711018711, contourCount=114
+  -22:24:47.471   -               I  [ImageClassifier] 📦 Map recibido: {variance: 2699.2319154180886, hasText: false, whiteRatio: 0.5976643711018711, contourCount: 114}
+  -22:24:47.472   -               I  [ImageClassifier] 🔍 whiteRatio: 0.5977 (59.77%)
+  -22:24:47.472   -               I  [ImageClassifier] Varianza Laplaciana: 2699.23
+  -22:24:47.472   -               I  [ImageClassifier] Threshold: 600.0
+  -22:24:47.472   -               I  [ImageClassifier] White Ratio: 0.5977 (59.77%)
+  -22:24:47.472   -               I  [ImageClassifier] Contornos válidos: 114
+  -22:24:47.472   -               I  [ImageClassifier] Tiene texto: false
+  -22:24:47.472   -               I  [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 271ms
+  -22:24:47.473   -               I  [ImageClassifier] ✅ Clasificado como: PHOTO (confianza: 100.0%)
+  -22:24:47.473   -               I  [ImportProvider] 🔴 END: Clasificar imagen - Duración: 274ms
+  -22:24:47.473   -               I  [ImportProvider] Clasificación: ClassificationResult(type: DocumentType.photo, confidence: 100.0%, metadata: {method: opencv_laplacian_whitepixels, variance: 2699.2319154180886, threshold: 600.0, whiteRatio: 0.5976643711018711, contourCount: 114, hasText: false, durationMs: 271})
+  -22:24:47.473   -               I  [ImportProvider] Es foto → saltando compresión (se hará si usuario acepta)
+  -22:24:47.473   -               I  [ImportProvider] 🔴 END: Preparación completa - Duración TOTAL: 1186ms
+
+
+ahora 
+
+
+
+ImportProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: 939ms
+2026-02-11 12:37:27.841   - [ImportProvider] 🟢 START: Clasificar imagen - 1770824247841
+2026-02-11 12:37:27.841   - [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770824247841
+2026-02-11 12:37:27.841   - [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/file_picker/1770824246740/IMG_20251126_113034927.jpg
+2026-02-11 12:37:28.108    - 📊 Píxeles blancos: 183985 / 307840 (ratio: 0.5977)
+2026-02-11 12:37:28.109    - 📊 Píxeles negros: 17094 / 307840 (ratio: 0.0555)
+2026-02-11 12:37:28.114    - 📊 Total contornos encontrados: 884
+2026-02-11 12:37:28.115    - ✅ Válidos: 114 | ❌ Por área: 770 | ❌ Por aspect ratio: 0
+2026-02-11 12:37:28.115    - 📦 Retornando Map: variance=2699.2319154180886, hasText=true, whiteRatio=0.5976643711018711, darkRatio=0.05552884615384615, contourCount=114
+2026-02-11 12:37:28.115   - [ImageClassifier] 📦 Map recibido: {variance: 2699.2319154180886, hasText: true, whiteRatio: 0.5976643711018711, darkRatio: 0.05552884615384615, contourCount: 114}
+2026-02-11 12:37:28.115   - [ImageClassifier] 🔍 whiteRatio: 0.5977 (59.77%)
+2026-02-11 12:37:28.115   - [ImageClassifier] 🔍 darkRatio: 0.0555 (5.55%)
+2026-02-11 12:37:28.115   - [ImageClassifier] Varianza Laplaciana: 2699.23
+2026-02-11 12:37:28.115   - [ImageClassifier] Threshold: 600.0
+2026-02-11 12:37:28.115   - [ImageClassifier] White Ratio: 0.5977 (59.77%)
+2026-02-11 12:37:28.115   - [ImageClassifier] Dark Ratio: 0.0555 (5.55%)
+2026-02-11 12:37:28.115   - [ImageClassifier] Contornos válidos: 114
+2026-02-11 12:37:28.115   - [ImageClassifier] Tiene texto: true
+2026-02-11 12:37:28.115   - [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 274ms
+2026-02-11 12:37:28.116   - [ImageClassifier] ✅ Clasificado como: DOCUMENT (confianza: 100.0%)
+2026-02-11 12:37:28.116   - [ImportProvider] 🔴 END: Clasificar imagen - Duración: 274ms
+2026-02-11 12:37:28.116   - [ImportProvider] Clasificación: ClassificationResult(type: DocumentType.document, confidence: 100.0%, metadata: {method: opencv_multicondition_v2, variance: 2699.2319154180886, threshold: 600.0, whiteRatio: 0.5976643711018711, darkRatio: 0.05552884615384615, contourCount: 114, hasText: true, durationMs: 274})
+2026-02-11 12:37:28.116   - [ImportProvider] Es documento → comprimiendo a <850KB ahora
+2026-02-11 12:37:28.116   - [ImportDocument] 🟢 Normalizar JPG
+2026-02-11 12:37:28.116   - ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-02-11 12:37:28.116   - 📦 COMPRESIÓN INTELIGENTE - INICIO
+
+
+
+macetas con flores antes
+
+
+ [ImportProvider] 🟢 START: Preparación de importación - 1770773191182
+  -22:26:31.183   -               I  [ImportProvider] 🟢 START: Convertir JPG + Resize A4 - 1770773191183
+  -22:26:31.184   -               I  [ImportDocument] 🟢 Convertir a JPG y redimensionar A4
+  -22:26:31.184   -               I  [ImportDocument] Archivo: /data/user/0/com.example.escandoc/cache/file_picker/1770773191020/IMG_20251120_134708010.jpg
+  -22:26:31.186   -               I  [FormatConverter] Converting jpg to JPG: /data/user/0/com.example.escandoc/cache/file_picker/1770773191020/IMG_20251120_134708010.jpg
+  -22:26:31.187   -               I  [FormatConverter] Already JPG, skipping conversion
+  -22:26:32.646   -               I  [ImportProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: 1462ms
+  -22:26:32.646   -               I  [ImportProvider] 🟢 START: Clasificar imagen - 1770773192646
+  -22:26:32.646   -               I  [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770773192646
+  -22:26:32.646   -               I  [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/file_picker/1770773191020/IMG_20251120_134708010_resized.jpg
+  -22:26:32.834 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  📊 Píxeles blancos: 186465 / 307840 (ratio: 0.6057)
+  -22:26:32.839 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  📊 Total contornos encontrados: 193
+  -22:26:32.840 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  ✅ Válidos: 42 | ❌ Por área: 151 | ❌ Por aspect ratio: 0
+  -22:26:32.840 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  📦 Retornando Map: variance=1984.1643896128764, hasText=false, whiteRatio=0.6057205041580042, contourCount=42
+  -22:26:32.841   -               I  [ImageClassifier] 📦 Map recibido: {variance: 1984.1643896128764, hasText: false, whiteRatio: 0.6057205041580042, contourCount: 42}
+  -22:26:32.841   -               I  [ImageClassifier] 🔍 whiteRatio: 0.6057 (60.57%)
+  -22:26:32.841   -               I  [ImageClassifier] Varianza Laplaciana: 1984.16
+  -22:26:32.841   -               I  [ImageClassifier] Threshold: 600.0
+  -22:26:32.841   -               I  [ImageClassifier] White Ratio: 0.6057 (60.57%)
+  -22:26:32.841   -               I  [ImageClassifier] Contornos válidos: 42
+  -22:26:32.841   -               I  [ImageClassifier] Tiene texto: false
+  -22:26:32.842   -               I  [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 195ms
+  -22:26:32.842   -               I  [ImageClassifier] ✅ Clasificado como: PHOTO (confianza: 100.0%)
+  -22:26:32.842   -               I  [ImportProvider] 🔴 END: Clasificar imagen - Duración: 196ms
+  -22:26:32.842   -               I  [ImportProvider] Clasificación: ClassificationResult(type: DocumentType.photo, confidence: 100.0%, metadata: {method: opencv_laplacian_whitepixels, variance: 1984.1643896128764, threshold: 600.0, whiteRatio: 0.6057205041580042, contourCount: 42, hasText: false, durationMs: 195})
+  -22:26:32.842   -               I  [ImportProvider] Es foto → saltando compresión (se hará si usuario acepta)
+  -22:26:32.842   -               I  [ImportProvider] 🔴 END: Preparación completa - Duración TOTAL: 1660ms
+  -22:26:32.889 22039-22039 OnBackInvokedCallback   com.example.escandoc                com.example.escandoc                 W  OnBackInvokedCallback is not enabled for the application.
+
+
+ahora
+
+
+
+
+2026-02-11 12:39:41.113   - [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770824381113
+2026-02-11 12:39:41.113   - [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/file_picker/1770824379574/IMG_20251120_134708010_resized.jpg
+2026-02-11 12:39:41.325    - 📊 Píxeles blancos: 186465 / 307840 (ratio: 0.6057)
+2026-02-11 12:39:41.325    - 📊 Píxeles negros: 5996 / 307840 (ratio: 0.0195)
+2026-02-11 12:39:41.328    - 📊 Total contornos encontrados: 193
+2026-02-11 12:39:41.328    - ✅ Válidos: 42 | ❌ Por área: 151 | ❌ Por aspect ratio: 0
+2026-02-11 12:39:41.328    - 📦 Retornando Map: variance=1984.1643896128764, hasText=true, whiteRatio=0.6057205041580042, darkRatio=0.019477650727650727, contourCount=42
+2026-02-11 12:39:41.329   - [ImageClassifier] 📦 Map recibido: {variance: 1984.1643896128764, hasText: true, whiteRatio: 0.6057205041580042, darkRatio: 0.019477650727650727, contourCount: 42}
+2026-02-11 12:39:41.329   - [ImageClassifier] 🔍 whiteRatio: 0.6057 (60.57%)
+2026-02-11 12:39:41.329   - [ImageClassifier] 🔍 darkRatio: 0.0195 (1.95%)
+2026-02-11 12:39:41.329   - [ImageClassifier] Varianza Laplaciana: 1984.16
+2026-02-11 12:39:41.329   - [ImageClassifier] Threshold: 600.0
+2026-02-11 12:39:41.329   - [ImageClassifier] White Ratio: 0.6057 (60.57%)
+2026-02-11 12:39:41.329   - [ImageClassifier] Dark Ratio: 0.0195 (1.95%)
+2026-02-11 12:39:41.329   - [ImageClassifier] Contornos válidos: 42
+2026-02-11 12:39:41.329   - [ImageClassifier] Tiene texto: true
+2026-02-11 12:39:41.329   - [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 216ms
+2026-02-11 12:39:41.329   - [ImageClassifier] ✅ Clasificado como: DOCUMENT (confianza: 100.0%)
+2026-02-11 12:39:41.329   - [ImportProvider] 🔴 END: Clasificar imagen - Duración: 216ms
+2026-02-11 12:39:41.329   - [ImportProvider] Clasificación: ClassificationResult(type: DocumentType.document, confidence: 100.0%, metadata: {method: opencv_multicondition_v2, variance: 1984.1643896128764, threshold: 600.0, whiteRatio: 0.6057205041580042, darkRatio: 0.019477650727650727, contourCount: 42, hasText: true, durationMs: 216})
+2026-02-11 12:39:41.329   - [ImportProvider] Es documento → comprimiendo a <850KB ahora
+
+
+
+
+frente casa con mucho cielo  2 arboles y mucha calle antes
+
+
+[ImportProvider] 🟢 START: Preparación de importación - 1770773241685
+  -22:27:21.695   -               I  [ImportProvider] 🟢 START: Convertir JPG + Resize A4 - 1770773241689
+  -22:27:21.697   -               I  [ImportDocument] 🟢 Convertir a JPG y redimensionar A4
+  -22:27:21.697   -               I  [ImportDocument] Archivo: /data/user/0/com.example.escandoc/cache/file_picker/1770773241523/IMG_20250923_131354682.jpg
+  -22:27:21.697   -               I  [FormatConverter] Converting jpg to JPG: /data/user/0/com.example.escandoc/cache/file_picker/1770773241523/IMG_20250923_131354682.jpg
+  -22:27:21.698   -               I  [FormatConverter] Already JPG, skipping conversion
+  -22:27:22.581   -               I  [ImportProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: 891ms
+  -22:27:22.581   -               I  [ImportProvider] 🟢 START: Clasificar imagen - 1770773242581
+  -22:27:22.581   -               I  [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770773242581
+  -22:27:22.581   -               I  [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/file_picker/1770773241523/IMG_20250923_131354682.jpg
+  -22:27:22.822 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  📊 Píxeles blancos: 227105 / 307840 (ratio: 0.7377)
+  -22:27:22.826 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  📊 Total contornos encontrados: 150
+  -22:27:22.826 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  ✅ Válidos: 36 | ❌ Por área: 114 | ❌ Por aspect ratio: 0
+  -22:27:22.826 22039-22039 TextDetector            com.example.escandoc                com.example.escandoc                 D  📦 Retornando Map: variance=2314.001523039961, hasText=false, whiteRatio=0.7377371361746362, contourCount=36
+  -22:27:22.827   -               I  [ImageClassifier] 📦 Map recibido: {variance: 2314.001523039961, hasText: false, whiteRatio: 0.7377371361746362, contourCount: 36}
+  -22:27:22.827   -               I  [ImageClassifier] 🔍 whiteRatio: 0.7377 (73.77%)
+  -22:27:22.827   -               I  [ImageClassifier] Varianza Laplaciana: 2314.00
+  -22:27:22.828   -               I  [ImageClassifier] Threshold: 600.0
+  -22:27:22.828   -               I  [ImageClassifier] White Ratio: 0.7377 (73.77%)
+  -22:27:22.828   -               I  [ImageClassifier] Contornos válidos: 36
+  -22:27:22.828   -               I  [ImageClassifier] Tiene texto: false
+  -22:27:22.828   -               I  [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 246ms
+  -22:27:22.828   -               I  [ImageClassifier] ✅ Clasificado como: PHOTO (confianza: 100.0%)
+  -22:27:22.828   -               I  [ImportProvider] 🔴 END: Clasificar imagen - Duración: 247ms
+  -22:27:22.828   -               I  [ImportProvider] Clasificación: ClassificationResult(type: DocumentType.photo, confidence: 100.0%, metadata: {method: opencv_laplacian_whitepixels, variance: 2314.001523039961, threshold: 600.0, whiteRatio: 0.7377371361746362, contourCount: 36, hasText: false, durationMs: 246})
+  -22:27:22.829   -               I  [ImportProvider] Es foto → saltando compresión (se hará si usuario acepta)
+  -22:27:22.829   -               I  [ImportProvider] 🔴 END: Preparación completa - Duración TOTAL: 1143ms
+
+
+
+ahora
+
+
+
+2026-02-11 12:41:33.941   - [ImportProvider] 🔴 END: Convertir JPG + Resize A4 - Duración: 869ms
+2026-02-11 12:41:33.941   - [ImportProvider] 🟢 START: Clasificar imagen - 1770824493941
+2026-02-11 12:41:33.941   - [ImageClassifier] 🟢 START: Clasificación OpenCV - 1770824493941
+2026-02-11 12:41:33.941   - [ImageClassifier] Imagen: /data/user/0/com.example.escandoc/cache/file_picker/1770824492901/IMG_20250923_131354682.jpg
+2026-02-11 12:41:34.199    - 📊 Píxeles blancos: 227105 / 307840 (ratio: 0.7377)
+2026-02-11 12:41:34.199    - 📊 Píxeles negros: 9478 / 307840 (ratio: 0.0308)
+2026-02-11 12:41:34.202    - 📊 Total contornos encontrados: 150
+2026-02-11 12:41:34.202    - ✅ Válidos: 36 | ❌ Por área: 114 | ❌ Por aspect ratio: 0
+2026-02-11 12:41:34.202    - 📦 Retornando Map: variance=2314.001523039961, hasText=true, whiteRatio=0.7377371361746362, darkRatio=0.030788721413721413, contourCount=36
+2026-02-11 12:41:34.202   - [ImageClassifier] 📦 Map recibido: {variance: 2314.001523039961, hasText: true, whiteRatio: 0.7377371361746362, darkRatio: 0.030788721413721413, contourCount: 36}
+2026-02-11 12:41:34.202   - [ImageClassifier] 🔍 whiteRatio: 0.7377 (73.77%)
+2026-02-11 12:41:34.202   - [ImageClassifier] 🔍 darkRatio: 0.0308 (3.08%)
+2026-02-11 12:41:34.202   - [ImageClassifier] Varianza Laplaciana: 2314.00
+2026-02-11 12:41:34.202   - [ImageClassifier] Threshold: 600.0
+2026-02-11 12:41:34.202   - [ImageClassifier] White Ratio: 0.7377 (73.77%)
+2026-02-11 12:41:34.202   - [ImageClassifier] Dark Ratio: 0.0308 (3.08%)
+2026-02-11 12:41:34.202   - [ImageClassifier] Contornos válidos: 36
+2026-02-11 12:41:34.202   - [ImageClassifier] Tiene texto: true
+2026-02-11 12:41:34.202   - [ImageClassifier] 🔴 END: Clasificación completa - Duración TOTAL: 261ms
+2026-02-11 12:41:34.202   - [ImageClassifier] ✅ Clasificado como: DOCUMENT (confianza: 100.0%)
+2026-02-11 12:41:34.202   - [ImportProvider] 🔴 END: Clasificar imagen - Duración: 261ms
+2026-02-11 12:41:34.202   - [ImportProvider] Clasificación: ClassificationResult(type: DocumentType.document, confidence: 100.0%, metadata: {method: opencv_multicondition_v2, variance: 2314.001523039961, threshold: 600.0, whiteRatio: 0.7377371361746362, darkRatio: 0.030788721413721413, contourCount: 36, hasText: true, durationMs: 261})
+2026-02-11 12:41:34.203   - [ImportProvider] Es documento → comprimiendo a <850KB ahora
+2026-02-11 12:41:34.203   - [ImportDocument] 🟢 Normalizar JPG
+2026-02-11 12:41:34.203   - ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

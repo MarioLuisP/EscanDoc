@@ -1,0 +1,71 @@
+═══════════════════════════════════════════════════════════════════════════════
+LIMPIEZA Y OPTIMIZACIÓN DE TAMAÑO - FEBRERO 2026
+═══════════════════════════════════════════════════════════════════════════════
+
+CONTEXTO INICIAL:
+- APK release arm64-v8a: 63 MB
+- APK debug: 264 MB
+- Objetivo: Reducir a ~35-40 MB
+
+═══════════════════════════════════════════════════════════════════════════════
+FASE 1: ELIMINACIÓN DE DEPENDENCIAS NO UTILIZADAS
+═══════════════════════════════════════════════════════════════════════════════
+
+1. CUNNING_DOCUMENT_SCANNER (~10 MB)
+   - Era un scanner alternativo marcado como "SPIKE: Plan B"
+   - Solo se usaba en código experimental
+   - Duplicaba funcionalidad de flutter_doc_scanner
+   - DECISIÓN: Eliminar completamente
+
+   Archivos eliminados:
+   - lib/features/scanner_custom/ (carpeta completa)
+
+   Rutas eliminadas de main.dart:
+   - /spike/scanner
+   - /spike/native-debug
+
+   Resultado: -10 MB estimado
+
+2. GOOGLE_MLKIT_BARCODE_SCANNING (~5-8 MB)
+   - Solo referenciada en código sin integrar
+   - Nunca se usaba en la app
+   - DECISIÓN: Eliminar hasta que se necesite
+
+   Archivos eliminados:
+   - lib/core/services/barcode_detector_service.dart
+   - test/core/services/barcode_detector_service_test.dart
+
+   Resultado: -5-8 MB estimado
+
+═══════════════════════════════════════════════════════════════════════════════
+FASE 2: CÓDIGO TEMPORAL/DEBUG ELIMINADO
+═══════════════════════════════════════════════════════════════════════════════
+
+- lib/core/database/diagnostics_page.dart
+- lib/core/database/sqlite_diagnostics.dart
+- 3 botones debug en AppBar de documents_list_page.dart
+- Imports sin usar en main.dart y pdf_generator.dart
+
+═══════════════════════════════════════════════════════════════════════════════
+FASE 3: DOCUMENTACIÓN ACTUALIZADA
+═══════════════════════════════════════════════════════════════════════════════
+
+ANTES: Documentación describía análisis de colores (código viejo)
+AHORA: Documentación refleja OpenCV Laplacian variance (código actual)
+
+Archivos actualizados:
+- image_classifier.dart
+- classification_result.dart
+- documents_list_page.dart (modal de FOTO)
+
+═══════════════════════════════════════════════════════════════════════════════
+DEPENDENCIAS MANTENIDAS
+═══════════════════════════════════════════════════════════════════════════════
+
+- flutter_doc_scanner: Scanner nativo (core)
+- google_mlkit_text_recognition: OCR (core)
+- opencv (nativo): Clasificación FOTO vs DOCUMENTO
+- package:image: Optimización lectura dimensiones
+- permission_handler: Permisos cámara/micrófono
+
+REDUCCIÓN ESTIMADA TOTAL: 15-20 MB

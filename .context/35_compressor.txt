@@ -1,0 +1,114 @@
+El truco: compresión de sondeo ("probe compression")
+Comprimís una sola vez a una calidad fija conocida (por ejemplo 85),
+medís el tamaño resultante, y con eso calculás el quality target por regla de tres.
+ Para una imagen dada, la relación calidad-peso es aproximadamente lineal en el rango 40-90.
+Ejemplo concreto: imagen original pesa 4MB, la comprimís a quality 85 y da 1.8MB.
+Necesitás 850KB. Entonces: target_quality ≈ 85 × (850 / 1800) ≈ 40.
+ Comprimís a 40 y vas a caer cerca de 850KB, probablemente entre 750-950KB.
+Por qué funciona: la "compresibilidad" varía enormemente entre imágenes
+(una foto de pared blanca vs un paisaje detallado), por eso no sirve una tabla fija universal.
+ Pero para la misma imagen, la relación es bastante predecible con un solo punto de referencia.
+Refinamientos prácticos:
+Si el probe da un tamaño ya menor al target (ej: probás a 85 y da 700KB),
+ no necesitás comprimir más, usá directamente ese resultado.
+Clampeá el quality mínimo a 30-35. Si el cálculo da menos que eso,
+la imagen necesita redimensionarse, no más compresión, porque debajo de 30 los artefactos JPEG son inaceptables.
+El probe a quality 85 es buena elección porque está en el medio del rango útil y la compresión a esa calidad es rápida.
+Resultado: dos compresiones máximo (probe + final) en vez de 5-10 iteraciones.
+De 10s a ~2s
+en imágenes pesadas.cual es el paquete flutter mas veloz para esto? flutter_image_compress? o hay optro?
+cualquier target demora igual? o por ejemplo a 20 es mas rapido y podemos calcular a 80 despues7:11 p. m.
+Evaluó opciones de compresión Flutter y relación calidad-velocidadThe user is asking about the fastest
+Flutter package for JPEG compression and whether compression speed varies by quality target.
+Listoflutter_image_compress es el estándar y el más rápido. Usa libjpeg-turbo en nativo (no Dart puro),
+así que es significativamente más veloz que alternativas como el paquete image de Dart que procesa pixel por pixel.
+Sobre la velocidad según quality: sí, hay diferencia, pero es al revés de lo que pensás.
+Comprimir a quality bajo (20) es ligeramente más rápido que a quality alto (85)
+porque genera menos datos de salida, pero la diferencia es marginal (~10-15%).
+El cuello de botella real es decodificar y recorrer los píxeles, no la codificación final.
+Así que a efectos prácticos, 20 y 85 tardan casi lo mismo.
+Entonces para tu probe: usá quality 85 tranquilo, no ganás nada significativo probando a 20
+y luego recomprimiendo a 80. Además, recomprimir un JPEG que ya fue comprimido a 20 te
+da peor calidad que comprimir el original directo a 80 (degradación acumulativa).
+Una alternativa a considerar: flutter_native_image es más simple y también usa nativo,
+pero flutter_image_compress tiene mejor mantenimiento y más opciones. Quedáte con flutter_image_compress.
+Dato clave: si la imagen viene muy pesada (>5MB, típico de iPhone), antes de comprimir
+JPEG considerá si necesitás redimensionar primero. Bajar de 4000x3000 a 2480x3508
+(tu target A4 300DPI) ya reduce peso dramáticamente antes de tocar la calidad JPEG,
+y eso sí es prácticamente gratis en flutter_image_compress porque lo hace en la misma pasada nativa.
+
+
+
+Sí, podés estimar. Ya tenés la Laplacian variance de OpenCV: varianza alta = mucho detalle = menos compresible, varianza baja = imagen simple = muy compresible.
+
+Combiná eso con el peso original y la resolución (píxeles totales) y tenés un estimador bastante bueno para saltar directo al quality target sin probe.
+Básicamente: peso_original, cantidad_píxeles y varianza te dan la "densidad de información" de esa imagen específica.
+
+Pero honestamente, el probe a 85 tarda ~200-400ms en flutter_image_compress con nativo. No sé si vale la pena la complejidad
+extra de un modelo predictivo para ahorrarte eso. El probe es simple, predecible y funciona siempre.
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPLEMENTACIÓN FINAL - FEBRERO 2026
+═══════════════════════════════════════════════════════════════════════════════
+
+ESTRATEGIA OPTIMIZADA IMPLEMENTADA:
+
+1. REDIMENSIONAR PRIMERO (si excede A4)
+   - Dimensiones A4 a 300 DPI: 2480 × 3508 px
+   - Se hace ANTES de cualquier compresión
+   - Reducción gratis y masiva (típicamente 30-40% si la imagen excede)
+   - Usa flutter_image_compress con minWidth/minHeight (mantiene aspect ratio)
+
+2. PROBE A QUALITY 85
+   - Comprimir a calidad fija 85
+   - Medir tamaño resultante
+   - Duración típica: 200-800ms dependiendo resolución
+
+3. ZONA ÓPTIMA (800-900 KB)
+   - Si el probe cae en este rango: NO hacer segunda compresión
+   - Usar directamente el resultado del probe
+   - Ahorra una compresión completa (~500-1000ms)
+
+4. DECISIÓN DE AJUSTE:
+
+   A) SI PROBE > 900 KB (necesita BAJAR calidad):
+      - Usar regla de tres lineal
+      - target_quality = 85 × (850 / probe_size_kb)
+      - Funciona bien porque la relación ES lineal al bajar calidad
+      - Clampear mínimo a quality 30
+
+   B) SI PROBE < 800 KB (necesita SUBIR calidad):
+      - LA REGLA DE TRES NO FUNCIONA (relación NO lineal al subir)
+      - Fórmula empírica descubierta: ~8% de incremento de tamaño por punto de quality
+      - Cálculo:
+        * needed_growth = (850 - probe) / probe
+        * quality_increment = needed_growth / 0.08
+        * target_quality = 85 + quality_increment
+      - Clampear máximo a quality 90 (retornos decrecientes después)
+
+ARCHIVOS MODIFICADOS:
+- lib/features/image_processing/normalize_image/data/image_normalizer_service_impl.dart
+
+HALLAZGOS EMPÍRICOS:
+
+Datos observados en imágenes reales (8 casos, análisis empírico 2026):
+- Incremento Q85 → Q90 (+5 puntos) = +32% a +45% tamaño
+- Promedio: ~8% incremento por punto de quality en rango 85-90 (7.75% observado)
+- Este factor NO es constante en todo el rango, solo válido para 85-90
+- Factor promedio por quality: Q86=1.07, Q87=1.10, Q88=1.17, Q90=1.38
+
+PERFORMANCE FINAL:
+- Antes (iterativo): 10-12 segundos en imágenes grandes
+- Después (probe): 1.6-2.7 segundos
+- Mejora: 4-7x más rápido
+- Máximo 2 compresiones (probe + ajuste), mínimo 1 (si cae en zona óptima)
+
+LIMITACIONES CONOCIDAS:
+- La fórmula del 6% solo es precisa en rango 85-90
+- Imágenes MUY compresibles no llegarán a 850 KB incluso a quality 90
+- Redimensionamiento usa estimación (si no reduce >5% del tamaño, asume que ya era ≤A4)
+
+TARGET OBJETIVO: 850 KB
+RANGO ACEPTABLE: 800-900 KB
+CALIDAD MÍNIMA: 30
+CALIDAD MÁXIMA: 90
