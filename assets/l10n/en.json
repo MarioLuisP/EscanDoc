@@ -20,8 +20,6 @@
 
   "doc_type_factura": "invoice",
   "doc_type_recibo": "receipt",
-  "doc_type_contrato": "contract",
-  "doc_type_medico": "medical",
   "doc_type_documento": "document",
 
   "month_jan": "Jan",
@@ -127,7 +125,6 @@
   "sort_name": "By name",
   "sort_type": "By type",
   "doc_type_nota": "Note",
-  "doc_type_informe": "Report",
   "doc_type_manuscrito": "Handwritten",
   "doc_type_foto": "Photo",
   "doc_type_folleto": "Brochure",

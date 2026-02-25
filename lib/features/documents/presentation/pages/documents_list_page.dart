@@ -5,12 +5,12 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
 import 'package:escandoc/features/documents/presentation/widgets/delete_confirmation_dialog.dart';
+import 'package:escandoc/core/theme/document_type_colors.dart';
 
 /// Retorna la clave i18n del tipo de documento a partir del campo documentType.
 String _docTypeKey(String? documentType) {
   const known = {
-    'factura', 'recibo', 'contrato', 'nota', 'informe',
-    'manuscrito', 'medico', 'medica', 'foto', 'folleto', 'documento',
+    'documento', 'foto', 'folleto', 'manuscrito', 'recibo', 'factura', 'nota',
   };
   final type = documentType?.toLowerCase() ?? '';
   return known.contains(type) ? 'doc_type_$type' : 'doc_type_documento';
@@ -289,7 +289,7 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
         return RefreshIndicator(
           onRefresh: () => provider.loadDocuments(),
           child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
             itemCount: docs.length,
             separatorBuilder: (_, __) =>
                 const Divider(height: 1, color: Color(0xFFDDD0B8)),
@@ -377,11 +377,14 @@ class _DocItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+    final scheme = DocumentTypeColors.of(document.documentType);
+    return Ink(
+      color: scheme.bg.withValues(alpha: 0.38),
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Row(
           children: [
             _buildThumbnail(),
@@ -409,11 +412,11 @@ class _DocItem extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            _TypeChip(typeKey: _docTypeKey(document.documentType)),
+            _TypeChip(documentType: document.documentType, typeKey: _docTypeKey(document.documentType)),
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildThumbnail() {
@@ -454,30 +457,31 @@ class _DocItem extends StatelessWidget {
 }
 
 class _TypeChip extends StatelessWidget {
+  final String? documentType;
   final String typeKey;
-  const _TypeChip({required this.typeKey});
+  const _TypeChip({required this.documentType, required this.typeKey});
 
   @override
   Widget build(BuildContext context) {
     final label = typeKey.tr();
-    // Primera letra mayúscula
     final display = label.isEmpty
         ? label
         : label[0].toUpperCase() + label.substring(1);
+    final scheme = DocumentTypeColors.of(documentType);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEE4CC),
+        color: scheme.bg,
         borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: const Color(0xFFBBAA88), width: 1),
+        border: Border.all(color: scheme.border, width: 1),
       ),
       child: Text(
         display,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
-          color: Color(0xFF5A4A30),
+          color: scheme.fg,
         ),
       ),
     );

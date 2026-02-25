@@ -13,6 +13,7 @@ import 'package:escandoc/features/scan/presentation/providers/scan_provider.dart
 import 'package:escandoc/features/scan/presentation/widgets/photo_detected_dialog.dart';
 import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 import 'package:escandoc/core/user/user_preferences.dart';
+import 'package:escandoc/core/theme/document_type_colors.dart';
 
 /// Dashboard principal de EscanDocs
 class HomePage extends StatefulWidget {
@@ -326,7 +327,7 @@ class _HomePageState extends State<HomePage> {
             document: recent[i],
             onTap: () => _navigateToDetail(recent[i].id!),
           ),
-          if (i < recent.length - 1) const Divider(height: 1),
+          if (i < recent.length - 1) const SizedBox(height: 8),
         ],
       ],
     );
@@ -817,37 +818,58 @@ class _RecentDocItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(
-          children: [
-            _buildThumbnail(),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    document.title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+    final scheme = DocumentTypeColors.of(document.documentType);
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.bg.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: scheme.border, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: scheme.border.withValues(alpha: 0.55),
+            offset: const Offset(0, 3),
+            blurRadius: 6,
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                _buildThumbnail(),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        document.title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _formatDate(document.createdAt),
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatDate(document.createdAt),
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

@@ -100,6 +100,7 @@
             │ • Generar nombre (fecha/OCR)    │
             │ • Mover archivo a storage       │
             │ • Insertar documento en BD      │
+            │   - documentType = tfliteClass  │
             │ • Crear nota automática         │
             │   "Clasificado como: X (99%)"   │
             │ • Tiempo: ~300ms                │
@@ -148,8 +149,11 @@
             │   + keywords + bloques > 80     │
             │     → factura                   │
             │                                 │
-            │ Si hubo cambio → nota automática│
-            │ "X → Y (2° paso: motivo)"      │
+            │ Si hubo cambio →                │
+            │   • documentType actualizado   │
+            │   • título regenerado           │
+            │   • nota automática             │
+            │     "X → Y (2° paso: motivo)"  │
             │                                 │
             │ Nota extracto (150 chars):      │
             │ strip # ## - | --- del markdown │

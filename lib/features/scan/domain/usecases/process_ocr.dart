@@ -112,9 +112,10 @@ class ProcessOCR {
           refinement.refinedClass, extractedText, ocrAnalysis.topConfidenceText);
       debugPrint('[ProcessOCR] 📝 Nota de extracto: ${noteContent.substring(0, noteContent.length.clamp(0, 60))}...');
 
-      // 8. Actualizar documento con texto OCR, nota y título (si hubo reclasificación)
+      // 8. Actualizar documento con texto OCR, nota, título y tipo (si hubo reclasificación)
       final updatedDocument = document.copyWith(
         title: updatedTitle,
+        documentType: refinement.refinedClass,
         ocrText: ocrText,
         extractedDate: extractedDate,
         noteContent: noteContent.isNotEmpty ? noteContent : null,
