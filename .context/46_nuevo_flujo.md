@@ -3,19 +3,32 @@
 **Fecha:** 16 Febrero 2026
 **Versión:** 2.0 - Flujo optimizado SIN resize A4 previo
 
----
-
-## 📊 Flujo Completo Optimizado  (diagrama ASCII)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    ORIGEN DEL ARCHIVO                       │
-├──────────────────────┬──────────────────────────────────────┤
-│   SCANNER NATIVO     │     IMPORTAR GALERÍA/ARCHIVOS        │
-│   (JPG/PNG)          │     (JPG/PNG/WebP/PDF/HEIC)          │
-│   ~2-3s              │     Instantáneo (file picker)        │
-└──────────────────────┴──────────────────────────────────────┘
-                              ↓
+┌──────────────────────────────────────────────────────────────────────┐
+│                         ORIGEN DEL ARCHIVO                           │
+├──────────────────────┬───────────────────────┬───────────────────────┤
+│   SCANNER NATIVO     │  IMPORTAR IMAGEN      │   IMPORTAR PDF        │
+│   (JPG/PNG)          │  (JPG/PNG/WebP/HEIC)  │   (multi-página)      │
+│   ~2-3s              │  Instantáneo          │   Instantáneo         │
+└──────────────────────┴───────────────────────┴───────────────────────┘
+         ↓                        ↓                        ↓
+         │                        │          ┌─────────────────────────┐
+         │                        │          │  0. RENDER PDF → JPGs   │
+         │                        │          │  PdfImportServiceImpl   │
+         │                        │          ├─────────────────────────┤
+         │                        │          │ • pdfrx: 150 DPI        │
+         │                        │          │   (1240×1754 px A4)     │
+         │                        │          │ • dart:ui in-memory     │
+         │                        │          │   (sin PNG temporal)    │
+         │                        │          │ • flutter_image_compress│
+         │                        │          │   → JPG, una escritura  │
+         │                        │          │ • Si > 10 pág → dialog  │
+         │                        │          │ • Cada página → pipeline│
+         │                        │          └─────────────────────────┘
+         │                        │                        ↓ (N veces)
+         └────────────────────────┴────────────────────────┘
+                                  ↓
             ┌─────────────────────────────────┐
             │   1. CONVERTIR A JPG            │
             │   ImageFormatConverter          │

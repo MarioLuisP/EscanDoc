@@ -49,5 +49,13 @@
 	<string>Necesitamos acceso a la cámara para escanear documentos</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>EscanDoc necesita permiso para guardar fotos escaneadas en tu galería</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>EscanDoc necesita acceso a tu galería para importar documentos e imágenes</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>EscanDoc necesita el micrófono para la búsqueda por voz</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>EscanDoc usa reconocimiento de voz para buscar documentos por dictado</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:escandoc/features/documents/domain/usecases/import_document.dart';
+import 'package:escandoc/features/documents/domain/services/pdf_import_service.dart';
 import 'package:escandoc/features/scan/domain/usecases/save_scanned_document.dart';
 import 'package:escandoc/features/scan/domain/usecases/process_ocr.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
@@ -53,6 +54,7 @@ class ImportProvider with ChangeNotifier {
   final SaveScannedDocument _saveDocument;
   final ProcessOCR _processOCR;
   final ThumbnailGenerator _thumbnailGenerator;
+  final PdfImportService? _pdfImportService;
 
   ImportProvider({
     required ImportDocument importDocument,
@@ -60,11 +62,13 @@ class ImportProvider with ChangeNotifier {
     required SaveScannedDocument saveDocument,
     required ProcessOCR processOCR,
     required ThumbnailGenerator thumbnailGenerator,
+    PdfImportService? pdfImportService,
   })  : _importDocument = importDocument,
         _imageClassifier = imageClassifier,
         _saveDocument = saveDocument,
         _processOCR = processOCR,
-        _thumbnailGenerator = thumbnailGenerator;
+        _thumbnailGenerator = thumbnailGenerator,
+        _pdfImportService = pdfImportService;
 
   // Estado
   bool _isImporting = false;
@@ -74,6 +78,10 @@ class ImportProvider with ChangeNotifier {
   DocumentModel? _lastImportedDocument;
   ClassificationResult? _lastClassification;
 
+  // Estado PDF multi-página
+  int _pdfCurrentPage = 0;
+  int _pdfTotalPages = 0;
+
   // Getters
   bool get isImporting => _isImporting;
   bool get isSaving => _isSaving;
@@ -82,6 +90,8 @@ class ImportProvider with ChangeNotifier {
   String? get error => _error;
   DocumentModel? get lastImportedDocument => _lastImportedDocument;
   ClassificationResult? get lastClassification => _lastClassification;
+  int get pdfCurrentPage => _pdfCurrentPage;
+  int get pdfTotalPages => _pdfTotalPages;
 
   /// FASE 1: Prepara documento importado (convierte JPG + clasifica).
   ///
@@ -291,6 +301,86 @@ class ImportProvider with ChangeNotifier {
       _isProcessingOCR = false;
       notifyListeners();
     }
+  }
+
+  /// Retorna el número de páginas del PDF para que la UI decida si mostrar dialog.
+  ///
+  /// Retorna 0 si el servicio no está disponible o el PDF no es válido.
+  Future<int> checkPdfPageCount(String pdfPath) async {
+    if (_pdfImportService == null) return 0;
+    try {
+      return await _pdfImportService!.getPageCount(pdfPath);
+    } catch (e) {
+      debugPrint('[ImportProvider] Error leyendo páginas PDF: $e');
+      return 0;
+    }
+  }
+
+  /// Importa N páginas de un PDF, cada una como documento independiente.
+  ///
+  /// Flujo por página:
+  ///   renderizar JPG → prepareImport (TFLite + clasificar) → completeImport (guardar + OCR)
+  ///
+  /// Retorna lista de documentos guardados (puede ser menor a [pagesToImport]
+  /// si alguna página falla — las demás se procesan igual).
+  Future<List<DocumentModel>> importPdfPages(
+    String pdfPath,
+    int pagesToImport,
+    String locale,
+  ) async {
+    if (_pdfImportService == null) return [];
+
+    final tempDir = await getTemporaryDirectory();
+    _pdfCurrentPage = 0;
+    _pdfTotalPages = pagesToImport;
+    notifyListeners();
+
+    List<File> pageFiles;
+    try {
+      pageFiles = await _pdfImportService!.renderPagesToJpg(
+        pdfPath,
+        tempDir.path,
+        maxPages: pagesToImport,
+      );
+    } catch (e) {
+      _error = e.toString();
+      _pdfCurrentPage = 0;
+      _pdfTotalPages = 0;
+      notifyListeners();
+      debugPrint('[ImportProvider] Error renderizando PDF: $e');
+      return [];
+    }
+
+    final savedDocuments = <DocumentModel>[];
+
+    for (var i = 0; i < pageFiles.length; i++) {
+      _pdfCurrentPage = i + 1;
+      notifyListeners();
+
+      try {
+        final preparation = await prepareImport(pageFiles[i]);
+        if (preparation == null) continue;
+
+        // PDFs imagen siempre se importan sin confirmación del usuario
+        final document = await completeImport(preparation, locale);
+        if (document != null) savedDocuments.add(document);
+      } catch (e) {
+        debugPrint('[ImportProvider] Error importando página ${i + 1}: $e');
+        // Continúa con las demás páginas
+      }
+
+      // Limpiar JPG temporal de la página ya procesada
+      try {
+        await pageFiles[i].delete();
+      } catch (_) {}
+    }
+
+    _pdfCurrentPage = 0;
+    _pdfTotalPages = 0;
+    notifyListeners();
+
+    debugPrint('[ImportProvider] PDF importado: ${savedDocuments.length}/${pageFiles.length} páginas guardadas');
+    return savedDocuments;
   }
 
   /// Limpia estado de error

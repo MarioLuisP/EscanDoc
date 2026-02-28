@@ -87,7 +87,52 @@ Al importar un PDF, antes de cualquier procesamiento:
 
 ## Orden de implementación sugerido
 
-1. Import PDF imagen (más común, extiende pipeline existente)
+1. Import PDF imagen (más común, extiende pipeline existente) ✅ IMPLEMENTADO
 2. Export individual (extiende pdf_converter_service)
 3. Export combinado multi-página
 4. Import PDF editable (menos urgente, es un bonus de UX)
+
+---
+
+## Estado: Import PDF imagen — COMPLETADO (Feb 2026)
+
+### Qué se implementó
+
+**Domain:** `PdfImportService` (abstract) + `PdfImportException`
+- `getPageCount(pdfPath)` → int
+- `renderPagesToJpg(pdfPath, outputDir, {maxPages})` → List<File>
+
+**Data:** `PdfImportServiceImpl` usando pdfrx
+- Renderizado a 150 DPI (suficiente para OCR en texto vectorial: sin ruido, bordes nítidos)
+- Flujo in-memory sin archivo PNG temporal: pdfrx → dart:ui → PNG bytes en memoria → FlutterImageCompress → JPG (una sola escritura a disco)
+
+**Provider:** dos métodos nuevos en `ImportProvider`
+- `checkPdfPageCount(path)` → retorna cantidad de páginas para que la UI decida
+- `importPdfPages(path, pagesToImport, locale)` → renderiza y pasa cada página al pipeline existente (TFLite + OCR + BD), con progreso `pdfCurrentPage / pdfTotalPages`
+- `PdfImportService` es opcional (nullable) para no romper tests existentes
+
+**UI:** `home_page.dart`
+- `_handleImport()` detecta extensión: si es PDF bifurca a `_handlePdfImport()`
+- `_handlePdfImport()` pide pageCount, muestra dialog si > 10 páginas (opciones: Primeras 10 / Todas / Cancelar), llama `importPdfPages()`, navega al detalle de la primera página
+- Dialog con strings hardcodeados — pendiente mover a claves i18n cuando se internacionalice
+
+**DI:** `PdfImportServiceImpl` inyectado en `ImportProvider` en `main.dart`
+
+### Decisiones técnicas
+- 150 DPI elegido sobre 200 DPI: menos presión de memoria, suficiente para MLKit en PDFs digitales
+- Cada página → documento independiente en BD (mismo comportamiento que importar N imágenes)
+- Si una página falla, las demás se procesan igual (no aborta todo)
+- Los JPG temporales renderizados se borran después de procesar cada página
+- Pipeline de imagen (TFLite, clasificación, normalización, OCR) sin cambios
+
+### Pendiente de esta etapa
+- Mover strings del dialog a claves i18n (`pdf_too_long`, `pdf_import_first_10`, etc.)
+
+La sesión anterior terminó bien — paso 1 (Import PDF imagen) completado y diagrama actualizado.
+
+Estado actual del plan (50_flujo_pdf_editable.md):                                                                                                                                                                               
+1. ✅ Import PDF imagen
+2. ⏳ Export individual — próximo paso                                                                                                                                                                                           ─
+3. ⏳ Export combinado multi-página
+4. ⏳ Import PDF editable
+

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
@@ -40,7 +41,7 @@ class _HomePageState extends State<HomePage> {
     _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen(
       (List<SharedMediaFile> files) {
         if (files.isEmpty) return;
-        _processImportedFile(File(files.first.path));
+        _processSharedFile(files.first.path);
       },
     );
 
@@ -48,10 +49,36 @@ class _HomePageState extends State<HomePage> {
     ReceiveSharingIntent.instance.getInitialMedia().then(
       (List<SharedMediaFile> files) {
         if (files.isEmpty) return;
-        _processImportedFile(File(files.first.path));
+        _processSharedFile(files.first.path);
         ReceiveSharingIntent.instance.reset();
       },
     );
+  }
+
+  /// Copia el archivo compartido al cache propio antes de procesarlo.
+  ///
+  /// Cuando el usuario comparte una captura de pantalla sin guardarla,
+  /// Android provee un URI efímero que puede expirar o ser borrado por el
+  /// sistema antes de que terminemos de procesar. Copiando al cache propio
+  /// garantizamos acceso estable durante todo el pipeline.
+  Future<void> _processSharedFile(String sourcePath) async {
+    if (sourcePath.isEmpty) return;
+    final sourceFile = File(sourcePath);
+    if (!sourceFile.existsSync()) return;
+
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final ext = sourcePath.contains('.')
+          ? sourcePath.split('.').last.split('?').first.toLowerCase()
+          : 'jpg';
+      final stableFile = await sourceFile.copy(
+        '${tempDir.path}/shared_${DateTime.now().millisecondsSinceEpoch}.$ext',
+      );
+      await _processImportedFile(stableFile);
+    } catch (_) {
+      // Si no se puede copiar, intentar con el archivo original
+      await _processImportedFile(sourceFile);
+    }
   }
 
   @override
@@ -449,7 +476,102 @@ class _HomePageState extends State<HomePage> {
     if (result == null || result.files.isEmpty) return;
     final filePath = result.files.first.path;
     if (filePath == null) return;
-    await _processImportedFile(File(filePath));
+
+    final ext = filePath.split('.').last.toLowerCase();
+    if (ext == 'pdf') {
+      await _handlePdfImport(filePath);
+    } else {
+      await _processSharedFile(filePath);
+    }
+  }
+
+  Future<void> _handlePdfImport(String pdfPath) async {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final importProvider = context.read<ImportProvider>();
+    final documentsProvider = context.read<DocumentsProvider>();
+    final locale = context.locale.languageCode;
+
+    // Contar páginas
+    final pageCount = await importProvider.checkPdfPageCount(pdfPath);
+    if (pageCount == 0) {
+      messenger.showSnackBar(SnackBar(
+        content: Text('No se pudo leer el PDF',
+            style: const TextStyle(fontSize: 16)),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ));
+      return;
+    }
+
+    // Si tiene más de 10 páginas, preguntar cuántas importar
+    int pagesToImport = pageCount;
+    if (pageCount > 10) {
+      if (!mounted) return;
+      pagesToImport = await _showPdfPagesDialog(pageCount) ?? 0;
+      if (pagesToImport == 0) return; // Canceló
+    }
+
+    // Importar páginas
+    final documents = await importProvider.importPdfPages(pdfPath, pagesToImport, locale);
+    if (!mounted) return;
+
+    if (documents.isEmpty) {
+      messenger.showSnackBar(SnackBar(
+        content: Text('No se pudo importar el PDF',
+            style: const TextStyle(fontSize: 16)),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ));
+      return;
+    }
+
+    await documentsProvider.loadDocuments();
+
+    messenger.showSnackBar(SnackBar(
+      content: Text(
+        documents.length == 1
+            ? 'PDF importado (1 página)'
+            : 'PDF importado (${documents.length} páginas)',
+        style: const TextStyle(fontSize: 16),
+      ),
+      backgroundColor: const Color(0xFF388E3C),
+      duration: const Duration(seconds: 3),
+    ));
+
+    // Navegar al detalle de la primera página
+    if (!mounted) return;
+    _navigateToDetail(documents.first.id!);
+  }
+
+  /// Dialog para PDFs con más de 10 páginas.
+  /// Retorna cuántas páginas importar, o null si cancela.
+  Future<int?> _showPdfPagesDialog(int totalPages) {
+    return showDialog<int>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('PDF largo', style: TextStyle(fontSize: 20)),
+        content: Text(
+          'Este PDF tiene $totalPages páginas.\n¿Cuántas querés importar?',
+          style: const TextStyle(fontSize: 17),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, null),
+            child: const Text('Cancelar', style: TextStyle(fontSize: 16)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 10),
+            child: const Text('Primeras 10', style: TextStyle(fontSize: 16)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, totalPages),
+            child: Text('Todas ($totalPages)',
+                style: const TextStyle(fontSize: 16)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _processImportedFile(File importedFile) async {
@@ -821,7 +943,7 @@ class _RecentDocItem extends StatelessWidget {
     final scheme = DocumentTypeColors.of(document.documentType);
     return Container(
       decoration: BoxDecoration(
-        color: scheme.bg.withValues(alpha: 0.45),
+        color: scheme.bg.withValues(alpha: 0.38),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: scheme.border, width: 1),
         boxShadow: [
