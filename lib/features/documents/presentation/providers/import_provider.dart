@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:escandoc/features/documents/domain/usecases/import_document.dart';
 import 'package:escandoc/features/documents/domain/services/pdf_import_service.dart';
@@ -75,6 +76,7 @@ class ImportProvider with ChangeNotifier {
   bool _isSaving = false;
   bool _isProcessingOCR = false;
   String? _error;
+  String? _statusMessage;
   DocumentModel? _lastImportedDocument;
   ClassificationResult? _lastClassification;
 
@@ -82,16 +84,21 @@ class ImportProvider with ChangeNotifier {
   int _pdfCurrentPage = 0;
   int _pdfTotalPages = 0;
 
+  // IDs de documentos con OCR en curso
+  final Set<int> _processingOcrIds = {};
+
   // Getters
   bool get isImporting => _isImporting;
   bool get isSaving => _isSaving;
   bool get isProcessingOCR => _isProcessingOCR;
   bool get isBusy => _isImporting || _isSaving || _isProcessingOCR;
   String? get error => _error;
+  String? get statusMessage => _statusMessage;
   DocumentModel? get lastImportedDocument => _lastImportedDocument;
   ClassificationResult? get lastClassification => _lastClassification;
   int get pdfCurrentPage => _pdfCurrentPage;
   int get pdfTotalPages => _pdfTotalPages;
+  Set<int> get processingOcrIds => Set.unmodifiable(_processingOcrIds);
 
   /// FASE 1: Prepara documento importado (convierte JPG + clasifica).
   ///
@@ -111,6 +118,7 @@ class ImportProvider with ChangeNotifier {
     try {
       _error = null;
       _isImporting = true;
+      _statusMessage = 'Preparando imagen...';
       notifyListeners();
 
       final startTotal = DateTime.now();
@@ -125,6 +133,8 @@ class ImportProvider with ChangeNotifier {
       debugPrint('[ImportProvider] 🔴 END: Convertir JPG (sin resize) - Duración: ${convertDuration}ms');
 
       // 2. Clasificar imagen con TFLite
+      _statusMessage = 'Analizando documento...';
+      notifyListeners();
       final startClassify = DateTime.now();
       debugPrint('[ImportProvider] 🟢 START: Clasificar imagen - ${startClassify.millisecondsSinceEpoch}');
       final classification = await _imageClassifier.classify(jpgFile.path);
@@ -141,6 +151,8 @@ class ImportProvider with ChangeNotifier {
 
       // 3. Comprimir solo si es DOCUMENTO (ya está redimensionado a A4)
       if (classification.type == DocumentType.document) {
+        _statusMessage = 'Optimizando imagen...';
+        notifyListeners();
         debugPrint('[ImportProvider] Es documento → comprimiendo a <850KB ahora');
         final startCompress = DateTime.now();
         processedFile = await _importDocument.normalize(jpgFile);
@@ -165,6 +177,7 @@ class ImportProvider with ChangeNotifier {
       }
 
       _isImporting = false;
+      _statusMessage = null;
       notifyListeners();
 
       final endTotal = DateTime.now();
@@ -180,6 +193,7 @@ class ImportProvider with ChangeNotifier {
     } catch (e, stackTrace) {
       _error = e.toString();
       _isImporting = false;
+      _statusMessage = null;
       notifyListeners();
       debugPrint('[ImportProvider] ERROR en prepareImport: $e');
       debugPrint('[ImportProvider] StackTrace: $stackTrace');
@@ -216,6 +230,8 @@ class ImportProvider with ChangeNotifier {
 
       // Comprimir si es foto (no comprimida en FASE 1, pero ya redimensionada a A4)
       if (!preparation.isNormalized) {
+        _statusMessage = 'Optimizando imagen...';
+        notifyListeners();
         debugPrint('[ImportProvider] Foto confirmada → comprimiendo a <850KB ahora');
         final startCompress = DateTime.now();
         finalFile = await _importDocument.normalize(preparation.processedFile);
@@ -231,6 +247,8 @@ class ImportProvider with ChangeNotifier {
       final label = preparation.classification.metadata['label'] as String? ?? 'desconocido';
 
       // Guardar documento
+      _statusMessage = 'Guardando...';
+      notifyListeners();
       final startSave = DateTime.now();
       debugPrint('[ImportProvider] 🟢 START: Guardar documento - ${startSave.millisecondsSinceEpoch}');
       final document = await _saveDocument.call(
@@ -244,6 +262,7 @@ class ImportProvider with ChangeNotifier {
       debugPrint('[ImportProvider] 🔴 END: Guardar documento - Duración: ${saveDuration}ms');
 
       _isSaving = false;
+      _statusMessage = null;
       _lastImportedDocument = document;
       notifyListeners();
 
@@ -260,6 +279,7 @@ class ImportProvider with ChangeNotifier {
     } catch (e, stackTrace) {
       _error = e.toString();
       _isSaving = false;
+      _statusMessage = null;
       notifyListeners();
       debugPrint('[ImportProvider] ERROR en completeImport: $e');
       debugPrint('[ImportProvider] StackTrace: $stackTrace');
@@ -283,7 +303,9 @@ class ImportProvider with ChangeNotifier {
   /// Ejecuta OCR en background sin bloquear UI
   Future<void> _processOCRInBackground(
       int documentId, String tfliteClass, String locale) async {
+    _processingOcrIds.add(documentId);
     _isProcessingOCR = true;
+    _statusMessage = 'Extrayendo texto...';
     notifyListeners();
 
     final startBackground = DateTime.now();
@@ -298,7 +320,9 @@ class ImportProvider with ChangeNotifier {
       // OCR falla silenciosamente en background
       debugPrint('[ImportProvider] ❌ OCR background error: $e');
     } finally {
-      _isProcessingOCR = false;
+      _processingOcrIds.remove(documentId);
+      _isProcessingOCR = _processingOcrIds.isNotEmpty;
+      if (_processingOcrIds.isEmpty) _statusMessage = null;
       notifyListeners();
     }
   }
@@ -331,8 +355,10 @@ class ImportProvider with ChangeNotifier {
     if (_pdfImportService == null) return [];
 
     final tempDir = await getTemporaryDirectory();
+    final docsDir = await getApplicationDocumentsDirectory();
     _pdfCurrentPage = 0;
     _pdfTotalPages = pagesToImport;
+    _statusMessage = 'Leyendo PDF...';
     notifyListeners();
 
     List<File> pageFiles;
@@ -346,6 +372,7 @@ class ImportProvider with ChangeNotifier {
       _error = e.toString();
       _pdfCurrentPage = 0;
       _pdfTotalPages = 0;
+      _statusMessage = null;
       notifyListeners();
       debugPrint('[ImportProvider] Error renderizando PDF: $e');
       return [];
@@ -355,21 +382,40 @@ class ImportProvider with ChangeNotifier {
 
     for (var i = 0; i < pageFiles.length; i++) {
       _pdfCurrentPage = i + 1;
+      _statusMessage = pagesToImport > 1
+          ? 'Página ${i + 1} de $pagesToImport...'
+          : 'Procesando PDF...';
       notifyListeners();
 
+      // Copiar del cache al directorio permanente antes de procesar.
+      // Necesario porque normalize() puede devolver el mismo path (sin cambios)
+      // y luego lo borramos del cache, dejando la DB con un path inexistente.
+      final permPath = p.join(docsDir.path, p.basename(pageFiles[i].path));
+      File permFile;
       try {
-        final preparation = await prepareImport(pageFiles[i]);
-        if (preparation == null) continue;
+        permFile = await pageFiles[i].copy(permPath);
+      } catch (e) {
+        debugPrint('[ImportProvider] Error copiando página ${i + 1} a docs: $e');
+        continue;
+      }
+
+      try {
+        final preparation = await prepareImport(permFile);
+        if (preparation == null) {
+          await permFile.delete().catchError((_) {});
+          continue;
+        }
 
         // PDFs imagen siempre se importan sin confirmación del usuario
         final document = await completeImport(preparation, locale);
         if (document != null) savedDocuments.add(document);
       } catch (e) {
         debugPrint('[ImportProvider] Error importando página ${i + 1}: $e');
+        await permFile.delete().catchError((_) {});
         // Continúa con las demás páginas
       }
 
-      // Limpiar JPG temporal de la página ya procesada
+      // Limpiar JPG temporal del cache (ya tenemos la copia en docsDir)
       try {
         await pageFiles[i].delete();
       } catch (_) {}
@@ -377,6 +423,7 @@ class ImportProvider with ChangeNotifier {
 
     _pdfCurrentPage = 0;
     _pdfTotalPages = 0;
+    _statusMessage = null;
     notifyListeners();
 
     debugPrint('[ImportProvider] PDF importado: ${savedDocuments.length}/${pageFiles.length} páginas guardadas');

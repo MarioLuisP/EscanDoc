@@ -30,7 +30,7 @@ class _OcrFullscreenPageState extends State<OcrFullscreenPage> {
 
   @override
   Widget build(BuildContext context) {
-    context.locale;
+    EasyLocalization.of(context)?.locale; // registra dependencia → rebuild al cambiar idioma
     final hasText = widget.ocrText != null && widget.ocrText!.isNotEmpty;
 
     return Scaffold(

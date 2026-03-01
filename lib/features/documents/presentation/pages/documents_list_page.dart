@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
+import 'package:escandoc/features/documents/presentation/providers/import_provider.dart';
 import 'package:escandoc/features/documents/presentation/widgets/delete_confirmation_dialog.dart';
 import 'package:escandoc/core/theme/document_type_colors.dart';
 
@@ -295,8 +296,10 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
                 const Divider(height: 1, color: Color(0xFFDDD0B8)),
             itemBuilder: (context, index) {
               final doc = docs[index];
+              final importProvider = context.watch<ImportProvider>();
               return _DocItem(
                 document: doc,
+                isProcessingOcr: importProvider.processingOcrIds.contains(doc.id),
                 onTap: () => _navigateToDetail(doc.id!),
                 onLongPress: () => _showDeleteDialog(doc.id!),
               );
@@ -368,11 +371,13 @@ class _DocItem extends StatelessWidget {
   final DocumentModel document;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
+  final bool isProcessingOcr;
 
   const _DocItem({
     required this.document,
     required this.onTap,
     required this.onLongPress,
+    this.isProcessingOcr = false,
   });
 
   @override
@@ -408,6 +413,28 @@ class _DocItem extends StatelessWidget {
                     _formatDate(document.createdAt),
                     style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
+                  if (isProcessingOcr) ...[
+                    const SizedBox(height: 3),
+                    Row(children: [
+                      SizedBox(
+                        width: 10,
+                        height: 10,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1.5,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Leyendo texto...',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ]),
+                  ],
                 ],
               ),
             ),

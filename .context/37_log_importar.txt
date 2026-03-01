@@ -1,0 +1,139 @@
+00:20 +65 -4: C:/Users/Mario/Documents/escandoc/test/features/documents/presentation/pages/ocr_fullscreen_page_test.dart: OcrFullscreenPage debe tener scrollbar visible
+══╡ EXCEPTION CAUGHT BY WIDGETS LIBRARY ╞═══════════════════════════════════════════════════════════
+The following _TypeError was thrown building OcrFullscreenPage(dirty, state:
+_OcrFullscreenPageState#69d91):
+Null check operator used on a null value
+
+The relevant error-causing widget was:
+  OcrFullscreenPage
+  OcrFullscreenPage:file:///C:/Users/Mario/Documents/escandoc/test/features/documents/presentation/pages/ocr_fullscreen_page_test.dart:11:13
+
+When the exception was thrown, this was the stack:
+#0      BuildContextEasyLocalizationExtension.locale (package:easy_localization/src/public_ext.dart:130:49)
+#1      _OcrFullscreenPageState.build (package:escandoc/features/documents/presentation/pages/ocr_fullscreen_page.dart:33:13)
+#2      StatefulElement.build (package:flutter/src/widgets/framework.dart:5934:27)
+#3      ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5820:15)
+#4      StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5985:11)
+#5      Element.rebuild (package:flutter/src/widgets/framework.dart:5532:7)
+#6      ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5802:5)
+#7      StatefulElement._firstBuild (package:flutter/src/widgets/framework.dart:5976:11)
+#8      ComponentElement.mount (package:flutter/src/widgets/framework.dart:5796:5)
+...     Normal element mounting (260 frames)
+#268    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4590:20)
+#269    MultiChildRenderObjectElement.inflateWidget (package:flutter/src/widgets/framework.dart:7269:36)
+#270    MultiChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7285:32)
+...     Normal element mounting (465 frames)
+#735    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4590:20)
+#736    Element.updateChild (package:flutter/src/widgets/framework.dart:4053:20)
+#737    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5844:16)
+#738    Element.rebuild (package:flutter/src/widgets/framework.dart:5532:7)
+#739    ProxyElement.update (package:flutter/src/widgets/framework.dart:6152:5)
+#740    _InheritedNotifierElement.update (package:flutter/src/widgets/inherited_notifier.dart:108:11)
+#741    Element.updateChild (package:flutter/src/widgets/framework.dart:4037:15)
+#742    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5844:16)
+#743    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5985:11)
+#744    Element.rebuild (package:flutter/src/widgets/framework.dart:5532:7)
+#745    StatefulElement.update (package:flutter/src/widgets/framework.dart:6010:5)
+#746    Element.updateChild (package:flutter/src/widgets/framework.dart:4037:15)
+#747    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5844:16)
+#748    Element.rebuild (package:flutter/src/widgets/framework.dart:5532:7)
+#749    ProxyElement.update (package:flutter/src/widgets/framework.dart:6152:5)
+#750    _InheritedNotifierElement.update (package:flutter/src/widgets/inherited_notifier.dart:108:11)
+#751    Element.updateChild (package:flutter/src/widgets/framework.dart:4037:15)
+#752    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5844:16)
+#753    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5985:11)
+#754    Element.rebuild (package:flutter/src/widgets/framework.dart:5532:7)
+#755    StatefulElement.update (package:flutter/src/widgets/framework.dart:6010:5)
+#756    Element.updateChild (package:flutter/src/widgets/framework.dart:4037:15)
+#757    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5844:16)
+#758    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5985:11)
+#759    Element.rebuild (package:flutter/src/widgets/framework.dart:5532:7)
+#760    StatefulElement.update (package:flutter/src/widgets/framework.dart:6010:5)
+#761    Element.updateChild (package:flutter/src/widgets/framework.dart:4037:15)
+#762    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5844:16)
+#763    Element.rebuild (package:flutter/src/widgets/framework.dart:5532:7)
+#764    ProxyElement.update (package:flutter/src/widgets/framework.dart:6152:5)
+#765    Element.updateChild (package:flutter/src/widgets/framework.dart:4037:15)
+#766    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5844:16)
+#767    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5985:11)
+#768    Element.rebuild (package:flutter/src/widgets/framework.dart:5532:7)
+#769    StatefulElement.update (package:flutter/src/widgets/framework.dart:6010:5)
+#770    Element.updateChild (package:flutter/src/widgets/framework.dart:4037:15)
+#771    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5844:16)
+#772    Element.rebuild (package:flutter/src/widgets/framework.dart:5532:7)
+#773    ProxyElement.update (package:flutter/src/widgets/framework.dart:6152:5)
+#774    Element.updateChild (package:flutter/src/widgets/framework.dart:4037:15)
+#775    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5844:16)
+#776    Element.rebuild (package:flutter/src/widgets/framework.dart:5532:7)
+#777    ProxyElement.update (package:flutter/src/widgets/framework.dart:6152:5)
+#778    Element.updateChild (package:flutter/src/widgets/framework.dart:4037:15)
+#779    _RawViewElement._updateChild (package:flutter/src/widgets/view.dart:481:16)
+#780    _RawViewElement.update (package:flutter/src/widgets/view.dart:568:5)
+#781    Element.updateChild (package:flutter/src/widgets/framework.dart:4037:15)
+#782    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5844:16)
+#783    Element.rebuild (package:flutter/src/widgets/framework.dart:5532:7)
+#784    StatelessElement.update (package:flutter/src/widgets/framework.dart:5898:5)
+#785    Element.updateChild (package:flutter/src/widgets/framework.dart:4037:15)
+#786    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5844:16)
+#787    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5985:11)
+#788    Element.rebuild (package:flutter/src/widgets/framework.dart:5532:7)
+#789    StatefulElement.update (package:flutter/src/widgets/framework.dart:6010:5)
+#790    Element.updateChild (package:flutter/src/widgets/framework.dart:4037:15)
+#791    RootElement._rebuild (package:flutter/src/widgets/binding.dart:1782:16)
+#792    RootElement.update (package:flutter/src/widgets/binding.dart:1760:5)
+#793    RootElement.performRebuild (package:flutter/src/widgets/binding.dart:1774:7)
+#794    Element.rebuild (package:flutter/src/widgets/framework.dart:5532:7)
+#795    BuildScope._tryRebuild (package:flutter/src/widgets/framework.dart:2750:15)
+#796    BuildScope._flushDirtyElements (package:flutter/src/widgets/framework.dart:2807:11)
+#797    BuildOwner.buildScope (package:flutter/src/widgets/framework.dart:3111:18)
+#798    AutomatedTestWidgetsFlutterBinding.drawFrame (package:flutter_test/src/binding.dart:1506:19)
+#799    RendererBinding._handlePersistentFrameCallback (package:flutter/src/rendering/binding.dart:495:5)
+#800    SchedulerBinding._invokeFrameCallback (package:flutter/src/scheduler/binding.dart:1434:15)
+#801    SchedulerBinding.handleDrawFrame (package:flutter/src/scheduler/binding.dart:1347:9)
+#802    AutomatedTestWidgetsFlutterBinding.pump.<anonymous closure> (package:flutter_test/src/binding.dart:1335:9)
+#805    TestAsyncUtils.guard (package:flutter_test/src/test_async_utils.dart:74:41)
+#806    AutomatedTestWidgetsFlutterBinding.pump (package:flutter_test/src/binding.dart:1324:27)
+#807    WidgetTester.pumpWidget.<anonymous closure> (package:flutter_test/src/widget_tester.dart:598:22)
+#810    TestAsyncUtils.guard (package:flutter_test/src/test_async_utils.dart:74:41)
+#811    WidgetTester.pumpWidget (package:flutter_test/src/widget_tester.dart:595:27)
+#812    main.<anonymous closure>.<anonymous closure> (file:///C:/Users/Mario/Documents/escandoc/test/features/documents/presentation/pages/ocr_fullscreen_page_test.dart:60:20)
+#813    testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:29)
+<asynchronous suspension>
+#814    TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 5 frames from dart:async and package:stack_trace)
+
+════════════════════════════════════════════════════════════════════════════════════════════════════
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: exactly one matching candidate
+  Actual: _TypeWidgetFinder:<Found 0 widgets with type "Scrollbar": []>
+   Which: means none were found but one was expected
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure>.<anonymous closure> (file:///C:/Users/Mario/Documents/escandoc/test/features/documents/presentation/pages/ocr_fullscreen_page_test.dart:64:7)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///C:/Users/Mario/Documents/escandoc/test/features/documents/presentation/pages/ocr_fullscreen_page_test.dart line 64
+The test description was:
+  debe tener scrollbar visible
+════════════════════════════════════════════════════════════════════════════════════════════════════
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following message was thrown:
+Multiple exceptions (2) were detected during the running of the current test, and at least one was
+unexpected.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:20 +65 -5: C:/Users/Mario/Documents/escandoc/test/features/documents/presentation/pages/ocr_fullscreen_page_test.dart: OcrFullscreenPage debe tener scrollbar visible [E]
+  Test failed. See exception logs above.
+  The test description was: debe tener scrollbar visible
+
+
+To run this test again: C:\Users\Mario\fvm\versions\3.38.8\bin\cache\dart-sdk\bin\dart.exe test C:/Users/Mario/Documents/escandoc/test/features/documents/presentation/pages/ocr_fullscreen_page_test.dart -p vm --plain-name "OcrFullscreenPage debe tener scrollbar visible"

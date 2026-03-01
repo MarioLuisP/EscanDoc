@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdfrx/pdfrx.dart';
 
 // Providers
 import 'features/scan/presentation/providers/scan_provider.dart';
@@ -53,6 +54,7 @@ import 'features/settings/presentation/pages/settings_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+  await pdfrxFlutterInitialize();
 
   // Verificar estado de onboarding
   final prefs = await SharedPreferences.getInstance();
@@ -221,6 +223,10 @@ class MyApp extends StatelessWidget {
 
         // Routing
         initialRoute: initialRoute,
+        onUnknownRoute: (settings) => MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const HomePage(),
+        ),
         routes: {
           '/onboarding': (context) => const OnboardingPage(),
           '/home': (context) => const HomePage(),

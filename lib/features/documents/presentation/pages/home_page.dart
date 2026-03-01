@@ -223,22 +223,27 @@ class _HomePageState extends State<HomePage> {
   // --- Botón ESCANEAR ---
 
   Widget _buildScanButton(BuildContext context) {
-    return Consumer<ScanProvider>(
-      builder: (context, scanProvider, _) {
-        final busy = scanProvider.isBusy;
+    return Consumer2<ScanProvider, ImportProvider>(
+      builder: (context, scanProvider, importProvider, _) {
+        final busy = scanProvider.isBusy || importProvider.isBusy;
         final gradientColors = busy
             ? [Colors.grey.shade400, Colors.grey.shade600]
             : [const Color(0xFF6FBF6F), const Color(0xFF2E7D32)];
         final shadowColor =
             busy ? Colors.grey.shade700 : const Color(0xFF1A5C1A);
 
-        final label = busy
-            ? (scanProvider.isScanning
-                ? 'scanning'.tr()
-                : scanProvider.isSaving
-                    ? 'document_saved'.tr()
-                    : 'processing_text'.tr())
-            : 'scan_button'.tr();
+        final String label;
+        if (importProvider.statusMessage != null) {
+          label = importProvider.statusMessage!;
+        } else if (scanProvider.isBusy) {
+          label = scanProvider.isScanning
+              ? 'scanning'.tr()
+              : scanProvider.isSaving
+                  ? 'document_saved'.tr()
+                  : 'processing_text'.tr();
+        } else {
+          label = 'scan_button'.tr();
+        }
 
         return Container(
           width: double.infinity,
@@ -313,8 +318,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildRecentSection(BuildContext context) {
-    return Consumer<DocumentsProvider>(
-      builder: (context, provider, _) {
+    return Consumer2<DocumentsProvider, ImportProvider>(
+      builder: (context, docsProvider, importProvider, _) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -327,9 +332,9 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 12),
-            if (provider.isLoading && !provider.hasDocuments)
+            if (docsProvider.isLoading && !docsProvider.hasDocuments)
               const Center(child: CircularProgressIndicator())
-            else if (!provider.hasDocuments)
+            else if (!docsProvider.hasDocuments)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Text(
@@ -338,20 +343,21 @@ class _HomePageState extends State<HomePage> {
                 ),
               )
             else
-              _buildRecentList(provider),
+              _buildRecentList(docsProvider, importProvider),
           ],
         );
       },
     );
   }
 
-  Widget _buildRecentList(DocumentsProvider provider) {
+  Widget _buildRecentList(DocumentsProvider provider, ImportProvider importProvider) {
     final recent = provider.documents.take(3).toList();
     return Column(
       children: [
         for (int i = 0; i < recent.length; i++) ...[
           _RecentDocItem(
             document: recent[i],
+            isProcessingOcr: importProvider.processingOcrIds.contains(recent[i].id),
             onTap: () => _navigateToDetail(recent[i].id!),
           ),
           if (i < recent.length - 1) const SizedBox(height: 8),
@@ -527,21 +533,6 @@ class _HomePageState extends State<HomePage> {
     }
 
     await documentsProvider.loadDocuments();
-
-    messenger.showSnackBar(SnackBar(
-      content: Text(
-        documents.length == 1
-            ? 'PDF importado (1 página)'
-            : 'PDF importado (${documents.length} páginas)',
-        style: const TextStyle(fontSize: 16),
-      ),
-      backgroundColor: const Color(0xFF388E3C),
-      duration: const Duration(seconds: 3),
-    ));
-
-    // Navegar al detalle de la primera página
-    if (!mounted) return;
-    _navigateToDetail(documents.first.id!);
   }
 
   /// Dialog para PDFs con más de 10 páginas.
@@ -635,12 +626,6 @@ class _HomePageState extends State<HomePage> {
 
       if (!mounted) return;
       documentsProvider.loadDocuments();
-      messenger.showSnackBar(SnackBar(
-        content: Text('document_imported'.tr(),
-            style: const TextStyle(fontSize: 16)),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 3),
-      ));
     } catch (e) {
       messenger.showSnackBar(SnackBar(
         content: Text('Error al importar: $e',
@@ -935,8 +920,13 @@ class _GradientOutlineButton extends StatelessWidget {
 class _RecentDocItem extends StatelessWidget {
   final DocumentModel document;
   final VoidCallback onTap;
+  final bool isProcessingOcr;
 
-  const _RecentDocItem({required this.document, required this.onTap});
+  const _RecentDocItem({
+    required this.document,
+    required this.onTap,
+    this.isProcessingOcr = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -986,6 +976,28 @@ class _RecentDocItem extends StatelessWidget {
                         _formatDate(document.createdAt),
                         style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
+                      if (isProcessingOcr) ...[
+                        const SizedBox(height: 4),
+                        Row(children: [
+                          SizedBox(
+                            width: 11,
+                            height: 11,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Leyendo texto...',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[500],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ]),
+                      ],
                     ],
                   ),
                 ),

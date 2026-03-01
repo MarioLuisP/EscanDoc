@@ -19,6 +19,8 @@
       "Read(**/*.dart)",
       "Read(**/*.json)",
       "Read(**/*.js)",
+      "Read(**/*.html)",
+      "Read(**/*.css)",
       "Read(**/*.ts)",
       "Read(**/*.jsx)",
       "Read(**/*.tsx)",
