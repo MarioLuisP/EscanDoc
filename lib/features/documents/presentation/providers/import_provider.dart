@@ -10,6 +10,7 @@ import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/image_processing/classification/domain/image_classifier.dart';
 import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 import 'package:escandoc/features/image_processing/thumbnail/domain/thumbnail_generator.dart';
+import 'package:escandoc/features/scan/domain/usecases/detect_and_fix_orientation.dart';
 
 /// Resultado de la preparación de importación.
 ///
@@ -56,6 +57,7 @@ class ImportProvider with ChangeNotifier {
   final ProcessOCR _processOCR;
   final ThumbnailGenerator _thumbnailGenerator;
   final PdfImportService? _pdfImportService;
+  final DetectAndFixOrientation? _detectOrientation;
 
   ImportProvider({
     required ImportDocument importDocument,
@@ -64,12 +66,14 @@ class ImportProvider with ChangeNotifier {
     required ProcessOCR processOCR,
     required ThumbnailGenerator thumbnailGenerator,
     PdfImportService? pdfImportService,
+    DetectAndFixOrientation? detectOrientation,
   })  : _importDocument = importDocument,
         _imageClassifier = imageClassifier,
         _saveDocument = saveDocument,
         _processOCR = processOCR,
         _thumbnailGenerator = thumbnailGenerator,
-        _pdfImportService = pdfImportService;
+        _pdfImportService = pdfImportService,
+        _detectOrientation = detectOrientation;
 
   // Estado
   bool _isImporting = false;
@@ -132,12 +136,20 @@ class ImportProvider with ChangeNotifier {
       final convertDuration = endConvert.difference(startConvert).inMilliseconds;
       debugPrint('[ImportProvider] 🔴 END: Convertir JPG (sin resize) - Duración: ${convertDuration}ms');
 
-      // 2. Clasificar imagen con TFLite
+      // 2. Detectar y corregir orientación (EXIF + Crop OCR)
+      File orientedFile = jpgFile;
+      if (_detectOrientation != null) {
+        _statusMessage = 'Corrigiendo orientación...';
+        notifyListeners();
+        orientedFile = await _detectOrientation.call(jpgFile);
+      }
+
+      // 3. Clasificar imagen con TFLite
       _statusMessage = 'Analizando documento...';
       notifyListeners();
       final startClassify = DateTime.now();
       debugPrint('[ImportProvider] 🟢 START: Clasificar imagen - ${startClassify.millisecondsSinceEpoch}');
-      final classification = await _imageClassifier.classify(jpgFile.path);
+      final classification = await _imageClassifier.classify(orientedFile.path);
       final endClassify = DateTime.now();
       final classifyDuration = endClassify.difference(startClassify).inMilliseconds;
       debugPrint('[ImportProvider] 🔴 END: Clasificar imagen - Duración: ${classifyDuration}ms');
@@ -155,14 +167,14 @@ class ImportProvider with ChangeNotifier {
         notifyListeners();
         debugPrint('[ImportProvider] Es documento → comprimiendo a <850KB ahora');
         final startCompress = DateTime.now();
-        processedFile = await _importDocument.normalize(jpgFile);
+        processedFile = await _importDocument.normalize(orientedFile);
         final endCompress = DateTime.now();
         final compressDuration = endCompress.difference(startCompress).inMilliseconds;
         debugPrint('[ImportProvider] Comprimido en ${compressDuration}ms');
         isNormalized = true;
       } else {
         debugPrint('[ImportProvider] Es foto → saltando compresión (se hará si usuario acepta)');
-        processedFile = jpgFile;
+        processedFile = orientedFile;
         isNormalized = false;
 
         // 4. Generar thumbnail para preview (solo si es foto)

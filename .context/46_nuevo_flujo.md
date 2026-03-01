@@ -41,6 +41,24 @@
             └─────────────────────────────────┘
                               ↓
             ┌─────────────────────────────────┐
+            │   1b. ORIENTACIÓN               │
+            │   DetectAndFixOrientation       │
+            ├─────────────────────────────────┤
+            │ • EXIF check (~7ms)             │
+            │   Si rotación → aplicar         │
+            │ • Crop OCR (siempre):           │
+            │   - dart:ui crop centro ~330ms  │
+            │   - ML Kit en 600×90px ~280ms   │
+            │   - detectOrientationDegrees()  │
+            │   Si rotación → aplicar         │
+            │   flutter_image_compress nativo │
+            │   (~200ms normal, ~865ms 4MB)   │
+            │ • TOTAL: ~900ms (sin rotar)     │
+            │          ~1100ms (con rotación) │
+            │          ~2400ms (EXIF+content) │
+            └─────────────────────────────────┘
+                              ↓
+            ┌─────────────────────────────────┐
             │   2. CLASIFICAR IMAGEN          │
             │   TFLiteImageClassifier         │
             ├─────────────────────────────────┤
@@ -195,8 +213,8 @@
 
 ### **Documento JPG (flujo completo):**
 ```
-Convertir (13ms) + Clasificar (1367ms) + Normalizar (2000ms) +
-Guardar (300ms) = ~3.7s
+Convertir (13ms) + Orientación (900ms) + Clasificar (1367ms) + Normalizar (2000ms) +
+Guardar (300ms) = ~4.6s
 + OCR background (3-5s, no bloquea)
 
 Mejora vs flujo anterior: -0.6s (elimina resize A4 previo)
@@ -469,6 +487,6 @@ La nota en BD siempre es texto plano legible (máx 150 chars).
 
 ---
 
-**Última actualización:** 18 Febrero 2026
+**Última actualización:** 1 Marzo 2026
 **Autor:** Equipo EscanDoc
-**Versión:** 1.2 - OCR Markdown Pipeline + fix rotación ángulos negativos
+**Versión:** 1.3 - Orientación automática pre-TFLite (EXIF + Crop OCR)

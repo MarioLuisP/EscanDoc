@@ -107,6 +107,19 @@ class _Line {
 // DETECCIÓN DE ROTACIÓN
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Retorna los grados de rotación necesarios para enderezar el texto (0, 90, 180 o 270).
+///
+/// Entrada: lista de ángulos de líneas de texto reportados por ML Kit (pueden ser negativos).
+/// Usado por [blocksToMarkdown] internamente y por [DocumentOrientationServiceImpl].
+int detectOrientationDegrees(List<double> angles) {
+  switch (_detectRotation(angles)) {
+    case _Rotation.deg0:   return 0;
+    case _Rotation.deg90:  return 90;
+    case _Rotation.deg180: return 180;
+    case _Rotation.deg270: return 270;
+  }
+}
+
 _Rotation _detectRotation(List<double> angles) {
   if (angles.isEmpty) return _Rotation.deg0;
 
