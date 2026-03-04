@@ -26,14 +26,27 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   StreamSubscription? _intentSub;
+  bool _wasProcessingOCR = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<DocumentsProvider>().loadDocuments();
+      context.read<ImportProvider>().addListener(_onImportChanged);
       _initSharingIntent();
     });
+  }
+
+  void _onImportChanged() {
+    if (!mounted) return;
+    final isProcessing = context.read<ImportProvider>().isProcessingOCR;
+    if (_wasProcessingOCR && !isProcessing) {
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+      context.read<DocumentsProvider>().loadDocuments();
+    }
+    _wasProcessingOCR = isProcessing;
   }
 
   void _initSharingIntent() {
@@ -83,6 +96,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    context.read<ImportProvider>().removeListener(_onImportChanged);
     _intentSub?.cancel();
     super.dispose();
   }
@@ -233,8 +247,13 @@ class _HomePageState extends State<HomePage> {
             busy ? Colors.grey.shade700 : const Color(0xFF1A5C1A);
 
         final String label;
-        if (importProvider.statusMessage != null) {
-          label = importProvider.statusMessage!;
+        if (importProvider.pdfCurrentPage > 0 && importProvider.pdfTotalPages > 1) {
+          label = 'status_pdf_page'.tr(namedArgs: {
+            'current': '${importProvider.pdfCurrentPage}',
+            'total': '${importProvider.pdfTotalPages}',
+          });
+        } else if (importProvider.statusMessage != null) {
+          label = importProvider.statusMessage!.tr();
         } else if (scanProvider.isBusy) {
           label = scanProvider.isScanning
               ? 'scanning'.tr()
@@ -431,11 +450,6 @@ class _HomePageState extends State<HomePage> {
 
     if (!mounted) return;
     documentsProvider.loadDocuments();
-    messenger.showSnackBar(SnackBar(
-      content: Text('document_saved'.tr(), style: const TextStyle(fontSize: 16)),
-      backgroundColor: Colors.green,
-      duration: const Duration(seconds: 3),
-    ));
   }
 
   Future<void> _savePhotoToGallery(File photoFile) async {
@@ -989,7 +1003,7 @@ class _RecentDocItem extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Leyendo texto...',
+                            'status_extracting'.tr(),
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey[500],
@@ -1022,6 +1036,7 @@ class _RecentDocItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: Image.file(
           imageFile,
+          key: ValueKey('${document.filePath}_${document.documentType}_${document.ocrText?.isNotEmpty == true}'),
           width: 60,
           height: 70,
           cacheWidth: 150,

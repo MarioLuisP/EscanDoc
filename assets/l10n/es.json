@@ -18,6 +18,16 @@
   "scanning": "Escaneando...",
   "processing_text": "Procesando texto...",
 
+  "status_preparing": "Preparando imagen...",
+  "status_analyzing": "Analizando documento...",
+  "status_optimizing": "Optimizando imagen...",
+  "status_saving": "Guardando...",
+  "status_extracting": "Extrayendo texto...",
+  "status_fixing_orientation": "Corrigiendo orientación...",
+  "status_reading_pdf": "Leyendo PDF...",
+  "status_processing_pdf": "Procesando PDF...",
+  "status_pdf_page": "Página {current} de {total}...",
+
   "doc_type_factura": "factura",
   "doc_type_recibo": "recibo",
   "doc_type_documento": "documento",

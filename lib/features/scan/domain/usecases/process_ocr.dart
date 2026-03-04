@@ -2,8 +2,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:escandoc/core/services/ocr_service.dart';
 import 'package:escandoc/core/services/document_classifier.dart';
+import 'package:escandoc/core/services/document_orientation_service.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
+import 'package:escandoc/features/image_processing/classification/domain/image_classifier.dart';
 import 'package:escandoc/features/scan/domain/usecases/refine_classification.dart';
 
 /// UseCase para procesar OCR en documento escaneado (SIMPLIFICADO - JPG only)
@@ -23,13 +25,18 @@ class ProcessOCR {
   final DocumentClassifier _classifier;
   final DocumentRepository _repository;
   final RefineClassification _refinement;
+  final DocumentOrientationService? _orientationService;
+  final ImageClassifier? _imageClassifier;
 
   ProcessOCR(
     this._ocrService,
     this._classifier,
     this._repository,
-    this._refinement,
-  );
+    this._refinement, {
+    DocumentOrientationService? orientationService,
+    ImageClassifier? imageClassifier,
+  })  : _orientationService = orientationService,
+        _imageClassifier = imageClassifier;
 
   /// Procesa OCR y refina clasificación para el documento dado.
   ///
@@ -39,6 +46,7 @@ class ProcessOCR {
     int documentId, {
     String tfliteClass = 'documento',
     String locale = 'es',
+    void Function(String)? onStatus,
   }) async {
     try {
       final startProcess = DateTime.now();
@@ -63,7 +71,7 @@ class ProcessOCR {
       final startOCR = DateTime.now();
       debugPrint(
           '[ProcessOCR] 🟢 START: OCR extractAnalysis - ${startOCR.millisecondsSinceEpoch}');
-      final ocrAnalysis = await _ocrService.extractAnalysis(jpgFile, docType: tfliteClass);
+      var ocrAnalysis = await _ocrService.extractAnalysis(jpgFile, docType: tfliteClass);
       final endOCR = DateTime.now();
       debugPrint(
           '[ProcessOCR] 🔴 END: OCR extractAnalysis - ${endOCR.difference(startOCR).inMilliseconds}ms'
@@ -71,10 +79,39 @@ class ProcessOCR {
           ' - ${ocrAnalysis.blockCount} bloques'
           ' - avgConf: ${ocrAnalysis.avgConfidence.toStringAsFixed(3)}');
 
+      // 3. Corrección de orientación si OCR detectó rotación
+      String activeTfliteClass = tfliteClass;
+      if (ocrAnalysis.detectedRotationDegrees != 0 && _orientationService != null) {
+        final degrees = ocrAnalysis.detectedRotationDegrees;
+        debugPrint('[ProcessOCR] 🔄 Rotación detectada: ${degrees}° → rotando y re-procesando');
+
+        onStatus?.call('status_fixing_orientation');
+        final tRotate = DateTime.now();
+        await _orientationService.rotateImage(jpgFile, degrees);
+        debugPrint('[ProcessOCR] ⏱️ Rotar: ${DateTime.now().difference(tRotate).inMilliseconds}ms');
+
+        if (_imageClassifier != null) {
+          onStatus?.call('status_analyzing');
+          final tClassify = DateTime.now();
+          final newClassification = await _imageClassifier.classify(jpgFile.path);
+          activeTfliteClass = newClassification.metadata['label'] as String? ?? tfliteClass;
+          debugPrint(
+              '[ProcessOCR] ⏱️ Re-clasificar: ${DateTime.now().difference(tClassify).inMilliseconds}ms'
+              ' → $activeTfliteClass');
+        }
+
+        onStatus?.call('status_extracting');
+        final tReOcr = DateTime.now();
+        ocrAnalysis = await _ocrService.extractAnalysis(jpgFile, docType: activeTfliteClass);
+        debugPrint(
+            '[ProcessOCR] ⏱️ Re-OCR: ${DateTime.now().difference(tReOcr).inMilliseconds}ms'
+            ' — ${ocrAnalysis.blockCount} bloques');
+      }
+
       final extractedText = ocrAnalysis.text;
 
-      // 3. Refinar clasificación TFLite con métricas OCR (2° paso)
-      final refinement = _refinement.call(tfliteClass, ocrAnalysis);
+      // 4. Refinar clasificación TFLite con métricas OCR (2° paso)
+      final refinement = _refinement.call(activeTfliteClass, ocrAnalysis);
       debugPrint('[ProcessOCR] TFLite: $tfliteClass → Refinado: ${refinement.refinedClass}');
 
       // 4. Si hubo reclasificación → actualizar título

@@ -41,24 +41,6 @@
             └─────────────────────────────────┘
                               ↓
             ┌─────────────────────────────────┐
-            │   1b. ORIENTACIÓN               │
-            │   DetectAndFixOrientation       │
-            ├─────────────────────────────────┤
-            │ • EXIF check (~7ms)             │
-            │   Si rotación → aplicar         │
-            │ • Crop OCR (siempre):           │
-            │   - dart:ui crop centro ~330ms  │
-            │   - ML Kit en 600×90px ~280ms   │
-            │   - detectOrientationDegrees()  │
-            │   Si rotación → aplicar         │
-            │   flutter_image_compress nativo │
-            │   (~200ms normal, ~865ms 4MB)   │
-            │ • TOTAL: ~900ms (sin rotar)     │
-            │          ~1100ms (con rotación) │
-            │          ~2400ms (EXIF+content) │
-            └─────────────────────────────────┘
-                              ↓
-            ┌─────────────────────────────────┐
             │   2. CLASIFICAR IMAGEN          │
             │   TFLiteImageClassifier         │
             ├─────────────────────────────────┤
@@ -141,9 +123,18 @@
             │   5. OCR BACKGROUND             │
             │   ProcessOCR (no bloquea UI)    │
             ├─────────────────────────────────┤
-            │ • google_mlkit_text_recognition │
-            │ • extractAnalysis(jpg,          │
+            │ • 1er pass OCR                  │
+            │   extractAnalysis(jpg,          │
             │     docType: tfliteClass)       │
+            │   → OcrAnalysis(                │
+            │       detectedRotationDegrees)  │
+            │                                 │
+            │ • Si rotación != 0°:            │
+            │   → rotateImage(jpg, degrees)   │
+            │     (~200ms, JPEG nativo)       │
+            │   → re-classify TFLite          │
+            │     (actualiza tfliteClass)     │
+            │   → 2do pass OCR               │
             │                                 │
             │ blocksToMarkdown(blocks,        │
             │   documentTypeFromString(type)) │
@@ -163,7 +154,8 @@
             │                                 │
             │ OcrAnalysis(text: markdown,     │
             │   blockCount, avgConfidence)    │
-            │ • Tiempo: ~3-5s                 │
+            │ • Tiempo: ~3-5s (sin rotar)     │
+            │           ~4-6s (con rotación)  │
             └─────────────────────────────────┘
                                 ↓
             ┌─────────────────────────────────┐
@@ -213,20 +205,16 @@
 
 ### **Documento JPG (flujo completo):**
 ```
-Convertir (13ms) + Orientación (900ms) + Clasificar (1367ms) + Normalizar (2000ms) +
-Guardar (300ms) = ~4.6s
-+ OCR background (3-5s, no bloquea)
-
-Mejora vs flujo anterior: -0.6s (elimina resize A4 previo)
+Convertir (13ms) + Clasificar (1367ms) + Normalizar (2000ms) +
+Guardar (300ms) = ~3.7s
++ OCR background (3-5s sin rotar / 4-6s con rotación, no bloquea)
 ```
 
 ### **Documento PNG (flujo completo):**
 ```
 Convertir PNG→JPG (1000ms) + Clasificar (1367ms) + Normalizar (2000ms) +
 Guardar (300ms) = ~4.7s
-+ OCR background (3-5s, no bloquea)
-
-Mejora vs flujo anterior: -0.6s
++ OCR background (3-5s sin rotar / 4-6s con rotación, no bloquea)
 ```
 
 ### **Foto JPG ACEPTADA (scanner/import):**
@@ -234,9 +222,7 @@ Mejora vs flujo anterior: -0.6s
 Convertir (13ms) + Clasificar (1367ms) + Thumbnail (361ms) +
 [Usuario acepta "Guardar en App"] + Normalizar (2000ms) +
 Guardar (300ms) = ~4.0s
-+ OCR background (3-5s, no bloquea)
-
-Mejora vs flujo anterior: +0.4s (agrega thumbnail, pero elimina resize A4)
++ OCR background (3-5s sin rotar / 4-6s con rotación, no bloquea)
 ```
 
 ### **Foto JPG CANCELADA:**
@@ -244,8 +230,6 @@ Mejora vs flujo anterior: +0.4s (agrega thumbnail, pero elimina resize A4)
 Convertir (13ms) + Clasificar (1367ms) + Thumbnail (361ms) +
 [Usuario cancela] = ~1.8s
 (Ahorro: 2.2s al no normalizar ni guardar)
-
-Mejora vs flujo anterior: -0.2s (thumbnail añade 361ms, pero ahorra resize A4 1458ms)
 ```
 
 ### **Foto JPG → GALERÍA (scanner only):**
@@ -487,6 +471,16 @@ La nota en BD siempre es texto plano legible (máx 150 chars).
 
 ---
 
-**Última actualización:** 1 Marzo 2026
+**Última actualización:** 4 Marzo 2026
 **Autor:** Equipo EscanDoc
-**Versión:** 1.3 - Orientación automática pre-TFLite (EXIF + Crop OCR)
+**Versión:** 1.4 - Orientación automática post-OCR (background, zero-cost si imagen está correcta)
+
+
+Listo. Ahora el log solo muestra:
+═══════════════════════════════════════                                    
+BLOQUES: 19
+═══════════════════════════════════════                                                                                                                                                                                             
+Cuando quieras ver la jerarquía completa, descomentá el bloque que empieza en // print('OCR DEBUG - texto plano completo:') hasta el final de la función (son las líneas con // dentro de _logOCRStructure).                     
+Update(lib\core\services\ocr_service.dart)
+⎿  Added 35 lines, removed 35 lines
+                                                

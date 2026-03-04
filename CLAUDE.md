@@ -65,4 +65,5 @@ lib/
 Botón ESCANEAR → Scanner nativo → OCR post-scan → Clasificar → Generar nombre → Guardar
 ```
 ## Lecciones del proyecto
-Ver `tasks/lessons.md` — leer al inicio de cada sesión.
+
+leer `lessons.md`  en la raiz del proyecto—  al inicio de cada sesión.

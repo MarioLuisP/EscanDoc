@@ -9,12 +9,17 @@ import 'package:escandoc/core/services/ocr_analysis.dart';
 import 'package:escandoc/core/services/document_classifier.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
+import 'package:escandoc/core/services/document_orientation_service.dart';
+import 'package:escandoc/features/image_processing/classification/domain/image_classifier.dart';
+import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 
 // Mocks
 class MockOCRService extends Mock implements OCRService {}
 class MockDocumentClassifier extends Mock implements DocumentClassifier {}
 class MockDocumentRepository extends Mock implements DocumentRepository {}
 class MockRefineClassification extends Mock implements RefineClassification {}
+class MockDocumentOrientationService extends Mock implements DocumentOrientationService {}
+class MockImageClassifier extends Mock implements ImageClassifier {}
 
 // Fakes para registerFallbackValue
 class FakeDocumentModel extends Fake implements DocumentModel {}
@@ -492,6 +497,125 @@ void main() {
           verify(() => mockRepository.updateDocument(captureAny()))
               .captured.single as DocumentModel;
       expect(captured.documentType, 'manuscrito');
+    });
+
+    group('corrección de orientación post-OCR', () {
+      late MockDocumentOrientationService mockOrientationService;
+      late MockImageClassifier mockImageClassifier;
+
+      setUp(() {
+        mockOrientationService = MockDocumentOrientationService();
+        mockImageClassifier = MockImageClassifier();
+      });
+
+      OcrAnalysis makeRotatedAnalysis(int degrees) => OcrAnalysis(
+            text: 'texto rotado',
+            blockCount: 5,
+            avgConfidence: 0.7,
+            detectedRotationDegrees: degrees,
+          );
+
+      OcrAnalysis makeCorrectAnalysis() => OcrAnalysis(
+            text: 'texto correcto',
+            blockCount: 15,
+            avgConfidence: 0.9,
+            detectedRotationDegrees: 0,
+          );
+
+      void stubDefaults(DocumentModel doc) {
+        when(() => mockRepository.getDocumentById(1))
+            .thenAnswer((_) async => doc);
+        when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
+        when(() => mockRepository.updateDocument(any()))
+            .thenAnswer((_) async => 1);
+      }
+
+      test('rotación detectada: rota archivo, re-clasifica y re-hace OCR', () async {
+        final testDoc = createTestDocument();
+        stubDefaults(testDoc);
+
+        // Dos llamadas: primera detecta 90°, segunda ya correcta
+        var ocrCallCount = 0;
+        when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
+            .thenAnswer((_) async {
+          ocrCallCount++;
+          return ocrCallCount == 1 ? makeRotatedAnalysis(90) : makeCorrectAnalysis();
+        });
+
+        // Rotación (File creado internamente por ProcessOCR, usar any())
+        when(() => mockOrientationService.rotateImage(any(), 90))
+            .thenAnswer((inv) async => inv.positionalArguments[0] as File);
+
+        // Re-clasificación (path es String → equality normal)
+        when(() => mockImageClassifier.classify(testJpgFile.path))
+            .thenAnswer((_) async => ClassificationResult(
+                  type: DocumentType.document,
+                  confidence: 0.9,
+                  metadata: {'label': 'documento'},
+                ));
+
+        when(() => mockRefinement.call(any(), any()))
+            .thenReturn(noChange('documento'));
+
+        final useCase2 = ProcessOCR(
+          mockOCRService,
+          mockClassifier,
+          mockRepository,
+          mockRefinement,
+          orientationService: mockOrientationService,
+          imageClassifier: mockImageClassifier,
+        );
+
+        final result = await useCase2.call(1, tfliteClass: 'documento');
+
+        verify(() => mockOrientationService.rotateImage(any(), 90)).called(1);
+        verify(() => mockImageClassifier.classify(testJpgFile.path)).called(1);
+        verify(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
+            .called(2);
+        expect(result.ocrText, 'texto correcto');
+      });
+
+      test('rotación detectada sin services: usa resultado original sin rotar', () async {
+        final testDoc = createTestDocument();
+        stubDefaults(testDoc);
+
+        when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
+            .thenAnswer((_) async => makeRotatedAnalysis(90));
+        when(() => mockRefinement.call(any(), any()))
+            .thenReturn(noChange('documento'));
+
+        // Sin services: comportamiento normal
+        final result = await useCase.call(1);
+
+        verify(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
+            .called(1);
+        expect(result.ocrText, 'texto rotado');
+      });
+
+      test('orientación 0°: no rota, una sola pasada OCR', () async {
+        final testDoc = createTestDocument();
+        stubDefaults(testDoc);
+
+        when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
+            .thenAnswer((_) async => makeCorrectAnalysis());
+        when(() => mockRefinement.call(any(), any()))
+            .thenReturn(noChange('documento'));
+
+        final useCase2 = ProcessOCR(
+          mockOCRService,
+          mockClassifier,
+          mockRepository,
+          mockRefinement,
+          orientationService: mockOrientationService,
+          imageClassifier: mockImageClassifier,
+        );
+
+        await useCase2.call(1);
+
+        verifyNever(() => mockOrientationService.rotateImage(any(), any()));
+        verify(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
+            .called(1);
+      });
     });
 
     test('debe lanzar excepción si documento no existe', () async {

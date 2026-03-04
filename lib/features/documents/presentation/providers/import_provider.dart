@@ -10,7 +10,6 @@ import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/image_processing/classification/domain/image_classifier.dart';
 import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 import 'package:escandoc/features/image_processing/thumbnail/domain/thumbnail_generator.dart';
-import 'package:escandoc/features/scan/domain/usecases/detect_and_fix_orientation.dart';
 
 /// Resultado de la preparación de importación.
 ///
@@ -57,7 +56,6 @@ class ImportProvider with ChangeNotifier {
   final ProcessOCR _processOCR;
   final ThumbnailGenerator _thumbnailGenerator;
   final PdfImportService? _pdfImportService;
-  final DetectAndFixOrientation? _detectOrientation;
 
   ImportProvider({
     required ImportDocument importDocument,
@@ -66,14 +64,12 @@ class ImportProvider with ChangeNotifier {
     required ProcessOCR processOCR,
     required ThumbnailGenerator thumbnailGenerator,
     PdfImportService? pdfImportService,
-    DetectAndFixOrientation? detectOrientation,
   })  : _importDocument = importDocument,
         _imageClassifier = imageClassifier,
         _saveDocument = saveDocument,
         _processOCR = processOCR,
         _thumbnailGenerator = thumbnailGenerator,
-        _pdfImportService = pdfImportService,
-        _detectOrientation = detectOrientation;
+        _pdfImportService = pdfImportService;
 
   // Estado
   bool _isImporting = false;
@@ -122,7 +118,7 @@ class ImportProvider with ChangeNotifier {
     try {
       _error = null;
       _isImporting = true;
-      _statusMessage = 'Preparando imagen...';
+      _statusMessage = 'status_preparing';
       notifyListeners();
 
       final startTotal = DateTime.now();
@@ -136,20 +132,12 @@ class ImportProvider with ChangeNotifier {
       final convertDuration = endConvert.difference(startConvert).inMilliseconds;
       debugPrint('[ImportProvider] 🔴 END: Convertir JPG (sin resize) - Duración: ${convertDuration}ms');
 
-      // 2. Detectar y corregir orientación (EXIF + Crop OCR)
-      File orientedFile = jpgFile;
-      if (_detectOrientation != null) {
-        _statusMessage = 'Corrigiendo orientación...';
-        notifyListeners();
-        orientedFile = await _detectOrientation.call(jpgFile);
-      }
-
-      // 3. Clasificar imagen con TFLite
-      _statusMessage = 'Analizando documento...';
+      // 2. Clasificar imagen con TFLite
+      _statusMessage = 'status_analyzing';
       notifyListeners();
       final startClassify = DateTime.now();
       debugPrint('[ImportProvider] 🟢 START: Clasificar imagen - ${startClassify.millisecondsSinceEpoch}');
-      final classification = await _imageClassifier.classify(orientedFile.path);
+      final classification = await _imageClassifier.classify(jpgFile.path);
       final endClassify = DateTime.now();
       final classifyDuration = endClassify.difference(startClassify).inMilliseconds;
       debugPrint('[ImportProvider] 🔴 END: Clasificar imagen - Duración: ${classifyDuration}ms');
@@ -163,18 +151,18 @@ class ImportProvider with ChangeNotifier {
 
       // 3. Comprimir solo si es DOCUMENTO (ya está redimensionado a A4)
       if (classification.type == DocumentType.document) {
-        _statusMessage = 'Optimizando imagen...';
+        _statusMessage = 'status_optimizing';
         notifyListeners();
         debugPrint('[ImportProvider] Es documento → comprimiendo a <850KB ahora');
         final startCompress = DateTime.now();
-        processedFile = await _importDocument.normalize(orientedFile);
+        processedFile = await _importDocument.normalize(jpgFile);
         final endCompress = DateTime.now();
         final compressDuration = endCompress.difference(startCompress).inMilliseconds;
         debugPrint('[ImportProvider] Comprimido en ${compressDuration}ms');
         isNormalized = true;
       } else {
         debugPrint('[ImportProvider] Es foto → saltando compresión (se hará si usuario acepta)');
-        processedFile = orientedFile;
+        processedFile = jpgFile;
         isNormalized = false;
 
         // 4. Generar thumbnail para preview (solo si es foto)
@@ -228,8 +216,9 @@ class ImportProvider with ChangeNotifier {
   /// - null si falla
   Future<DocumentModel?> completeImport(
     ImportPreparationResult preparation,
-    String locale,
-  ) async {
+    String locale, {
+    VoidCallback? onOcrComplete,
+  }) async {
     try {
       _error = null;
       _isSaving = true;
@@ -242,7 +231,7 @@ class ImportProvider with ChangeNotifier {
 
       // Comprimir si es foto (no comprimida en FASE 1, pero ya redimensionada a A4)
       if (!preparation.isNormalized) {
-        _statusMessage = 'Optimizando imagen...';
+        _statusMessage = 'status_optimizing';
         notifyListeners();
         debugPrint('[ImportProvider] Foto confirmada → comprimiendo a <850KB ahora');
         final startCompress = DateTime.now();
@@ -259,7 +248,7 @@ class ImportProvider with ChangeNotifier {
       final label = preparation.classification.metadata['label'] as String? ?? 'desconocido';
 
       // Guardar documento
-      _statusMessage = 'Guardando...';
+      _statusMessage = 'status_saving';
       notifyListeners();
       final startSave = DateTime.now();
       debugPrint('[ImportProvider] 🟢 START: Guardar documento - ${startSave.millisecondsSinceEpoch}');
@@ -285,7 +274,7 @@ class ImportProvider with ChangeNotifier {
       debugPrint('[ImportProvider] 🔴 END: Completar importación - Duración TOTAL: ${totalDuration}ms');
 
       // Procesar OCR en background (no bloquea UI)
-      _processOCRInBackground(document.id!, label, locale);
+      _processOCRInBackground(document.id!, label, locale, onComplete: onOcrComplete);
 
       return document;
     } catch (e, stackTrace) {
@@ -314,17 +303,25 @@ class ImportProvider with ChangeNotifier {
 
   /// Ejecuta OCR en background sin bloquear UI
   Future<void> _processOCRInBackground(
-      int documentId, String tfliteClass, String locale) async {
+      int documentId, String tfliteClass, String locale, {VoidCallback? onComplete}) async {
     _processingOcrIds.add(documentId);
     _isProcessingOCR = true;
-    _statusMessage = 'Extrayendo texto...';
+    _statusMessage = 'status_extracting';
     notifyListeners();
 
     final startBackground = DateTime.now();
     debugPrint('[ImportProvider] 🟢 START: Procesamiento OCR background - ${startBackground.millisecondsSinceEpoch}');
 
     try {
-      await _processOCR.call(documentId, tfliteClass: tfliteClass, locale: locale);
+      await _processOCR.call(
+        documentId,
+        tfliteClass: tfliteClass,
+        locale: locale,
+        onStatus: (msg) {
+          _statusMessage = msg;
+          notifyListeners();
+        },
+      );
       final endBackground = DateTime.now();
       final backgroundDuration = endBackground.difference(startBackground).inMilliseconds;
       debugPrint('[ImportProvider] 🔴 END: Procesamiento OCR background - Duración: ${backgroundDuration}ms');
@@ -336,6 +333,7 @@ class ImportProvider with ChangeNotifier {
       _isProcessingOCR = _processingOcrIds.isNotEmpty;
       if (_processingOcrIds.isEmpty) _statusMessage = null;
       notifyListeners();
+      onComplete?.call();
     }
   }
 
@@ -370,7 +368,7 @@ class ImportProvider with ChangeNotifier {
     final docsDir = await getApplicationDocumentsDirectory();
     _pdfCurrentPage = 0;
     _pdfTotalPages = pagesToImport;
-    _statusMessage = 'Leyendo PDF...';
+    _statusMessage = 'status_reading_pdf';
     notifyListeners();
 
     List<File> pageFiles;
@@ -394,9 +392,7 @@ class ImportProvider with ChangeNotifier {
 
     for (var i = 0; i < pageFiles.length; i++) {
       _pdfCurrentPage = i + 1;
-      _statusMessage = pagesToImport > 1
-          ? 'Página ${i + 1} de $pagesToImport...'
-          : 'Procesando PDF...';
+      _statusMessage = pagesToImport > 1 ? null : 'status_processing_pdf';
       notifyListeners();
 
       // Copiar del cache al directorio permanente antes de procesar.

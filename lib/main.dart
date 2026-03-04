@@ -16,7 +16,6 @@ import 'features/scan/domain/usecases/scan_document.dart';
 import 'features/scan/domain/usecases/save_scanned_document.dart';
 import 'features/scan/domain/usecases/process_ocr.dart';
 import 'features/scan/domain/usecases/refine_classification.dart';
-import 'features/scan/domain/usecases/detect_and_fix_orientation.dart';
 import 'core/services/document_orientation_service_impl.dart';
 import 'core/services/document_scanner_service.dart';
 import 'core/services/document_classifier.dart';
@@ -132,6 +131,8 @@ class MyApp extends StatelessWidget {
               classifier,
               documentRepository,
               RefineClassification(),
+              orientationService: DocumentOrientationServiceImpl(),
+              imageClassifier: imageClassifier,
             );
 
             return ScanProvider(
@@ -170,11 +171,9 @@ class MyApp extends StatelessWidget {
               classifier,
               documentRepository,
               RefineClassification(),
+              orientationService: DocumentOrientationServiceImpl(),
+              imageClassifier: imageClassifier,
             );
-
-            final orientationService = DocumentOrientationServiceImpl();
-            final detectOrientation =
-                DetectAndFixOrientation(orientationService);
 
             return ImportProvider(
               importDocument: importDocument,
@@ -183,7 +182,6 @@ class MyApp extends StatelessWidget {
               processOCR: processOCR,
               thumbnailGenerator: thumbnailGenerator,
               pdfImportService: PdfImportServiceImpl(),
-              detectOrientation: detectOrientation,
             );
           },
         ),

@@ -67,11 +67,17 @@ class OCRServiceImpl implements OCRService {
         documentTypeFromString(docType),
       );
 
+      // Detectar rotación dominante para corrección post-OCR
+      final allAngles = allLines.map((l) => l.angle).whereType<double>().toList();
+      final detected = detectOrientationDegrees(allAngles);
+      final rotationCorrection = (360 - detected) % 360;
+
       return OcrAnalysis(
         text: markdown,
         blockCount: recognizedText.blocks.length,
         avgConfidence: avgConf,
         topConfidenceText: topConfidenceText,
+        detectedRotationDegrees: rotationCorrection,
       );
     } catch (e) {
       return OcrAnalysis.empty;
@@ -88,42 +94,42 @@ class OCRServiceImpl implements OCRService {
   void _logOCRStructure(RecognizedText result) {
     // ignore_for_file: avoid_print
     print('═══════════════════════════════════════');
-    print('OCR DEBUG - texto plano completo:');
-    print(result.text);
-    print('───────────────────────────────────────');
     print('BLOQUES: ${result.blocks.length}');
-
-    for (var bi = 0; bi < result.blocks.length; bi++) {
-      final block = result.blocks[bi];
-      print('');
-      print('  ┌─ BLOQUE $bi ─────────────────────────');
-      print('  │  texto  : "${block.text}"');
-      print('  │  bbox   : ${block.boundingBox}');
-      print('  │  ángulo : ${block.recognizedLanguages}');
-      print('  │  líneas : ${block.lines.length}');
-
-      for (var li = 0; li < block.lines.length; li++) {
-        final line = block.lines[li];
-        print('  │');
-        print('  │  ├─ LÍNEA $li ─────────────────────');
-        print('  │  │  texto      : "${line.text}"');
-        print('  │  │  bbox       : ${line.boundingBox}');
-        print('  │  │  confianza  : ${line.confidence}');
-        print('  │  │  ángulo     : ${line.angle}');
-        print('  │  │  elementos  : ${line.elements.length}');
-
-        for (var ei = 0; ei < line.elements.length; ei++) {
-          final elem = line.elements[ei];
-          print('  │  │');
-          print('  │  │  └─ ELEM $ei: "${elem.text}"');
-          print('  │  │     bbox     : ${elem.boundingBox}');
-          print('  │  │     confianza: ${elem.confidence}');
-          print('  │  │     ángulo   : ${elem.angle}');
-        }
-      }
-      print('  └───────────────────────────────────────');
-    }
-
     print('═══════════════════════════════════════');
+
+    // Para ver texto plano + jerarquía completa (bloques/líneas/elementos),
+    // descomentar desde aquí hasta el final de la función:
+    //
+    // print('OCR DEBUG - texto plano completo:');
+    // print(result.text);
+    // print('───────────────────────────────────────');
+    // for (var bi = 0; bi < result.blocks.length; bi++) {
+    //   final block = result.blocks[bi];
+    //   print('');
+    //   print('  ┌─ BLOQUE $bi ─────────────────────────');
+    //   print('  │  texto  : "${block.text}"');
+    //   print('  │  bbox   : ${block.boundingBox}');
+    //   print('  │  ángulo : ${block.recognizedLanguages}');
+    //   print('  │  líneas : ${block.lines.length}');
+    //   for (var li = 0; li < block.lines.length; li++) {
+    //     final line = block.lines[li];
+    //     print('  │');
+    //     print('  │  ├─ LÍNEA $li ─────────────────────');
+    //     print('  │  │  texto      : "${line.text}"');
+    //     print('  │  │  bbox       : ${line.boundingBox}');
+    //     print('  │  │  confianza  : ${line.confidence}');
+    //     print('  │  │  ángulo     : ${line.angle}');
+    //     print('  │  │  elementos  : ${line.elements.length}');
+    //     for (var ei = 0; ei < line.elements.length; ei++) {
+    //       final elem = line.elements[ei];
+    //       print('  │  │');
+    //       print('  │  │  └─ ELEM $ei: "${elem.text}"');
+    //       print('  │  │     bbox     : ${elem.boundingBox}');
+    //       print('  │  │     confianza: ${elem.confidence}');
+    //       print('  │  │     ángulo   : ${elem.angle}');
+    //     }
+    //   }
+    //   print('  └───────────────────────────────────────');
+    // }
   }
 }

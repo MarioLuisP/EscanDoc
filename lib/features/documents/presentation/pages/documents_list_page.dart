@@ -426,7 +426,7 @@ class _DocItem extends StatelessWidget {
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        'Leyendo texto...',
+                        'status_extracting'.tr(),
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[500],
@@ -458,6 +458,7 @@ class _DocItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: Image.file(
           File(document.filePath),
+          key: ValueKey('${document.filePath}_${document.documentType}_${document.ocrText?.isNotEmpty == true}'),
           width: 56,
           height: 66,
           cacheWidth: 140,

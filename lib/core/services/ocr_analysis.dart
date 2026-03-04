@@ -30,11 +30,19 @@ class OcrAnalysis {
   /// - Manuscritos: saldrán las palabras más reconocibles
   final String topConfidenceText;
 
+  /// Grados de corrección de orientación detectados (0, 90, 180 o 270).
+  ///
+  /// Calculado a partir de la mediana de ángulos de todas las líneas de texto.
+  /// 0 = imagen ya orientada correctamente.
+  /// Distinto de 0 = [ProcessOCR] debe rotar el archivo y re-procesar.
+  final int detectedRotationDegrees;
+
   const OcrAnalysis({
     required this.text,
     required this.blockCount,
     required this.avgConfidence,
     this.topConfidenceText = '',
+    this.detectedRotationDegrees = 0,
   });
 
   /// Resultado vacío cuando OCR falla o la imagen es inválida
@@ -43,5 +51,6 @@ class OcrAnalysis {
     blockCount: 0,
     avgConfidence: 0.0,
     topConfidenceText: '',
+    detectedRotationDegrees: 0,
   );
 }
