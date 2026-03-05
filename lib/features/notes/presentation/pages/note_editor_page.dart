@@ -249,7 +249,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Widget build(BuildContext context) {
     context.locale;
     final pageTitle = _isNewNote
-        ? 'Nueva nota'
+        ? 'note_new_label'.tr()
         : _isEditing
             ? 'note_edit_title'.tr(namedArgs: {'docName': _documentTitle})
             : 'note_new_title'.tr(namedArgs: {'docName': _documentTitle});

@@ -166,3 +166,19 @@ Si el OCR no extrae ningún texto (imagen en blanco, error de reconocimiento), n
 
 ### Campo agregado a OcrAnalysis
 Se agregó `topConfidenceText` al modelo de dominio `OcrAnalysis`, calculado en `OCRServiceImpl` ordenando todas las líneas por confianza y tomando las top-5 con longitud útil.
+
+El problema está claro: TFLite clasifica esta boleta de agua como 'recibo', y la línea 97 dice 'recibo' es intocable — el refinamiento nunca corre, aunque tenga keywords de factura.
+
+Un recibo real tiene 13-46 bloques. Esta boleta tiene ~120+. El fix: si TFLite dice 'recibo' pero tiene keywords de factura + muchos bloques → promoverlo a 'factura'.
+
+Primero el test (RED):
+
+● Read 1 file (ctrl+o to expand)
+
+● Está claro. El test en línea 37-44 confirma que 'recibo' es intocable. Necesito:
+
+1. Actualizar el test: sacar 'recibo' de intocables + agregar tests del nuevo comportamiento
+2. Agregar la lógica en call() para 'recibo' → 'factura'
+
+Nota: real recibo supermercado = 13-46 bloques. Esta boleta = ~120+ bloques. El umbral de 80 los separa perfectamente.
+, igual que un texto de folleto no claro lo toma como manuscrito

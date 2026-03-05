@@ -668,6 +668,7 @@ class _ActionsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    EasyLocalization.of(context)?.locale;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       child: Column(
@@ -691,7 +692,7 @@ class _ActionsSheet extends StatelessWidget {
           const SizedBox(height: 10),
           _SheetActionButton(
             icon: Icons.edit_note,
-            label: 'Nueva nota', // TODO: i18n al implementar
+            label: 'note_new_label'.tr(),
             onTap: onNewNote,
           ),
           // --- Separador visual: acciones principales / configuración ---

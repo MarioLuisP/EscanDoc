@@ -60,6 +60,7 @@
   "documents_empty_subtitle": "Tap the button to scan your first document",
 
   "note_title": "Note",
+  "note_new_label": "New note",
   "note_add": "ADD NOTE",
   "note_add_button": "ADD NOTE",
   "note_edit": "EDIT NOTE",
@@ -121,6 +122,11 @@
   "import_cancelled": "Import cancelled",
   "document_imported": "Document imported successfully",
   "print_tooltip": "Print",
+  "share_title": "Share as...",
+  "share_as_photo": "As photo (JPG)",
+  "share_as_document": "As document (PDF)",
+  "share_preparing": "Preparing document...",
+  "share_error": "Error sharing document",
   "result_type_document": "Document",
   "result_type_note": "Note",
 

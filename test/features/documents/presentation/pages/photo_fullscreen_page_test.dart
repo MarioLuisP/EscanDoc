@@ -34,20 +34,6 @@ void main() {
       expect(find.byIcon(Icons.share), findsOneWidget);
     });
 
-    testWidgets('debe mostrar botón imprimir para PDFs', (tester) async {
-      await tester.pumpWidget(buildWidget(filePath: 'test.pdf'));
-
-      // Debe mostrar botón imprimir para PDFs
-      expect(find.byIcon(Icons.print), findsOneWidget);
-    });
-
-    testWidgets('NO debe mostrar botón imprimir para imágenes', (tester) async {
-      await tester.pumpWidget(buildWidget(filePath: 'test.jpg'));
-
-      // NO debe mostrar botón imprimir para imágenes
-      expect(find.byIcon(Icons.print), findsNothing);
-    });
-
     testWidgets('debe tener fondo negro en Scaffold', (tester) async {
       await tester.pumpWidget(buildWidget(filePath: 'test.pdf'));
 

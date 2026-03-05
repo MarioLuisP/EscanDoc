@@ -136,3 +136,25 @@ Estado actual del plan (50_flujo_pdf_editable.md):
 3. ⏳ Export combinado multi-página
 4. ⏳ Import PDF editable
 
+  ---
+Resumen de lo implementado:
+
+┌─────────────────────────────────┬───────────────────────────────────────────────────┐
+│             Archivo             │                      Cambio                       │
+├─────────────────────────────────┼───────────────────────────────────────────────────┤
+│ a4_normalizer_service.dart      │ Abstract + calculateA4Fit (lógica pura testeable) │
+├─────────────────────────────────┼───────────────────────────────────────────────────┤
+│ a4_normalizer_service_impl.dart │ Impl con dart:ui: canvas A4 blanco + contain fit  │
+├─────────────────────────────────┼───────────────────────────────────────────────────┤
+│ pdf_converter_service.dart      │ convertImageBytesToPdfA4() con dimensiones fijas  │
+├─────────────────────────────────┼───────────────────────────────────────────────────┤
+│ photo_fullscreen_page.dart      │ StatefulWidget + bottom sheet + loading inline    │
+├─────────────────────────────────┼───────────────────────────────────────────────────┤
+│ pubspec.yaml                    │ share_plus: ^10.1.0                               │
+├─────────────────────────────────┼───────────────────────────────────────────────────┤
+│ es.json / en.json               │ 5 claves nuevas                                   │
+├─────────────────────────────────┼───────────────────────────────────────────────────┤
+│ photo_fullscreen_page_test.dart │ Removidos tests del botón print                   │
+└─────────────────────────────────┴───────────────────────────────────────────────────┘
+
+El A4FitResult con calculateA4Fit queda disponible para cuando implementemos el export combinado multi-página — cada JPG se normaliza a A4 y después los unimos en un solo PDF.

@@ -1,15 +1,19 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:share_plus/share_plus.dart';
 
-/// Página fullscreen para visualizar documento (JPG o PDF) con zoom
+import 'package:escandoc/core/services/a4_normalizer_service_impl.dart';
+import 'package:escandoc/core/services/pdf_converter_service.dart';
+
+/// Página fullscreen para visualizar documento (JPG o PDF) con zoom.
 ///
-/// NOTA: Ahora los documentos se almacenan como JPG por defecto.
-/// PDF solo se genera on-demand para compartir/imprimir.
-///
-/// Botones: compartir, imprimir, cerrar
-class PhotoFullscreenPage extends StatelessWidget {
+/// Botones: compartir, cerrar.
+/// Al compartir JPG: pregunta "Como foto" o "Como documento (PDF A4)".
+/// Al compartir PDF: comparte directamente.
+class PhotoFullscreenPage extends StatefulWidget {
   final String filePath;
 
   const PhotoFullscreenPage({
@@ -18,9 +22,16 @@ class PhotoFullscreenPage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final isPDF = filePath.toLowerCase().endsWith('.pdf');
+  State<PhotoFullscreenPage> createState() => _PhotoFullscreenPageState();
+}
 
+class _PhotoFullscreenPageState extends State<PhotoFullscreenPage> {
+  bool _sharing = false;
+
+  bool get _isPDF => widget.filePath.toLowerCase().endsWith('.pdf');
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -32,102 +43,187 @@ class PhotoFullscreenPage extends StatelessWidget {
           tooltip: 'back_button'.tr(),
         ),
         actions: [
-          // Botón compartir
-          IconButton(
-            icon: const Icon(Icons.share, size: 24),
-            onPressed: () => _shareDocument(context),
-            tooltip: 'share_button'.tr(),
-          ),
-          if (isPDF)
-            // Botón imprimir (solo para PDFs)
+          if (_sharing)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2.5,
+                  ),
+                ),
+              ),
+            )
+          else
             IconButton(
-              icon: const Icon(Icons.print, size: 24),
-              onPressed: () => _printDocument(context),
-              tooltip: 'print_tooltip'.tr(),
+              icon: const Icon(Icons.share, size: 24),
+              onPressed: () => _onShareTap(context),
+              tooltip: 'share_button'.tr(),
             ),
         ],
       ),
-      body: isPDF ? _buildPdfViewer() : _buildImageViewer(),
+      body: _isPDF ? _buildPdfViewer() : _buildImageViewer(),
     );
   }
 
-  /// Viewer de PDF con todas las páginas y zoom
   Widget _buildPdfViewer() {
-    return PdfViewer.file(
-      filePath,
-      // El viewer por defecto ya incluye zoom, scroll y gestos
-    );
+    return PdfViewer.file(widget.filePath);
   }
 
-  /// Viewer de imagen con zoom
   Widget _buildImageViewer() {
-    final file = File(filePath);
-
     return InteractiveViewer(
       minScale: 0.5,
       maxScale: 5.0,
       child: Center(
         child: Image.file(
-          file,
+          File(widget.filePath),
           fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'error_loading'.tr(),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
+          errorBuilder: (context, error, stackTrace) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.white),
+                const SizedBox(height: 16),
+                Text(
+                  'error_loading'.tr(),
+                  style: const TextStyle(fontSize: 18, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Share logic
+  // ---------------------------------------------------------------------------
+
+  void _onShareTap(BuildContext context) {
+    if (_isPDF) {
+      // PDF ya es un documento: compartir directamente
+      _shareFile(widget.filePath, mimeType: 'application/pdf');
+      return;
+    }
+    // JPG: preguntar formato
+    _showShareSheet(context);
+  }
+
+  void _showShareSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFFF5F0E8),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[400],
+                borderRadius: BorderRadius.circular(2),
               ),
-            );
-          },
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'share_title'.tr(),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 4),
+            ListTile(
+              leading: const Icon(
+                Icons.image_outlined,
+                color: Color(0xFF388E3C),
+                size: 28,
+              ),
+              title: Text(
+                'share_as_photo'.tr(),
+                style: const TextStyle(fontSize: 17),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                _shareFile(widget.filePath, mimeType: 'image/jpeg');
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.picture_as_pdf_outlined,
+                color: Color(0xFFD32F2F),
+                size: 28,
+              ),
+              title: Text(
+                'share_as_document'.tr(),
+                style: const TextStyle(fontSize: 17),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                _shareAsDocumentPdf(context);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
         ),
       ),
     );
   }
 
-  /// Comparte el documento
-  /// TODO: Si es JPG, convertir a PDF on-demand antes de compartir
-  void _shareDocument(BuildContext context) {
-    // TODO: Implementar con share_plus package
-    // Si filePath es JPG: convertir a PDF on-demand, luego compartir
-    // Si filePath es PDF: compartir directamente
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Compartir disponible próximamente (convertirá JPG→PDF on-demand)',
-          style: const TextStyle(fontSize: 16),
-        ),
-        backgroundColor: Colors.grey[800],
-      ),
-    );
+  Future<void> _shareFile(String path, {required String mimeType}) async {
+    await Share.shareXFiles([XFile(path, mimeType: mimeType)]);
   }
 
-  /// Imprime el documento
-  /// TODO: Si es JPG, convertir a PDF on-demand antes de imprimir
-  void _printDocument(BuildContext context) {
-    // TODO: Implementar impresión con printing package
-    // Si filePath es JPG: convertir a PDF on-demand, luego imprimir
-    // Si filePath es PDF: imprimir directamente
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Imprimir disponible próximamente (convertirá JPG→PDF on-demand)',
-          style: const TextStyle(fontSize: 16),
+  Future<void> _shareAsDocumentPdf(BuildContext context) async {
+    setState(() => _sharing = true);
+
+    File? tempPdf;
+    try {
+      final imageBytes = await File(widget.filePath).readAsBytes();
+
+      final normalizer = A4NormalizerServiceImpl();
+      final normalizedBytes = await normalizer.normalizeToA4(imageBytes);
+
+      final tempDir = await getTemporaryDirectory();
+      final tempPath =
+          '${tempDir.path}/export_${DateTime.now().millisecondsSinceEpoch}.pdf';
+
+      final converter = PdfConverterServiceImpl();
+      tempPdf = await converter.convertImageBytesToPdfA4(
+          normalizedBytes, tempPath);
+
+      if (!mounted) return;
+      setState(() => _sharing = false);
+
+      await Share.shareXFiles(
+        [XFile(tempPdf.path, mimeType: 'application/pdf')],
+      );
+    } catch (e) {
+      debugPrint('[Export] Error al exportar PDF: $e');
+      if (!mounted) return;
+      setState(() => _sharing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('share_error'.tr(),
+              style: const TextStyle(fontSize: 16)),
+          backgroundColor: Colors.red[700],
         ),
-        backgroundColor: Colors.grey[800],
-      ),
-    );
+      );
+    } finally {
+      // Limpiar PDF temporal después de que share_plus lo haya procesado
+      if (tempPdf != null && await tempPdf.exists()) {
+        await tempPdf.delete();
+      }
+    }
   }
 }

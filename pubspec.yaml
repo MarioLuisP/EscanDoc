@@ -55,6 +55,7 @@ dependencies:
   printing: ^5.14.2                  # Vista previa e impresión de PDFs
   pdfrx: ^2.2.24                     # Visualización de PDFs con zoom
   gal: ^2.3.0                        # Guardar imágenes en galería (feature: escanear fotos)
+  share_plus: ^10.1.0               # Compartir archivos via share sheet del SO
 
   # ═══════════════════════════════════════════════════════════════════════════
   # VOICE SEARCH

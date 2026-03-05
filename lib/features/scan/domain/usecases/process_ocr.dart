@@ -134,10 +134,8 @@ class ProcessOCR {
       }
 
       // 5. Si es manuscrito → anteponer aviso en el texto OCR
-      const manuscritoDisclaimer =
-          '⚠️ Texto manuscrito — el reconocimiento puede contener errores.\n\n';
       final ocrText = refinement.refinedClass == 'manuscrito'
-          ? '$manuscritoDisclaimer$extractedText'
+          ? '${_manuscritoDisclaimer(locale)}$extractedText'
           : extractedText;
 
       // 6. Extraer fecha de vencimiento si existe
@@ -146,7 +144,7 @@ class ProcessOCR {
 
       // 7. Construir nota de extracto
       final noteContent = _buildExtractNote(
-          refinement.refinedClass, extractedText, ocrAnalysis.topConfidenceText);
+          refinement.refinedClass, extractedText, ocrAnalysis.topConfidenceText, locale);
       debugPrint('[ProcessOCR] 📝 Nota de extracto: ${noteContent.substring(0, noteContent.length.clamp(0, 60))}...');
 
       // 8. Actualizar documento con texto OCR, nota, título y tipo (si hubo reclasificación)
@@ -178,11 +176,20 @@ class ProcessOCR {
     }
   }
 
-  /// Nota para manuscritos: prefija "Nota manuscrita de" + top-palabras.
-  /// Si no hay palabras reconocibles, retorna "Nota manuscrita".
-  String _buildManuscritoNote(String topConfidenceText) {
-    if (topConfidenceText.trim().isEmpty) return 'Nota manuscrita';
-    return 'Nota manuscrita de ${topConfidenceText.trim()}';
+  /// Aviso de calidad OCR para manuscritos, según idioma.
+  String _manuscritoDisclaimer(String locale) {
+    return locale == 'en'
+        ? '⚠️ Handwritten text — recognition may contain errors.\n\n'
+        : '⚠️ Texto manuscrito — el reconocimiento puede contener errores.\n\n';
+  }
+
+  /// Nota para manuscritos: prefija etiqueta + top-palabras.
+  /// Si no hay palabras reconocibles, retorna solo la etiqueta.
+  String _buildManuscritoNote(String topConfidenceText, String locale) {
+    final label = locale == 'en' ? 'Handwritten note' : 'Nota manuscrita';
+    if (topConfidenceText.trim().isEmpty) return label;
+    final prefix = locale == 'en' ? 'Handwritten note of' : 'Nota manuscrita de';
+    return '$prefix ${topConfidenceText.trim()}';
   }
 
   /// Nota para documentos impresos: primeros 150 chars del markdown limpio.
@@ -196,13 +203,13 @@ class ProcessOCR {
         .replaceAll(RegExp(r'^---+$', multiLine: true), '')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
-    return stripped.length > 150 ? stripped.substring(0, 150).trimRight() : stripped;
+    return stripped.length > 70 ? stripped.substring(0, 70).trimRight() : stripped;
   }
 
   /// Selecciona la nota correcta según el tipo refinado.
-  String _buildExtractNote(String refinedClass, String extractedText, String topConfidenceText) {
+  String _buildExtractNote(String refinedClass, String extractedText, String topConfidenceText, String locale) {
     if (refinedClass == 'manuscrito') {
-      return _buildManuscritoNote(topConfidenceText);
+      return _buildManuscritoNote(topConfidenceText, locale);
     }
     return _buildPrintedNote(extractedText);
   }

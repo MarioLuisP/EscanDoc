@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -14,6 +15,13 @@ abstract class PdfConverterService {
   ///
   /// Retorna el File del PDF generado.
   Future<File> convertJpgToPdf(String jpgPath, String outputPdfPath);
+
+  /// Convierte bytes de imagen (PNG/JPG) a PDF de tamaño A4 fijo (2480×3508).
+  ///
+  /// Usado para exportar imágenes ya normalizadas por [A4NormalizerService].
+  /// No lee headers: las dimensiones son siempre kA4Width × kA4Height.
+  Future<File> convertImageBytesToPdfA4(
+      Uint8List imageBytes, String outputPdfPath);
 }
 
 /// Implementación del servicio de conversión JPG→PDF.
@@ -102,5 +110,28 @@ class PdfConverterServiceImpl implements PdfConverterService {
       debugPrint('[PdfConverter] StackTrace: $stackTrace');
       rethrow;
     }
+  }
+
+  @override
+  Future<File> convertImageBytesToPdfA4(
+      Uint8List imageBytes, String outputPdfPath) async {
+    debugPrint('[PdfConverter] convertImageBytesToPdfA4 → $outputPdfPath');
+
+    const pageFormat = PdfPageFormat(2480, 3508, marginAll: 0);
+
+    final pdf = pw.Document();
+    pdf.addPage(
+      pw.Page(
+        pageFormat: pageFormat,
+        build: (pw.Context context) =>
+            pw.Image(pw.MemoryImage(imageBytes), fit: pw.BoxFit.fill),
+      ),
+    );
+
+    final file = File(outputPdfPath);
+    await file.writeAsBytes(await pdf.save());
+    debugPrint(
+        '[PdfConverter] PDF A4 generado: ${(file.lengthSync() / 1024).toStringAsFixed(2)} KB');
+    return file;
   }
 }

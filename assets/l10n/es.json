@@ -60,6 +60,7 @@
   "documents_empty_subtitle": "Toca el botón para escanear tu primer documento",
 
   "note_title": "Nota",
+  "note_new_label": "Nueva nota",
   "note_add": "AGREGAR NOTA",
   "note_add_button": "AGREGAR NOTA",
   "note_edit": "EDITAR NOTA",
@@ -121,6 +122,11 @@
   "import_cancelled": "Importación cancelada",
   "document_imported": "Documento importado exitosamente",
   "print_tooltip": "Imprimir",
+  "share_title": "¿Compartir como?",
+  "share_as_photo": "Como foto (JPG)",
+  "share_as_document": "Como documento (PDF)",
+  "share_preparing": "Preparando documento...",
+  "share_error": "Error al compartir el documento",
   "result_type_document": "Documento",
   "result_type_note": "Nota",
 
