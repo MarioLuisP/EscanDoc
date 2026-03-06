@@ -20,6 +20,7 @@ import 'core/services/document_orientation_service_impl.dart';
 import 'core/services/document_scanner_service.dart';
 import 'core/services/document_classifier.dart';
 import 'core/services/ocr_service.dart';
+import 'core/services/document_pipeline.dart';
 import 'features/documents/data/repositories/document_repository.dart';
 
 // Image processing dependencies (Épica 6 - OCR-first)
@@ -103,10 +104,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
+        Provider<DocumentPipeline>(
           create: (_) {
-            // Crear servicios para Scan (compartidos con Import)
-            final scannerService = DocumentScannerServiceImpl();
+            // Servicios e UseCases compartidos — instanciados UNA SOLA VEZ
             final imageNormalizerService = ImageNormalizerServiceImpl();
             final normalizeImageUseCase = NormalizeImageUseCase(imageNormalizerService);
             final formatConverter = ImageFormatConverterImpl();
@@ -116,16 +116,8 @@ class MyApp extends StatelessWidget {
             final documentRepository = DocumentRepository();
             final thumbnailGenerator = ThumbnailGeneratorImpl();
 
-            // Crear UseCases
-            final scanDocument = ScanDocument(scannerService);
-            final importDocument = ImportDocument(
-              formatConverter,
-              normalizeImageUseCase,
-            );
-            final saveDocument = SaveScannedDocument(
-              classifier,
-              documentRepository,
-            );
+            final importDocument = ImportDocument(formatConverter, normalizeImageUseCase);
+            final saveDocument = SaveScannedDocument(classifier, documentRepository);
             final processOCR = ProcessOCR(
               ocrService,
               classifier,
@@ -135,8 +127,7 @@ class MyApp extends StatelessWidget {
               imageClassifier: imageClassifier,
             );
 
-            return ScanProvider(
-              scanDocument: scanDocument,
+            return DocumentPipeline(
               importDocument: importDocument,
               imageClassifier: imageClassifier,
               saveDocument: saveDocument,
@@ -146,44 +137,16 @@ class MyApp extends StatelessWidget {
           },
         ),
         ChangeNotifierProvider(
-          create: (_) {
-            // Crear servicios compartidos para Import
-            final imageNormalizerService = ImageNormalizerServiceImpl();
-            final normalizeImageUseCase = NormalizeImageUseCase(imageNormalizerService);
-            final formatConverter = ImageFormatConverterImpl();
-            final imageClassifier = TFLiteImageClassifier();
-            final classifier = DocumentClassifier();
-            final ocrService = OCRServiceImpl();
-            final documentRepository = DocumentRepository();
-            final thumbnailGenerator = ThumbnailGeneratorImpl();
-
-            // Crear UseCases
-            final importDocument = ImportDocument(
-              formatConverter,
-              normalizeImageUseCase,
-            );
-            final saveDocument = SaveScannedDocument(
-              classifier,
-              documentRepository,
-            );
-            final processOCR = ProcessOCR(
-              ocrService,
-              classifier,
-              documentRepository,
-              RefineClassification(),
-              orientationService: DocumentOrientationServiceImpl(),
-              imageClassifier: imageClassifier,
-            );
-
-            return ImportProvider(
-              importDocument: importDocument,
-              imageClassifier: imageClassifier,
-              saveDocument: saveDocument,
-              processOCR: processOCR,
-              thumbnailGenerator: thumbnailGenerator,
-              pdfImportService: PdfImportServiceImpl(),
-            );
-          },
+          create: (context) => ScanProvider(
+            scanDocument: ScanDocument(DocumentScannerServiceImpl()),
+            pipeline: context.read<DocumentPipeline>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => ImportProvider(
+            pipeline: context.read<DocumentPipeline>(),
+            pdfImportService: PdfImportServiceImpl(),
+          ),
         ),
         ChangeNotifierProvider(create: (_) => DocumentsProvider()),
         ChangeNotifierProvider(

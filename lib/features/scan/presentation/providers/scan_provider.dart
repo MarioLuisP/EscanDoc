@@ -1,74 +1,27 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:escandoc/features/scan/domain/usecases/scan_document.dart';
-import 'package:escandoc/features/scan/domain/usecases/save_scanned_document.dart';
-import 'package:escandoc/features/scan/domain/usecases/process_ocr.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
-import 'package:escandoc/features/documents/domain/usecases/import_document.dart';
-import 'package:escandoc/features/image_processing/classification/domain/image_classifier.dart';
 import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
-import 'package:escandoc/features/image_processing/thumbnail/domain/thumbnail_generator.dart';
+import 'package:escandoc/core/services/document_pipeline.dart';
 
-/// Resultado de la preparación de escaneo.
-///
-/// **OPTIMIZACIÓN (16 Feb 2026):** Eliminado resize A4 previo.
-///
-/// Contiene la imagen procesada y su clasificación.
-/// - Fotos: convertidas JPG (original) + thumbnail preview (NO resize A4)
-/// - Documentos: convertidas JPG + comprimidas <850KB (resize A4 + compress)
-///
-/// El UI puede decidir si continuar o cancelar basado en la clasificación.
-class ScanPreparationResult {
-  final File processedFile;
-  final ClassificationResult classification;
-  final bool isNormalized;
-  final File? thumbnailFile; // Thumbnail optimizado para preview (solo si es foto)
+export 'package:escandoc/core/services/document_pipeline.dart' show PreparationResult;
 
-  ScanPreparationResult({
-    required this.processedFile,
-    required this.classification,
-    required this.isNormalized,
-    this.thumbnailFile,
-  });
-}
-
-/// Provider para manejar el flujo de escaneo de documentos
+/// Provider para manejar el flujo de escaneo de documentos.
 ///
-/// **OPTIMIZACIÓN (16 Feb 2026):** Eliminado resize A4 previo.
+/// Flujo optimizado en 2 fases:
+/// 1. PREPARACIÓN: Scanner nativo → pipeline.prepare() (convert + classify + thumbnail)
+/// 2. GUARDADO: pipeline.complete() (comprimir si foto + guardar BD) + OCR background
 ///
-/// Flujo optimizado dividido en 2 fases:
-/// 1. PREPARACIÓN: Scanner + Convertir JPG + Clasificar + Thumbnail (NO resize A4)
-/// 2. GUARDADO: Resize A4 + Comprimir + Guardar en BD + OCR background
-///
-/// Ahorro de tiempo: Si usuario cancela foto, evitamos resize A4 + compress (~3.5s)
-///
-/// Estados:
-/// - isScanning: Scanner nativo abierto o procesando imagen
-/// - isSaving: Guardando en BD
-/// - isProcessingOCR: Ejecutando OCR en background
-/// - error: Mensaje de error si falla
+/// Si el usuario cancela en la pantalla de clasificación, se evita el guardado.
 class ScanProvider with ChangeNotifier {
   final ScanDocument _scanDocument;
-  final ImportDocument _importDocument;
-  final ImageClassifier _imageClassifier;
-  final SaveScannedDocument _saveDocument;
-  final ProcessOCR _processOCR;
-  final ThumbnailGenerator _thumbnailGenerator;
+  final DocumentPipeline _pipeline;
 
   ScanProvider({
     required ScanDocument scanDocument,
-    required ImportDocument importDocument,
-    required ImageClassifier imageClassifier,
-    required SaveScannedDocument saveDocument,
-    required ProcessOCR processOCR,
-    required ThumbnailGenerator thumbnailGenerator,
+    required DocumentPipeline pipeline,
   })  : _scanDocument = scanDocument,
-        _importDocument = importDocument,
-        _imageClassifier = imageClassifier,
-        _saveDocument = saveDocument,
-        _processOCR = processOCR,
-        _thumbnailGenerator = thumbnailGenerator;
+        _pipeline = pipeline;
 
   // Estado
   bool _isScanning = false;
@@ -87,130 +40,53 @@ class ScanProvider with ChangeNotifier {
   DocumentModel? get lastScannedDocument => _lastScannedDocument;
   ClassificationResult? get lastClassification => _lastClassification;
 
-  /// FASE 1: Prepara documento escaneado (scanner + convierte JPG + clasifica).
+  /// FASE 1: Abre el scanner nativo y prepara el documento (convert + classify + thumbnail).
   ///
-  /// **OPTIMIZACIÓN (16 Feb 2026):** NO hace resize A4 previo (TFLite hace resize a 224×224).
-  /// Solo comprime si es DOCUMENTO. Las fotos se comprimen en FASE 2 solo si usuario confirma.
+  /// NO guarda en BD. Retorna resultado con clasificación para que la UI
+  /// pueda decidir si continuar o cancelar.
   ///
-  /// NO guarda en BD todavía. Retorna resultado con clasificación
-  /// para que el UI pueda decidir si continuar o cancelar.
-  ///
-  /// Retorna:
-  /// - [ScanPreparationResult] con imagen procesada y clasificación
-  /// - null si falla o usuario cancela
-  Future<ScanPreparationResult?> prepareScan() async {
+  /// Retorna null si el usuario cancela o si hay un error.
+  Future<PreparationResult?> prepareScan() async {
     try {
       _error = null;
       _isScanning = true;
       notifyListeners();
 
       final startTotal = DateTime.now();
-      debugPrint('[ScanProvider] 🟢 START: Preparación de escaneo - ${startTotal.millisecondsSinceEpoch}');
+      debugPrint('[ScanProvider] 🟢 START: Preparación - ${startTotal.millisecondsSinceEpoch}');
 
-      // 1. Abrir scanner nativo (retorna JPG en Android, PNG en iOS)
-      final startScan = DateTime.now();
-      debugPrint('[ScanProvider] 🟢 START: Scanner nativo - ${startScan.millisecondsSinceEpoch}');
       final scannedFile = await _scanDocument.call();
-      final endScan = DateTime.now();
-      final scanDuration = endScan.difference(startScan).inMilliseconds;
-      debugPrint('[ScanProvider] 🔴 END: Scanner nativo - Duración: ${scanDuration}ms');
-
-      // Usuario canceló
       if (scannedFile == null) {
-        debugPrint('[ScanProvider] Scanner retornó null (usuario canceló o error)');
+        debugPrint('[ScanProvider] Scanner retornó null (usuario canceló)');
         _isScanning = false;
         notifyListeners();
         return null;
       }
 
-      debugPrint('[ScanProvider] Archivo escaneado: ${scannedFile.path}');
-
-      // 2. Convertir a JPG + Redimensionar A4 (geometría, sin comprimir)
-      final startConvert = DateTime.now();
-      debugPrint('[ScanProvider] 🟢 START: Convertir JPG (sin resize) - ${startConvert.millisecondsSinceEpoch}');
-      final jpgFile = await _importDocument.convertOnly(scannedFile);
-      final endConvert = DateTime.now();
-      final convertDuration = endConvert.difference(startConvert).inMilliseconds;
-      debugPrint('[ScanProvider] 🔴 END: Convertir JPG (sin resize) - Duración: ${convertDuration}ms');
-
-      // 3. Clasificar imagen con TFLite
-      final startClassify = DateTime.now();
-      debugPrint('[ScanProvider] 🟢 START: Clasificar imagen - ${startClassify.millisecondsSinceEpoch}');
-      final classification = await _imageClassifier.classify(jpgFile.path);
-      final endClassify = DateTime.now();
-      final classifyDuration = endClassify.difference(startClassify).inMilliseconds;
-      debugPrint('[ScanProvider] 🔴 END: Clasificar imagen - Duración: ${classifyDuration}ms');
-      debugPrint('[ScanProvider] Clasificación: $classification');
-
-      _lastClassification = classification;
-
-      File processedFile;
-      bool isNormalized;
-      File? thumbnailFile;
-
-      // 4. Comprimir solo si es DOCUMENTO (ya está redimensionado a A4)
-      if (classification.type == DocumentType.document) {
-        debugPrint('[ScanProvider] Es documento → comprimiendo a <850KB ahora');
-        final startCompress = DateTime.now();
-        processedFile = await _importDocument.normalize(jpgFile);
-        final endCompress = DateTime.now();
-        final compressDuration = endCompress.difference(startCompress).inMilliseconds;
-        debugPrint('[ScanProvider] Comprimido en ${compressDuration}ms');
-        isNormalized = true;
-      } else {
-        debugPrint('[ScanProvider] Es foto → saltando compresión (se hará si usuario acepta)');
-        processedFile = jpgFile;
-        isNormalized = false;
-
-        // 5. Generar thumbnail para preview (solo si es foto)
-        debugPrint('[ScanProvider] 🟢 START: Generar thumbnail para preview');
-        final startThumb = DateTime.now();
-        thumbnailFile = await _thumbnailGenerator.generateThumbnail(
-          processedFile.path,
-          maxWidth: 200, // Reducido de 400 → 200px (4x menos píxeles = ~4x más rápido)
-        );
-        final thumbDuration = DateTime.now().difference(startThumb).inMilliseconds;
-        debugPrint('[ScanProvider] 🔴 END: Thumbnail generado en ${thumbDuration}ms');
-      }
+      final result = await _pipeline.prepare(scannedFile);
+      _lastClassification = result.classification;
 
       _isScanning = false;
       notifyListeners();
 
-      final endTotal = DateTime.now();
-      final totalDuration = endTotal.difference(startTotal).inMilliseconds;
-      debugPrint('[ScanProvider] 🔴 END: Preparación completa - Duración TOTAL: ${totalDuration}ms');
-
-      return ScanPreparationResult(
-        processedFile: processedFile,
-        classification: classification,
-        isNormalized: isNormalized,
-        thumbnailFile: thumbnailFile,
-      );
+      debugPrint('[ScanProvider] 🔴 END: Preparación TOTAL - ${DateTime.now().difference(startTotal).inMilliseconds}ms');
+      return result;
     } catch (e, stackTrace) {
       _error = e.toString();
       _isScanning = false;
       notifyListeners();
-      debugPrint('[ScanProvider] ERROR en prepareScan: $e');
-      debugPrint('[ScanProvider] StackTrace: $stackTrace');
+      debugPrint('[ScanProvider] ERROR en prepareScan: $e\n$stackTrace');
       return null;
     }
   }
 
-  /// FASE 2: Completa el escaneo (comprime si es foto + guarda en BD + OCR background).
+  /// FASE 2: Guarda el documento en BD y lanza OCR en background.
   ///
   /// Debe llamarse después de prepareScan() y confirmación del usuario.
   ///
-  /// Si es foto (no comprimida), comprime ahora. Si es documento, ya está comprimido.
-  ///
-  /// Parámetros:
-  /// - [preparation]: Resultado de prepareScan con imagen procesada
-  /// - [locale]: Idioma para nombrar documento
-  ///
-  /// Retorna:
-  /// - [DocumentModel] guardado con ID
-  /// - null si falla
+  /// Retorna el [DocumentModel] guardado, o null si hay un error.
   Future<DocumentModel?> completeScan(
-    ScanPreparationResult preparation,
+    PreparationResult preparation,
     String locale,
   ) async {
     try {
@@ -219,50 +95,17 @@ class ScanProvider with ChangeNotifier {
       notifyListeners();
 
       final startTotal = DateTime.now();
-      debugPrint('[ScanProvider] 🟢 START: Completar escaneo - ${startTotal.millisecondsSinceEpoch}');
+      debugPrint('[ScanProvider] 🟢 START: Completar - ${startTotal.millisecondsSinceEpoch}');
 
-      File finalFile = preparation.processedFile;
-
-      // Comprimir si es foto (no comprimida en FASE 1, pero ya redimensionada a A4)
-      if (!preparation.isNormalized) {
-        debugPrint('[ScanProvider] Foto confirmada → comprimiendo a <850KB ahora');
-        final startCompress = DateTime.now();
-        finalFile = await _importDocument.normalize(preparation.processedFile);
-        final endCompress = DateTime.now();
-        final compressDuration = endCompress.difference(startCompress).inMilliseconds;
-        debugPrint('[ScanProvider] Comprimido en ${compressDuration}ms');
-      }
-
-      // Obtener directorio de storage
-      final docsDir = await getApplicationDocumentsDirectory();
-      debugPrint('[ScanProvider] Directorio de docs: ${docsDir.path}');
-
-      final label = preparation.classification.metadata['label'] as String? ?? 'desconocido';
-
-      // Guardar documento
-      final startSave = DateTime.now();
-      debugPrint('[ScanProvider] 🟢 START: Guardar documento - ${startSave.millisecondsSinceEpoch}');
-      final document = await _saveDocument.call(
-        finalFile,
-        docsDir.path,
-        locale,
-        tfliteClass: label,
-      );
-      final endSave = DateTime.now();
-      final saveDuration = endSave.difference(startSave).inMilliseconds;
-      debugPrint('[ScanProvider] 🔴 END: Guardar documento - Duración: ${saveDuration}ms');
-
+      final document = await _pipeline.complete(preparation, locale);
       _isSaving = false;
       _lastScannedDocument = document;
       notifyListeners();
 
-      debugPrint('[ScanProvider] Documento guardado exitosamente. ID: ${document.id}');
+      debugPrint('[ScanProvider] 🔴 END: Completar TOTAL - ${DateTime.now().difference(startTotal).inMilliseconds}ms');
+      debugPrint('[ScanProvider] Documento guardado. ID: ${document.id}');
 
-      final endTotal = DateTime.now();
-      final totalDuration = endTotal.difference(startTotal).inMilliseconds;
-      debugPrint('[ScanProvider] 🔴 END: Completar escaneo - Duración TOTAL: ${totalDuration}ms');
-
-      // Procesar OCR en background (no bloquea UI)
+      final label = preparation.classification.metadata['label'] as String? ?? 'desconocido';
       _processOCRInBackground(document.id!, label, locale);
 
       return document;
@@ -270,49 +113,28 @@ class ScanProvider with ChangeNotifier {
       _error = e.toString();
       _isSaving = false;
       notifyListeners();
-      debugPrint('[ScanProvider] ERROR en completeScan: $e');
-      debugPrint('[ScanProvider] StackTrace: $stackTrace');
+      debugPrint('[ScanProvider] ERROR en completeScan: $e\n$stackTrace');
       return null;
     }
   }
 
   /// MÉTODO LEGACY: Flujo completo sin clasificación (para compatibilidad).
-  ///
-  /// Usa prepareScan() + completeScan() internamente.
-  /// Para el flujo nuevo con clasificación, usar prepareScan() seguido de
-  /// completeScan() desde el UI.
   @Deprecated('Use prepareScan() + completeScan() for classification support')
   Future<DocumentModel?> scanAndSave(String locale) async {
     final preparation = await prepareScan();
     if (preparation == null) return null;
-
     return await completeScan(preparation, locale);
   }
 
-  /// Ejecuta OCR en background sin bloquear UI
   Future<void> _processOCRInBackground(
       int documentId, String tfliteClass, String locale) async {
     _isProcessingOCR = true;
     notifyListeners();
-
-    final startBackground = DateTime.now();
-    debugPrint('[ScanProvider] 🟢 START: Procesamiento OCR background - ${startBackground.millisecondsSinceEpoch}');
-
-    try {
-      await _processOCR.call(documentId, tfliteClass: tfliteClass, locale: locale);
-      final endBackground = DateTime.now();
-      final backgroundDuration = endBackground.difference(startBackground).inMilliseconds;
-      debugPrint('[ScanProvider] 🔴 END: Procesamiento OCR background - Duración: ${backgroundDuration}ms');
-    } catch (e) {
-      // OCR falla silenciosamente en background
-      debugPrint('[ScanProvider] ❌ OCR background error: $e');
-    } finally {
-      _isProcessingOCR = false;
-      notifyListeners();
-    }
+    await _pipeline.processOCRBackground(documentId, tfliteClass, locale);
+    _isProcessingOCR = false;
+    notifyListeners();
   }
 
-  /// Limpia estado de error
   void clearError() {
     _error = null;
     notifyListeners();

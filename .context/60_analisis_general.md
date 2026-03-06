@@ -901,3 +901,28 @@ Riesgo bajo
 
 El refactor es mecánico: extraer, delegar, no cambia comportamiento. Los tests de domain (usecases) no se tocan. Solo necesitarías verificar que los flujos completos siguen funcionando igual en emulador.
 
+El refactor está completo. Corré fvm flutter test para confirmar.
+
+  ---
+Resumen de lo hecho:
+
+Nuevo archivo: lib/core/services/document_pipeline.dart
+- Clase pura DocumentPipeline con 3 métodos: prepare(), complete(), processOCRBackground()
+- Clase PreparationResult unificada (reemplaza ScanPreparationResult e ImportPreparationResult)
+
+scan_provider.dart — de 320 → ~140 líneas:
+- Constructor: ScanDocument + DocumentPipeline (antes tenía 6 deps)
+- prepareScan() y completeScan() delegan al pipeline
+- Mantiene solo _isScanning y OCR simple (sin Set, sin callbacks)
+
+import_provider.dart — de 460 → ~260 líneas:
+- Constructor: DocumentPipeline + PdfImportService? (antes tenía 5 deps)
+- PDF methods intactos, _processingOcrIds, onOcrComplete, onStatus callbacks
+- _processOCRInBackground pasa onStatus al pipeline → provider actualiza _statusMessage + notifyListeners()
+
+main.dart — ~60 líneas menos:
+- Provider<DocumentPipeline> como primer provider (servicios instanciados UNA vez)
+- ScanProvider y ImportProvider reciben el pipeline vía context.read<DocumentPipeline>()
+                                                                                                                                                                            
+~250 líneas netas eliminadas. Y encima el código nuevo (DocumentPipeline) 
+es más testeable que lo que reemplaza, porque es una clase pura sin ChangeNotifier.  
