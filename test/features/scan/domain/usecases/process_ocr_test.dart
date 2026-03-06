@@ -160,7 +160,7 @@ void main() {
       verify(() => mockRefinement.call('manuscrito', any())).called(1);
     });
 
-    test('nota de impreso: guarda primeros 150 chars en note_content', () async {
+    test('nota de impreso: guarda primeros 70 chars en note_content', () async {
       // Arrange
       const text = 'Este es el texto extraído con OCR del documento impreso';
       final testDoc = createTestDocument();
@@ -184,7 +184,7 @@ void main() {
       expect(captured.noteContent, text);
     });
 
-    test('nota de impreso: texto largo → note_content truncado a 150 chars', () async {
+    test('nota de impreso: texto largo → note_content truncado a 70 chars', () async {
       // Arrange
       final longText = 'A' * 200;
       final testDoc = createTestDocument();
@@ -201,11 +201,11 @@ void main() {
       // Act
       await useCase.call(1);
 
-      // Assert: noteContent truncado a 150 chars
+      // Assert: noteContent truncado a 70 chars
       final captured =
           verify(() => mockRepository.updateDocument(captureAny()))
               .captured.single as DocumentModel;
-      expect(captured.noteContent?.length, 150);
+      expect(captured.noteContent?.length, 70);
     });
 
     test('nota de manuscrito: note_content empieza con "Nota manuscrita de"', () async {

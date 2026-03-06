@@ -23,7 +23,8 @@ class PdfImportServiceImpl implements PdfImportService {
   Future<int> getPageCount(String pdfPath) async {
     PdfDocument? document;
     try {
-      document = await PdfDocument.openFile(pdfPath);
+      document = await PdfDocument.openFile(pdfPath)
+          .timeout(const Duration(seconds: 15));
       return document.pages.length;
     } catch (e) {
       throw PdfImportException('No se pudo abrir el PDF', pdfPath, e);
@@ -40,7 +41,8 @@ class PdfImportServiceImpl implements PdfImportService {
   }) async {
     PdfDocument? document;
     try {
-      document = await PdfDocument.openFile(pdfPath);
+      document = await PdfDocument.openFile(pdfPath)
+          .timeout(const Duration(seconds: 15));
       final pageCount = document.pages.length;
       final pagesToRender = pageCount < maxPages ? pageCount : maxPages;
       final basename = path.basenameWithoutExtension(pdfPath);
@@ -65,6 +67,26 @@ class PdfImportServiceImpl implements PdfImportService {
     } catch (e) {
       if (e is PdfImportException) rethrow;
       throw PdfImportException('Error al renderizar páginas', pdfPath, e);
+    } finally {
+      await document?.dispose();
+    }
+  }
+
+  @override
+  Future<File> renderPageToJpg(String pdfPath, int pageIndex, String outputDir) async {
+    PdfDocument? document;
+    try {
+      document = await PdfDocument.openFile(pdfPath)
+          .timeout(const Duration(seconds: 15));
+      if (pageIndex >= document.pages.length) {
+        throw PdfImportException('Página $pageIndex fuera de rango', pdfPath);
+      }
+      final basename = path.basenameWithoutExtension(pdfPath);
+      return await _renderPageToJpg(document.pages[pageIndex], outputDir, basename, pageIndex)
+          .timeout(const Duration(seconds: 30));
+    } catch (e) {
+      if (e is PdfImportException) rethrow;
+      throw PdfImportException('Error al renderizar página $pageIndex', pdfPath, e);
     } finally {
       await document?.dispose();
     }

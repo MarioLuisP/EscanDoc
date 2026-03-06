@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
@@ -69,6 +70,28 @@ class TFLiteImageClassifier implements ImageClassifier {
 
   @override
   Future<ClassificationResult> classify(String imagePath) async {
+    try {
+      return await _classifyInternal(imagePath)
+          .timeout(const Duration(seconds: 30));
+    } on TimeoutException {
+      debugPrint('[TFLiteClassifier] ⏱️ TIMEOUT al clasificar $imagePath → fallback documento');
+      return ClassificationResult(
+        type: DocumentType.document,
+        confidence: 0.5,
+        metadata: {'method': 'tflite_keras', 'error': 'timeout'},
+      );
+    } catch (e, stackTrace) {
+      debugPrint('[TFLiteClassifier] ❌ ERROR: $e');
+      debugPrint('[TFLiteClassifier] StackTrace: $stackTrace');
+      return ClassificationResult(
+        type: DocumentType.document,
+        confidence: 0.5,
+        metadata: {'method': 'tflite_keras', 'error': e.toString()},
+      );
+    }
+  }
+
+  Future<ClassificationResult> _classifyInternal(String imagePath) async {
     try {
       final startTime = DateTime.now();
       debugPrint('[TFLiteClassifier] 🟢 START: Clasificación TFLite - ${startTime.millisecondsSinceEpoch}');

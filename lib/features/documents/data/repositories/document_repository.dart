@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:escandoc/core/database/database_helper.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 
@@ -21,7 +22,7 @@ class DocumentRepository {
 
       return maps.map((map) => DocumentModel.fromMap(map)).toList();
     } catch (e) {
-      // En caso de error, retornar lista vacía (fail-safe para MVP)
+      debugPrint('[DocumentRepository] ERROR getAllDocuments: $e');
       return [];
     }
   }
@@ -40,6 +41,7 @@ class DocumentRepository {
       if (maps.isEmpty) return null;
       return DocumentModel.fromMap(maps.first);
     } catch (e) {
+      debugPrint('[DocumentRepository] ERROR getDocumentById($id): $e');
       return null;
     }
   }
@@ -104,6 +106,7 @@ class DocumentRepository {
 
       return rowsDeleted > 0;
     } catch (e) {
+      debugPrint('[DocumentRepository] ERROR deleteDocument($id): $e');
       return false;
     }
   }
@@ -135,6 +138,7 @@ class DocumentRepository {
       );
       return (result.first['count'] as int?) ?? 0;
     } catch (e) {
+      debugPrint('[DocumentRepository] ERROR countByTypePrefix($prefix): $e');
       return 0;
     }
   }
@@ -148,6 +152,7 @@ class DocumentRepository {
       }
       return true;
     } catch (e) {
+      debugPrint('[DocumentRepository] ERROR _deleteFile($path): $e');
       return false;
     }
   }

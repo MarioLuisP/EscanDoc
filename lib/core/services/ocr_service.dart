@@ -35,7 +35,9 @@ class OCRServiceImpl implements OCRService {
       }
 
       final inputImage = InputImage.fromFile(imageFile);
-      final recognizedText = await _textRecognizer.processImage(inputImage);
+      final recognizedText = await _textRecognizer
+          .processImage(inputImage)
+          .timeout(const Duration(seconds: 30));
 
       // DEBUG: log estructura completa de ML Kit
       _logOCRStructure(recognizedText);

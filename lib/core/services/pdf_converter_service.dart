@@ -117,14 +117,14 @@ class PdfConverterServiceImpl implements PdfConverterService {
       Uint8List imageBytes, String outputPdfPath) async {
     debugPrint('[PdfConverter] convertImageBytesToPdfA4 → $outputPdfPath');
 
-    const pageFormat = PdfPageFormat(2480, 3508, marginAll: 0);
-
     final pdf = pw.Document();
     pdf.addPage(
       pw.Page(
-        pageFormat: pageFormat,
-        build: (pw.Context context) =>
-            pw.Image(pw.MemoryImage(imageBytes), fit: pw.BoxFit.fill),
+        pageFormat: PdfPageFormat.a4,
+        margin: pw.EdgeInsets.zero,
+        build: (pw.Context context) => pw.Center(
+          child: pw.Image(pw.MemoryImage(imageBytes), fit: pw.BoxFit.contain),
+        ),
       ),
     );
 

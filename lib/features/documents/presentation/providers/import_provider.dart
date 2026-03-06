@@ -218,6 +218,7 @@ class ImportProvider with ChangeNotifier {
     ImportPreparationResult preparation,
     String locale, {
     VoidCallback? onOcrComplete,
+    DateTime? currentDate,
   }) async {
     try {
       _error = null;
@@ -257,6 +258,7 @@ class ImportProvider with ChangeNotifier {
         docsDir.path,
         locale,
         tfliteClass: label,
+        currentDate: currentDate,
       );
       final endSave = DateTime.now();
       final saveDuration = endSave.difference(startSave).inMilliseconds;
@@ -366,47 +368,62 @@ class ImportProvider with ChangeNotifier {
 
     final tempDir = await getTemporaryDirectory();
     final docsDir = await getApplicationDocumentsDirectory();
-    _pdfCurrentPage = 0;
-    _pdfTotalPages = pagesToImport;
-    _statusMessage = 'status_reading_pdf';
-    notifyListeners();
 
-    List<File> pageFiles;
+    // Verificar cuántas páginas tiene realmente el PDF
+    int actualPages;
     try {
-      pageFiles = await _pdfImportService!.renderPagesToJpg(
-        pdfPath,
-        tempDir.path,
-        maxPages: pagesToImport,
-      );
+      final pageCount = await _pdfImportService!.getPageCount(pdfPath);
+      actualPages = pageCount < pagesToImport ? pageCount : pagesToImport;
     } catch (e) {
       _error = e.toString();
-      _pdfCurrentPage = 0;
-      _pdfTotalPages = 0;
       _statusMessage = null;
       notifyListeners();
-      debugPrint('[ImportProvider] Error renderizando PDF: $e');
+      debugPrint('[ImportProvider] Error leyendo páginas PDF: $e');
       return [];
     }
 
+    _pdfCurrentPage = 0;
+    _pdfTotalPages = actualPages;
+    _statusMessage = 'status_reading_pdf';
+    notifyListeners();
+
     final savedDocuments = <DocumentModel>[];
 
-    for (var i = 0; i < pageFiles.length; i++) {
+    // Procesar de primera a última (nombres naturales: p1=N+1, p2=N+2...).
+    // Para que p1 quede arriba en UI (orden por createdAt DESC), asignamos
+    // timestamps decrecientes: p1 = ahora + (N-1)ms, p2 = ahora + (N-2)ms... pN = ahora.
+    final baseTime = DateTime.now();
+    for (var i = 0; i < actualPages; i++) {
       _pdfCurrentPage = i + 1;
-      _statusMessage = pagesToImport > 1 ? null : 'status_processing_pdf';
+      _statusMessage = actualPages > 1 ? null : 'status_processing_pdf';
       notifyListeners();
 
-      // Copiar del cache al directorio permanente antes de procesar.
-      // Necesario porque normalize() puede devolver el mismo path (sin cambios)
-      // y luego lo borramos del cache, dejando la DB con un path inexistente.
-      final permPath = p.join(docsDir.path, p.basename(pageFiles[i].path));
-      File permFile;
+      // 1. Renderizar solo esta página
+      File tempPageFile;
       try {
-        permFile = await pageFiles[i].copy(permPath);
+        tempPageFile = await _pdfImportService!.renderPageToJpg(pdfPath, i, tempDir.path);
       } catch (e) {
-        debugPrint('[ImportProvider] Error copiando página ${i + 1} a docs: $e');
+        debugPrint('[ImportProvider] Error renderizando página ${i + 1}: $e');
         continue;
       }
 
+      // 2. Copiar del cache al directorio permanente antes de procesar.
+      // Necesario porque normalize() puede devolver el mismo path (sin cambios)
+      // y luego lo borramos del cache, dejando la DB con un path inexistente.
+      final permPath = p.join(docsDir.path, p.basename(tempPageFile.path));
+      File permFile;
+      try {
+        permFile = await tempPageFile.copy(permPath);
+      } catch (e) {
+        debugPrint('[ImportProvider] Error copiando página ${i + 1} a docs: $e');
+        await tempPageFile.delete().catchError((_) {});
+        continue;
+      }
+
+      // 3. Limpiar JPG temporal inmediatamente (ya tenemos copia en docsDir)
+      await tempPageFile.delete().catchError((_) {});
+
+      // 4. Procesar
       try {
         final preparation = await prepareImport(permFile);
         if (preparation == null) {
@@ -414,19 +431,16 @@ class ImportProvider with ChangeNotifier {
           continue;
         }
 
-        // PDFs imagen siempre se importan sin confirmación del usuario
-        final document = await completeImport(preparation, locale);
+        // PDFs imagen siempre se importan sin confirmación del usuario.
+        // currentDate decreciente → p1 queda arriba (más reciente) en la UI.
+        final pageDate = baseTime.add(Duration(milliseconds: actualPages - 1 - i));
+        final document = await completeImport(preparation, locale, currentDate: pageDate);
         if (document != null) savedDocuments.add(document);
       } catch (e) {
         debugPrint('[ImportProvider] Error importando página ${i + 1}: $e');
         await permFile.delete().catchError((_) {});
         // Continúa con las demás páginas
       }
-
-      // Limpiar JPG temporal del cache (ya tenemos la copia en docsDir)
-      try {
-        await pageFiles[i].delete();
-      } catch (_) {}
     }
 
     _pdfCurrentPage = 0;
@@ -434,7 +448,7 @@ class ImportProvider with ChangeNotifier {
     _statusMessage = null;
     notifyListeners();
 
-    debugPrint('[ImportProvider] PDF importado: ${savedDocuments.length}/${pageFiles.length} páginas guardadas');
+    debugPrint('[ImportProvider] PDF importado: ${savedDocuments.length}/$actualPages páginas guardadas');
     return savedDocuments;
   }
 

@@ -158,3 +158,185 @@ Resumen de lo implementado:
 └─────────────────────────────────┴───────────────────────────────────────────────────┘
 
 El A4FitResult con calculateA4Fit queda disponible para cuando implementemos el export combinado multi-página — cada JPG se normaliza a A4 y después los unimos en un solo PDF.
+El lugar natural: DocumentsListPage con selección múltiple por long-press
+
+Por qué ahí y no en otro lado
+
+1. Ya tenés long-press en cada item de la lista — hoy dispara el delete dialog directamente
+2. Es la única pantalla donde el usuario ve todos sus documentos juntos — el contexto correcto para "elegir varios y combinar"
+3. Home muestra solo 3 recientes — no tiene sentido seleccionar ahí
+4. El patrón long-press → selección múltiple es universal (Google Photos, WhatsApp, Files)
+
+Cómo funcionaría
+
+Estado normal (lo que ya tenés):
+┌─────────────────────────────────┐
+│  EscanDocs                      │
+│  Todos los documentos           │
+│  [Más reciente ▾]               │
+│ ┌─────────────────────────────┐ │
+│ │ 📄 Factura 1 del 3/3       │ │  ← tap → detalle
+│ │ 📄 Documento 2 del 3/3     │ │  ← long-press → modo selección
+│ │ 📄 Recibo 1 del 2/3        │ │
+│ │ 📝 Mi nota personal        │ │
+│ └─────────────────────────────┘ │
+│ ┌───────────┐ ┌───────────────┐ │
+│ │ 🏠 Inicio │ │ 🔍 Buscar    │ │
+│ └───────────┘ └───────────────┘ │
+└─────────────────────────────────┘
+
+Modo selección (se activa con long-press en cualquier item):
+┌─────────────────────────────────┐
+│  ✕  3 seleccionados             │  ← header se transforma
+│                                 │
+│ ┌─────────────────────────────┐ │
+│ │ ☑ Factura 1 del 3/3        │ │  ← tap ahora toggle check
+│ │ ☑ Documento 2 del 3/3      │ │
+│ │ ☐ Recibo 1 del 2/3         │ │
+│ │ ☑ Mi nota personal          │ │
+│ └─────────────────────────────┘ │
+│ ┌───────────┐ ┌───────────────┐ │
+│ │ 🗑 Eliminar│ │ 📑 Crear PDF │ │  ← barra inferior se transforma
+│ └───────────┘ └───────────────┘ │
+└─────────────────────────────────┘
+
+Por qué este enfoque encaja con tu filosofía de diseño
+
+Para el usuario mayor (60-85):
+- En el uso diario no ve nada nuevo — la lista funciona exactamente igual
+- No hay botones extra que confundan
+- El flujo primario (escanear, ver, buscar) no se toca
+
+Para el usuario avanzado:
+- Long-press es un gesto que ya conoce (lo usaba para borrar)
+- Al entrar en modo selección, las acciones son explícitas y grandes
+- Puede seleccionar 2, 5, 20 documentos y combinar en un tap
+- Es el mismo patrón del botón + en home: "oculto pero a mano"
+
+Detalles de implementación que importan para UX
+
+1. La transición debe ser suave y clara:
+- El item long-presionado queda seleccionado (con check verde)
+- Los demás items muestran un checkbox vacío (aparece con animación)
+- La barra inferior cambia de [Inicio][Buscar] a [Eliminar][Crear PDF]
+- El título cambia a "X seleccionados" con una ✕ para cancelar
+
+2. El botón "Crear PDF" solo aparece si hay ≥2 seleccionados:
+- Con 1 seleccionado: solo [Eliminar] (reemplaza el long-press → delete actual)
+- Con 2+: [Eliminar] y [Crear PDF]
+- Esto evita confusión — combinar 1 documento no tiene sentido
+
+3. Delete actual migra al modo selección:
+- Hoy: long-press → dialog "¿Eliminar?" (1 documento)
+- Propuesto: long-press → selección → [Eliminar] (1 o más documentos)
+- Es más potente (borrar varios a la vez) y más consistente
+
+4. Orden de selección = orden en el PDF:
+- Los documentos se combinan en el orden en que aparecen en la lista
+- El usuario puede cambiar el sort antes de seleccionar para controlar el orden
+- Esto es intuitivo sin necesitar drag & drop (que es difícil para manos mayores)
+
+Lo que NO haría
+
+- No agregar un botón "Exportar" permanente en la barra inferior — contamina la vista principal con una acción que se usa poco
+- No poner la opción en el menú + de home — ese es para crear/ingresar, no para exportar
+- No crear una pantalla nueva de "Seleccionar documentos" — duplica la lista y confunde
+- No usar FAB flotante — ocupa espacio visual, compite con el botón ESCANEAR
+
+
+❯ excelentee, me parece perfecto| que propones para que el usuario pueda ordenar facilmente las paginas del pdf a exportar? que pueda ir ordenando antes de exzportar
+
+● Buena pregunta. El sort de la lista resuelve el orden inicial, pero el usuario necesita control fino antes de exportar. Déjame pensar en las opciones.
+
+El problema                                                                                                                                                                                                                         
+Drag & drop es la solución obvia en apps para jóvenes, pero para manos de 60-85 años:
+- El gesto de mantener presionado + arrastrar es difícil (temblor, precisión)
+- En listas largas hay que hacer scroll mientras arrastrás — frustrante
+- Es fácil soltar en el lugar equivocado
+
+Propuesta: pantalla de "Vista previa PDF" con flechas
+
+Después de seleccionar documentos y tocar [Crear PDF], antes de exportar, se abre una pantalla intermedia:                                                                                                                                                                                                                                                                                                                                                          
+┌─────────────────────────────────┐                                                                                                                                                                                              
+│  ← Ordenar páginas              │
+│                                 │
+│  ┌───┬──────────────────┬───┐  │
+│  │   │                  │   │  │                                                                                                                                                                                               
+│  │   │  📄 miniatura 1  │ ▲ │  │  ← botón subir                                                                                                                                                                                
+│  │ 1 │  Factura 1 del…  │   │  │                                                                                                                                                                                               
+│  │   │                  │ ▼ │  │  ← botón bajar                                                                                                                                                                                
+│  │   │                  │   │  │                                                                                                                                                                                               
+│  ├───┼──────────────────┼───┤  │                                                                                                                                                                                               
+│  │   │                  │   │  │                                                                                                                                                                                               
+│  │   │  📄 miniatura 2  │ ▲ │  │                                                                                                                                                                                               
+│  │ 2 │  Documento 2…    │   │  │                                                                                                                                                                                               
+│  │   │                  │ ▼ │  │                                                                                                                                                                                                 │  │   │                  │   │  │
+│  ├───┼──────────────────┼───┤  │                                                                                                                                                                                               
+│  │   │                  │   │  │                                                                                                                                                                                                 │  │   │  📄 miniatura 3  │ ▲ │  │
+│  │ 3 │  Mi nota pers…   │   │  │                                                                                                                                                                                               
+│  │   │                  │ ▼ │  │                                                                                                                                                                                               
+│  │   │                  │   │  │
+│  └───┴──────────────────┴───┘  │                                                                                                                                                                                               
+│                                 │
+│  ┌─────────────────────────────┐│                                                                                                                                                                                              
+│  │    📑  Exportar PDF (3)     ││                                                                                                                                                                                              
+│  └─────────────────────────────┘│                                                                                                                                                                                              
+└─────────────────────────────────┘                                                                                                                                                                                                                                                                                                                                                                                                                                 
+Por qué flechas y no drag & drop                                                                                                                                                                                                                   
+┌─────────────────────┬─────────────────────────────┬─────────────────────────────────┐                                                                                                                                            │                     │         Drag & drop         │           Flechas ▲ ▼           │
+├─────────────────────┼─────────────────────────────┼─────────────────────────────────┤                                                                                                                                          
+│ Precisión requerida │ Alta (mantener + arrastrar) │ Baja (un tap)                   │
+├─────────────────────┼─────────────────────────────┼─────────────────────────────────┤
+│ Temblor de manos    │ Problema serio              │ No afecta                       │                                                                                                                                            ├─────────────────────┼─────────────────────────────┼─────────────────────────────────┤
+│ Feedback visual     │ Ambiguo (¿dónde lo suelto?) │ Inmediato (se mueve 1 posición) │                                                                                                                                          
+├─────────────────────┼─────────────────────────────┼─────────────────────────────────┤                                                                                                                                            │ Descubrimiento      │ Poco intuitivo para mayores │ Botón visible = acción obvia    │
+├─────────────────────┼─────────────────────────────┼─────────────────────────────────┤                                                                                                                                            │ Scroll + arrastrar  │ Muy difícil                 │ No necesario                    │
+└─────────────────────┴─────────────────────────────┴─────────────────────────────────┘                                                                                                                                                            
+Detalles de cada item en la lista                                                                                                                                                                                                                  
+┌─────┬──────────────────────────┬────────┐                                                                                                                                                                                      
+│     │  Factura 1 del 3/3       │        │                                                                                                                                                                                      
+│  1  │  📄 miniatura 60×80      │  ▲  ▼  │
+│     │  3 Mar 2026              │        │                                                                                                                                                                                      
+└─────┴──────────────────────────┴────────┘
+- Número grande a la izquierda: posición en el PDF — se actualiza al mover
+- Miniatura + título + fecha: identifica el documento rápidamente
+- ▲ ▼ a la derecha: botones grandes (48×48 tap target mínimo), bien separados
+- El ▲ del primero y el ▼ del último se deshabilitan (gris tenue)
+
+La interacción al mover                                                                                                                                                                                                                                                                                                                                                                                                                                             
+Cuando el usuario toca ▲ en el item 3:
+1. El item 3 sube a posición 2 con una animación suave (300ms, slide)
+2. El item que estaba en 2 baja a 3
+3. Los números se actualizan
+4. El item movido queda brevemente resaltado (flash verde sutil) para confirmar visualmente
+
+Esto es rápido: 3 taps para mover un item del final al principio en una lista de 4. Para listas más largas...
+
+Atajo para listas largas (5+ items): "Mover al inicio / Mover al final"                                                                                                                                                                                                                                                                                                                                                                                             
+Si la lista tiene 5 o más documentos, agregar un long-press en las flechas:
+- Long-press en ▲ → mueve al inicio (posición 1)
+- Long-press en ▼ → mueve al final
+
+Con un tooltip/snackbar sutil la primera vez: "Mantené presionado para mover al inicio". Es un atajo descubrible sin ser necesario — el usuario puede ignorarlo y usar taps simples.                                                                                                                                                                                                                                                                                
+Opción complementaria: ¿ofrecer drag & drop también?                                                                                                                                                                                               
+Sí, pero como gesto secundario, no primario. Flutter tiene ReorderableListView que es gratis. Los usuarios avanzados o más jóvenes (hijos/nietos ayudando) lo usarían naturalmente. Las flechas quedan como método principal y     accesible.
+
+Ambos métodos coexisten sin conflicto:
+- Flechas: siempre visibles, método principal
+- Drag handle (⠿ grip icon): a la izquierda del número, funciona pero no es prominente                                                                                                                                                             
+  ┌──┬─────┬──────────────────┬────────┐                                                                                                                                                                                           
+  │⠿│  1  │  Factura 1 del…  │  ▲  ▼  │                                                                                                                                                                                            
+  └──┴─────┴──────────────────┴────────┘                                                                                                                                                                                           
+  ↑ drag handle discreto (gris claro)
+
+Flujo completo integrado                                                                                                                                                                                                                                                                                                                                                                                                                                            
+DocumentsListPage          Vista previa PDF         Resultado                                                                                                                                                                    
+─────────────────         ──────────────────       ──────────                                                                                                                                                                    
+Long-press → selección    Reordenar con ▲▼        PDF generado                                                                                                                                                                   
+Tap items (checks)   →    [Exportar PDF (3)]  →   Share sheet                                                                                                                                                                    
+[Crear PDF]               ← (back = cancelar)     o guardar                                                                                                                                                                      
+Lo que NO haría
+
+- No numerar en la selección — el orden de selección (1ro clickeado = página 1) es confuso e irreversible. Mejor usar el orden de la lista + reordenar después
+- No mostrar un grid de miniaturas — ocupa mucho espacio y las fotos de documentos se parecen mucho entre sí; el título es más útil para identificar
+- No pedir el nombre del PDF antes de ordenar — primero el contenido, después el nombre (o autogenerarlo)                           

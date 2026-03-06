@@ -192,7 +192,7 @@ class ProcessOCR {
     return '$prefix ${topConfidenceText.trim()}';
   }
 
-  /// Nota para documentos impresos: primeros 150 chars del markdown limpio.
+  /// Nota para documentos impresos: primeros 70 chars del markdown limpio.
   /// Quita prefijos markdown antes de truncar.
   String _buildPrintedNote(String markdown) {
     if (markdown.isEmpty) return '';

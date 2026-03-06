@@ -5,7 +5,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:escandoc/core/services/a4_normalizer_service_impl.dart';
 import 'package:escandoc/core/services/pdf_converter_service.dart';
 
 /// Página fullscreen para visualizar documento (JPG o PDF) con zoom.
@@ -58,10 +57,13 @@ class _PhotoFullscreenPageState extends State<PhotoFullscreenPage> {
               ),
             )
           else
-            IconButton(
-              icon: const Icon(Icons.share, size: 24),
+            TextButton.icon(
+              icon: const Icon(Icons.share, size: 20, color: Colors.white),
+              label: Text(
+                'share_button'.tr(),
+                style: const TextStyle(color: Colors.white, fontSize: 15),
+              ),
               onPressed: () => _onShareTap(context),
-              tooltip: 'share_button'.tr(),
             ),
         ],
       ),
@@ -118,63 +120,63 @@ class _PhotoFullscreenPageState extends State<PhotoFullscreenPage> {
       context: context,
       backgroundColor: const Color(0xFFF5F0E8),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[400],
-                borderRadius: BorderRadius.circular(2),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'share_title'.tr(),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+              const SizedBox(height: 20),
+              Text(
+                'share_title'.tr(),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            ListTile(
-              leading: const Icon(
-                Icons.image_outlined,
-                color: Color(0xFF388E3C),
-                size: 28,
+              const SizedBox(height: 24),
+              // Botón verde tenue — Como foto (JPG)
+              _ShareButton(
+                icon: Icons.image_outlined,
+                label: 'share_as_photo'.tr(),
+                gradientColors: const [Color(0xFFE8F5E8), Color(0xFFC0D8C0)],
+                borderColor: const Color(0xFF7AAB7A),
+                shadowColor: const Color(0xFF4A7A4A),
+                iconColor: const Color(0xFF2E7D32),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _shareFile(widget.filePath, mimeType: 'image/jpeg');
+                },
               ),
-              title: Text(
-                'share_as_photo'.tr(),
-                style: const TextStyle(fontSize: 17),
+              const SizedBox(height: 14),
+              // Botón celeste tenue — Como documento (PDF)
+              _ShareButton(
+                icon: Icons.picture_as_pdf_outlined,
+                label: 'share_as_document'.tr(),
+                gradientColors: const [Color(0xFFE3F2FD), Color(0xFFB3D4EC)],
+                borderColor: const Color(0xFF7AAFC8),
+                shadowColor: const Color(0xFF3A7A9A),
+                iconColor: const Color(0xFF1565C0),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _shareAsDocumentPdf(context);
+                },
               ),
-              onTap: () {
-                Navigator.pop(ctx);
-                _shareFile(widget.filePath, mimeType: 'image/jpeg');
-              },
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.picture_as_pdf_outlined,
-                color: Color(0xFFD32F2F),
-                size: 28,
-              ),
-              title: Text(
-                'share_as_document'.tr(),
-                style: const TextStyle(fontSize: 17),
-              ),
-              onTap: () {
-                Navigator.pop(ctx);
-                _shareAsDocumentPdf(context);
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
+              const SizedBox(height: 28),
+            ],
+          ),
         ),
       ),
     );
@@ -191,16 +193,12 @@ class _PhotoFullscreenPageState extends State<PhotoFullscreenPage> {
     try {
       final imageBytes = await File(widget.filePath).readAsBytes();
 
-      final normalizer = A4NormalizerServiceImpl();
-      final normalizedBytes = await normalizer.normalizeToA4(imageBytes);
-
       final tempDir = await getTemporaryDirectory();
       final tempPath =
           '${tempDir.path}/export_${DateTime.now().millisecondsSinceEpoch}.pdf';
 
       final converter = PdfConverterServiceImpl();
-      tempPdf = await converter.convertImageBytesToPdfA4(
-          normalizedBytes, tempPath);
+      tempPdf = await converter.convertImageBytesToPdfA4(imageBytes, tempPath);
 
       if (!mounted) return;
       setState(() => _sharing = false);
@@ -225,5 +223,67 @@ class _PhotoFullscreenPageState extends State<PhotoFullscreenPage> {
         await tempPdf.delete();
       }
     }
+  }
+}
+
+class _ShareButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final List<Color> gradientColors;
+  final Color borderColor;
+  final Color shadowColor;
+  final Color iconColor;
+  final VoidCallback onTap;
+
+  const _ShareButton({
+    required this.icon,
+    required this.label,
+    required this.gradientColors,
+    required this.borderColor,
+    required this.shadowColor,
+    required this.iconColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: gradientColors,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor.withValues(alpha: 0.38),
+              offset: const Offset(0, 4),
+              blurRadius: 7,
+              spreadRadius: -1,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: iconColor, size: 32),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: iconColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

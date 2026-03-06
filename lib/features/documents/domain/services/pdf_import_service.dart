@@ -25,6 +25,11 @@ abstract class PdfImportService {
     String outputDir, {
     int maxPages = 10,
   });
+
+  /// Renderiza una única página (0-indexada) a JPG en [outputDir].
+  ///
+  /// Lanza [PdfImportException] si falla.
+  Future<File> renderPageToJpg(String pdfPath, int pageIndex, String outputDir);
 }
 
 /// Excepción para errores de importación de PDF.
