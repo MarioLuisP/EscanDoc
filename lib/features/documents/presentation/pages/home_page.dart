@@ -54,18 +54,24 @@ class _HomePageState extends State<HomePage> {
     _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen(
       (List<SharedMediaFile> files) {
         if (files.isEmpty) return;
-        _processSharedFile(files.first.path);
+        _processSharedFile(files.first.path).catchError((Object e) {
+          debugPrint('[HomePageState] Error procesando archivo compartido: $e');
+        });
       },
+      onError: (Object e) =>
+          debugPrint('[HomePageState] Error en stream de sharing: $e'),
     );
 
     // App cerrada — se abrió desde un archivo compartido (cold start)
     ReceiveSharingIntent.instance.getInitialMedia().then(
-      (List<SharedMediaFile> files) {
+      (List<SharedMediaFile> files) async {
         if (files.isEmpty) return;
-        _processSharedFile(files.first.path);
+        await _processSharedFile(files.first.path);
         ReceiveSharingIntent.instance.reset();
       },
-    );
+    ).catchError((Object e) {
+      debugPrint('[HomePageState] Error en getInitialMedia: $e');
+    });
   }
 
   /// Copia el archivo compartido al cache propio antes de procesarlo.

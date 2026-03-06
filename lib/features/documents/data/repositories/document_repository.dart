@@ -94,27 +94,32 @@ class DocumentRepository {
     return insertDocument(doc);
   }
 
-  /// Elimina un documento de la BD y sus archivos asociados
-  /// Retorna true si se eliminó correctamente
+  /// Elimina un documento de la BD y sus archivos asociados.
+  /// Retorna true si se eliminó correctamente.
+  ///
+  /// Orden deliberado: BD primero, filesystem después.
+  /// - Si falla la BD → archivo intacto, estado consistente.
+  /// - Si falla el filesystem → archivo huérfano en disco, pero sin registro
+  ///   en BD → no hay crash al cargar documentos.
   Future<bool> deleteDocument(int id) async {
     try {
-      // 1. Obtener documento para acceder a las rutas de archivos
+      // 1. Obtener documento para acceder a la ruta del archivo
       final document = await getDocumentById(id);
       if (document == null) return false;
 
-      // 2. Eliminar archivo del filesystem
-      final fileDeleted = await _deleteFile(document.filePath);
-      if (!fileDeleted) return false;
-
-      // 3. Eliminar registro de BD
+      // 2. Eliminar registro de BD primero
       final db = await _dbHelper.database;
       final rowsDeleted = await db.delete(
         'documents',
         where: 'id = ?',
         whereArgs: [id],
       );
+      if (rowsDeleted == 0) return false;
 
-      return rowsDeleted > 0;
+      // 3. Eliminar archivo del filesystem (best-effort)
+      await _deleteFile(document.filePath);
+
+      return true;
     } catch (e) {
       debugPrint('[DocumentRepository] ERROR deleteDocument($id): $e');
       return false;

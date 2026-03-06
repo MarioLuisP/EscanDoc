@@ -129,24 +129,29 @@ void main() {
       expect(retrieved.ocrText, 'FACTURA ACTUALIZADA Total: \$2000');
     });
 
-    test('Debe eliminar documento de BD', () async {
+    test('Debe eliminar documento de BD y retornar true', () async {
       // Arrange
       final insertedId = await repository.insertDocument(testDocument);
+      expect(await repository.getDocumentById(insertedId), isNotNull);
 
-      // Verificar que existe
-      final beforeDelete = await repository.getDocumentById(insertedId);
-      expect(beforeDelete, isNotNull);
-
-      // Act
-      // Nota: Este test no puede probar la eliminación de archivos reales
-      // porque los paths son de prueba. Solo verifica la eliminación de BD.
-      await repository.deleteDocument(insertedId);
+      // Act — path de prueba no existe en disco, pero BD se borra primero
+      final result = await repository.deleteDocument(insertedId);
 
       // Assert
-      // El resultado puede ser false porque el archivo no existe (esperado en test)
-      // Lo importante es verificar que se eliminó de BD
-      final afterDelete = await repository.getDocumentById(insertedId);
-      expect(afterDelete, isNull);
+      expect(result, isTrue);
+      expect(await repository.getDocumentById(insertedId), isNull);
+    });
+
+    test('Si el archivo no existe en disco, igual elimina de BD', () async {
+      // Arrange — path inexistente en filesystem
+      final insertedId = await repository.insertDocument(testDocument);
+
+      // Act
+      final result = await repository.deleteDocument(insertedId);
+
+      // Assert — BD borrada correctamente, sin crash por archivo ausente
+      expect(result, isTrue);
+      expect(await repository.getDocumentById(insertedId), isNull);
     });
 
     test('Debe retornar null si documento no existe', () async {
