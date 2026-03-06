@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:escandoc/core/utils/text_normalizer.dart';
 
 /// Singleton para gestionar la base de datos SQLite local
 /// Schema simplificado: tabla única documents + due_dates (Fase 2)
@@ -21,7 +22,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -42,7 +43,9 @@ class DatabaseHelper {
         ocr_text        TEXT,
         extracted_date  DATE,
         created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP
+        updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+        title_search    TEXT,
+        note_search     TEXT
       )
     ''');
 
@@ -118,9 +121,31 @@ class DatabaseHelper {
         'CREATE INDEX idx_due_dates_is_resolved ON due_dates(is_resolved)');
   }
 
-  /// Migraciones futuras
+  /// Migraciones incrementales por versión
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    // TODO: Implementar migrations cuando sea necesario
+    if (oldVersion < 2) {
+      await db.execute(
+          'ALTER TABLE documents ADD COLUMN title_search TEXT');
+      await db.execute(
+          'ALTER TABLE documents ADD COLUMN note_search TEXT');
+
+      // Poblar shadow columns para documentos existentes
+      final rows = await db.query('documents', columns: ['id', 'title', 'note_content']);
+      for (final row in rows) {
+        final id = row['id'] as int;
+        final title = row['title'] as String? ?? '';
+        final note = row['note_content'] as String?;
+        await db.update(
+          'documents',
+          {
+            'title_search': TextNormalizer.normalize(title),
+            'note_search': note != null ? TextNormalizer.normalize(note) : null,
+          },
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+      }
+    }
   }
 
   /// Cierra la base de datos

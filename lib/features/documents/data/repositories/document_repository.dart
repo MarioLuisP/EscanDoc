@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:escandoc/core/database/database_helper.dart';
+import 'package:escandoc/core/utils/text_normalizer.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 
 /// Repository para operaciones CRUD de documentos en SQLite
@@ -49,7 +50,12 @@ class DocumentRepository {
   /// Inserta un nuevo documento y retorna el ID generado
   Future<int> insertDocument(DocumentModel document) async {
     final db = await _dbHelper.database;
-    return await db.insert('documents', document.toMap());
+    final map = document.toMap();
+    map['title_search'] = TextNormalizer.normalize(document.title);
+    map['note_search'] = document.noteContent != null
+        ? TextNormalizer.normalize(document.noteContent!)
+        : null;
+    return await db.insert('documents', map);
   }
 
   /// Actualiza un documento existente
@@ -59,6 +65,10 @@ class DocumentRepository {
     // Crear map sin el 'id' (PRIMARY KEY no debe actualizarse)
     final map = document.toMap();
     map.remove('id');
+    map['title_search'] = TextNormalizer.normalize(document.title);
+    map['note_search'] = document.noteContent != null
+        ? TextNormalizer.normalize(document.noteContent!)
+        : null;
 
     return await db.update(
       'documents',
@@ -116,7 +126,10 @@ class DocumentRepository {
     final db = await _dbHelper.database;
     await db.update(
       'documents',
-      {'note_content': content},
+      {
+        'note_content': content,
+        'note_search': content != null ? TextNormalizer.normalize(content) : null,
+      },
       where: 'id = ?',
       whereArgs: [documentId],
     );

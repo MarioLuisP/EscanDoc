@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:escandoc/core/database/database_helper.dart';
+import 'package:escandoc/core/utils/text_normalizer.dart';
 import 'package:escandoc/features/search/data/repositories/search_repository_impl.dart';
 
 /// Tests de integración para SearchRepository (LIKE normalizado)
@@ -28,23 +29,29 @@ void main() {
     await db.delete('documents');
 
     // Documento 1: factura con nota
+    const note1 = 'Pagar factura Edesur usando Mercado Pago antes del vencimiento';
     await db.insert('documents', {
       'id': 1,
       'title': 'Factura Edesur Enero 2026',
+      'title_search': TextNormalizer.normalize('Factura Edesur Enero 2026'),
       'file_path': '/test/factura.jpg',
       'document_type': 'factura',
-      'note_content': 'Pagar factura Edesur usando Mercado Pago antes del vencimiento',
+      'note_content': note1,
+      'note_search': TextNormalizer.normalize(note1),
       'ocr_text': 'EDESUR S.A. Factura de Energía Eléctrica. Período Enero 2026. Total: \$12,500',
       'created_at': DateTime(2026, 1, 15).toIso8601String(),
     });
 
     // Documento 2: recibo con nota
+    const note2 = 'Próxima consulta con Dr. González el 15/02/2026. Llevar estudios previos.';
     await db.insert('documents', {
       'id': 2,
       'title': 'Recibo Médico Dr. González',
+      'title_search': TextNormalizer.normalize('Recibo Médico Dr. González'),
       'file_path': '/test/recibo.jpg',
       'document_type': 'recibo',
-      'note_content': 'Próxima consulta con Dr. González el 15/02/2026. Llevar estudios previos.',
+      'note_content': note2,
+      'note_search': TextNormalizer.normalize(note2),
       'ocr_text': 'Dr. González. Consulta médica general. Fecha: 20/01/2026.',
       'created_at': DateTime(2026, 1, 20).toIso8601String(),
     });
@@ -53,9 +60,11 @@ void main() {
     await db.insert('documents', {
       'id': 3,
       'title': 'Contrato Alquiler',
+      'title_search': TextNormalizer.normalize('Contrato Alquiler'),
       'file_path': '/test/contrato.jpg',
       'document_type': 'documento',
       'note_content': null,
+      'note_search': null,
       'ocr_text': 'Contrato de Locación de Inmueble. Entre las partes...',
       'created_at': DateTime(2026, 1, 10).toIso8601String(),
     });
@@ -158,6 +167,7 @@ void main() {
         await db.insert('documents', {
           'id': i,
           'title': 'Documento Test $i',
+          'title_search': TextNormalizer.normalize('Documento Test $i'),
           'file_path': '/test/doc$i.jpg',
           'document_type': 'documento',
           'created_at': DateTime(2026, 1, i % 28 + 1).toIso8601String(),
