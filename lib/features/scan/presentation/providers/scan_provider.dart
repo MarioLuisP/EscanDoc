@@ -105,8 +105,7 @@ class ScanProvider with ChangeNotifier {
       debugPrint('[ScanProvider] 🔴 END: Completar TOTAL - ${DateTime.now().difference(startTotal).inMilliseconds}ms');
       debugPrint('[ScanProvider] Documento guardado. ID: ${document.id}');
 
-      final label = preparation.classification.metadata['label'] as String? ?? 'desconocido';
-      _processOCRInBackground(document.id!, label, locale);
+      _processOCRInBackground(document.id!, preparation.classification.type, locale);
 
       return document;
     } catch (e, stackTrace) {
@@ -127,10 +126,10 @@ class ScanProvider with ChangeNotifier {
   }
 
   Future<void> _processOCRInBackground(
-      int documentId, String tfliteClass, String locale) async {
+      int documentId, DocumentType tfliteKind, String locale) async {
     _isProcessingOCR = true;
     notifyListeners();
-    await _pipeline.processOCRBackground(documentId, tfliteClass, locale);
+    await _pipeline.processOCRBackground(documentId, tfliteKind, locale);
     _isProcessingOCR = false;
     notifyListeners();
   }

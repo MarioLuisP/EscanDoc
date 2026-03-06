@@ -640,6 +640,34 @@ PRIORIDAD MEDIA — Calidad y mantenibilidad
    if (refinement.refinedClass == 'manuscrito') { ... }
    Esto es frágil. Ya tenés DocumentType como enum — usarlo consistentemente en domain evitaría errores por typos.
 
+Resumen de los 15 archivos tocados:                                                                                                                                                                                                 
+Producción (10):
+- classification_result.dart — nuevo enum con 6 valores + fromLabel() + displayName()
+- tflite_image_classifier.dart — elimina indexToType, usa DocumentType.fromLabel(label)
+- refine_classification.dart — refinedKind: DocumentType en lugar de refinedClass: String
+- document_classifier.dart — métodos toman DocumentType en lugar de String
+- save_scanned_document.dart — tfliteKind: DocumentType
+- process_ocr.dart — tfliteKind: DocumentType, comparaciones con enum
+- document_pipeline.dart — pasa prep.classification.type directo, sin metadata['label']
+- scan_provider.dart / import_provider.dart — _processOCRInBackground con DocumentType
+- home_page.dart — DocumentType.foto
+
+Tests (5): actualizados para usar DocumentType con los nuevos nombres.
+
+blocks_to_markdown.dart — ya estaba correcto, no tocado. La inconsistencia preexistente queda resuelta.
+
+Resumen del refactor:
+- DocumentType pasó de 5 valores en inglés (document, brochure, photo, handwritten, ticket) a 6 valores en español que son la única fuente de verdad del dominio
+- Eliminados todos los magic strings ('manuscrito', 'factura', etc.) de ProcessOCR, RefineClassification, DocumentClassifier
+- metadata['label'] ya no se usa como canal de paso entre capas — el tipo viaja como DocumentType desde el clasificador hasta la DB
+- blocks_to_markdown.dart ya compilaba correctamente (tenía los valores nuevos adelantados)
+- Sin migración de DB — kind.dbKey == kind.name coincide exactamente con lo que ya estaba guardado
+
+
+
+
+
+
 9. DateTime.parse() sin try-catch en DocumentModel
    Si algún registro en BD tiene una fecha corrupta, la app crashea al cargar documentos. Un DateTime.tryParse() sería más defensivo.
 

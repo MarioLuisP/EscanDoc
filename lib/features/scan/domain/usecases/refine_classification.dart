@@ -1,16 +1,17 @@
 import 'package:escandoc/core/services/ocr_analysis.dart';
+import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 
-/// Resultado del refinamiento de clasificación
+/// Resultado del refinamiento de clasificación.
 class RefinementResult {
-  /// Clase final después del refinamiento
-  final String refinedClass;
+  /// Tipo final después del refinamiento.
+  final DocumentType refinedKind;
 
   /// Nota de corrección para agregar al documento.
-  /// null si no hubo cambio respecto a [tfliteClass].
+  /// null si no hubo cambio.
   final String? correctionNote;
 
   const RefinementResult({
-    required this.refinedClass,
+    required this.refinedKind,
     this.correctionNote,
   });
 
@@ -20,12 +21,12 @@ class RefinementResult {
 /// Refina la clasificación inicial del TFLite usando métricas del OCR.
 ///
 /// Se ejecuta en background después de que el OCR finaliza.
-/// Solo ajusta 'documento' y 'manuscrito' — el resto queda intacto.
+/// Solo ajusta [DocumentType.documento] y [DocumentType.manuscrito] — el resto queda intacto.
 ///
 /// Lógica:
-/// 1. avgConfidence < 0.55 → manuscrito (texto muy irregular)
-/// 2. avgConfidence >= 0.55 → documento (texto legible)
-/// 3. Si quedó como 'documento' + keywords + >80 bloques → factura
+/// 1. avgConfidence < 0.72 → manuscrito (texto muy irregular)
+/// 2. avgConfidence >= 0.72 → documento (texto legible)
+/// 3. Si quedó como documento + keywords + >80 bloques → factura
 ///
 /// Umbrales basados en datos empíricos (Feb 2026):
 /// - Manuscrito: avgConf ~0.35-0.40 (máx 0.56)
@@ -89,36 +90,34 @@ class RefineClassification {
     'tear here',
   ];
 
-  /// Refina [tfliteClass] usando las métricas de [analysis].
+  /// Refina [kind] usando las métricas de [analysis].
   ///
-  /// Tipos intocables: 'foto', 'folleto', 'recibo'
-  RefinementResult call(String tfliteClass, OcrAnalysis analysis) {
-    // Tipos que no refinamos
-    if (!_isRefineable(tfliteClass)) {
-      return RefinementResult(refinedClass: tfliteClass);
+  /// Tipos intocables: foto, folleto, recibo, factura
+  RefinementResult call(DocumentType kind, OcrAnalysis analysis) {
+    if (!_isRefineable(kind)) {
+      return RefinementResult(refinedKind: kind);
     }
 
     final isHandwritten = analysis.avgConfidence < _avgConfidenceThreshold;
 
     if (isHandwritten) {
-      // Texto muy irregular → manuscrito
-      if (tfliteClass == 'documento') {
+      if (kind == DocumentType.documento) {
         final conf = analysis.avgConfidence.toStringAsFixed(2);
         return RefinementResult(
-          refinedClass: 'manuscrito',
+          refinedKind: DocumentType.manuscrito,
           correctionNote:
               'documento → manuscrito (2° paso: confianza promedio baja: $conf)',
         );
       }
-      // Manuscrito → sigue siendo manuscrito, sin cambio
-      return RefinementResult(refinedClass: 'manuscrito');
+      // manuscrito → sigue siendo manuscrito, sin cambio
+      return RefinementResult(refinedKind: DocumentType.manuscrito);
     }
 
     // Texto legible → documento
-    String refined = 'documento';
+    DocumentType refined = DocumentType.documento;
     String? note;
 
-    if (tfliteClass == 'manuscrito') {
+    if (kind == DocumentType.manuscrito) {
       final conf = analysis.avgConfidence.toStringAsFixed(2);
       note = 'manuscrito → documento (2° paso: confianza promedio alta: $conf)';
     }
@@ -127,20 +126,19 @@ class RefineClassification {
     if (_hasInvoiceKeyword(analysis.text) &&
         analysis.blockCount > _minBlocksForInvoice) {
       if (note != null) {
-        // Cadena completa: manuscrito → factura
         note = note.replaceFirst('→ documento', '→ factura');
       } else {
         note =
             'documento → factura (2° paso: keywords + ${analysis.blockCount} bloques)';
       }
-      refined = 'factura';
+      refined = DocumentType.factura;
     }
 
-    return RefinementResult(refinedClass: refined, correctionNote: note);
+    return RefinementResult(refinedKind: refined, correctionNote: note);
   }
 
-  bool _isRefineable(String type) =>
-      type == 'documento' || type == 'manuscrito';
+  bool _isRefineable(DocumentType kind) =>
+      kind == DocumentType.documento || kind == DocumentType.manuscrito;
 
   bool _hasInvoiceKeyword(String text) {
     final lower = text.toLowerCase();

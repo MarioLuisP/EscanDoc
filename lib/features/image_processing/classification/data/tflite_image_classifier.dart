@@ -36,14 +36,6 @@ class TFLiteImageClassifier implements ImageClassifier {
     'recibo',      // 4 (ticket → recibo en español)
   ];
 
-  /// Mapeo de índice a DocumentType (orden alfabético español)
-  static const Map<int, DocumentType> indexToType = {
-    0: DocumentType.document,   // documentos
-    1: DocumentType.brochure,   // folletos
-    2: DocumentType.photo,      // fotos
-    3: DocumentType.handwritten, // manuscrito
-    4: DocumentType.ticket,     // tickets
-  };
 
   /// Inicializa el intérprete TFLite cargando el modelo.
   Future<void> initialize() async {
@@ -76,7 +68,7 @@ class TFLiteImageClassifier implements ImageClassifier {
     } on TimeoutException {
       debugPrint('[TFLiteClassifier] ⏱️ TIMEOUT al clasificar $imagePath → fallback documento');
       return ClassificationResult(
-        type: DocumentType.document,
+        type: DocumentType.documento,
         confidence: 0.5,
         metadata: {'method': 'tflite_keras', 'error': 'timeout'},
       );
@@ -84,7 +76,7 @@ class TFLiteImageClassifier implements ImageClassifier {
       debugPrint('[TFLiteClassifier] ❌ ERROR: $e');
       debugPrint('[TFLiteClassifier] StackTrace: $stackTrace');
       return ClassificationResult(
-        type: DocumentType.document,
+        type: DocumentType.documento,
         confidence: 0.5,
         metadata: {'method': 'tflite_keras', 'error': e.toString()},
       );
@@ -130,8 +122,8 @@ class TFLiteImageClassifier implements ImageClassifier {
         }
       }
 
-      final type = indexToType[maxIndex]!;
       final label = labels[maxIndex];
+      final type = DocumentType.fromLabel(label);
 
       final endTime = DateTime.now();
       final totalDuration = endTime.difference(startTime).inMilliseconds;
@@ -164,7 +156,7 @@ class TFLiteImageClassifier implements ImageClassifier {
 
       // Fallback: clasificar como documento
       return ClassificationResult(
-        type: DocumentType.document,
+        type: DocumentType.documento,
         confidence: 0.5,
         metadata: {
           'method': 'tflite_keras',

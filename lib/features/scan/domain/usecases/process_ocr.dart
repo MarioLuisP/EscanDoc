@@ -5,10 +5,11 @@ import 'package:escandoc/core/services/document_classifier.dart';
 import 'package:escandoc/core/services/document_orientation_service.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
+import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 import 'package:escandoc/features/image_processing/classification/domain/image_classifier.dart';
 import 'package:escandoc/features/scan/domain/usecases/refine_classification.dart';
 
-/// UseCase para procesar OCR en documento escaneado (SIMPLIFICADO - JPG only)
+/// UseCase para procesar OCR en documento escaneado (JPG only).
 ///
 /// FLUJO:
 /// 1. Obtener documento de BD (filePath apunta al JPG)
@@ -19,7 +20,7 @@ import 'package:escandoc/features/scan/domain/usecases/refine_classification.dar
 /// 6. Guardar nota de extracto en note_content
 /// 7. Actualizar documento en BD con texto OCR
 ///
-/// Se ejecuta en background después de SaveScannedDocument
+/// Se ejecuta en background después de SaveScannedDocument.
 class ProcessOCR {
   final OCRService _ocrService;
   final DocumentClassifier _classifier;
@@ -40,11 +41,11 @@ class ProcessOCR {
 
   /// Procesa OCR y refina clasificación para el documento dado.
   ///
-  /// [tfliteClass]: clasificación inicial del TFLite (ej: 'documento', 'manuscrito').
-  /// [locale]: idioma para regenerar el título si hay reclasificación (ej: 'es', 'en').
+  /// [tfliteKind]: clasificación inicial del TFLite.
+  /// [locale]: idioma para regenerar el título si hay reclasificación.
   Future<DocumentModel> call(
     int documentId, {
-    String tfliteClass = 'documento',
+    DocumentType tfliteKind = DocumentType.documento,
     String locale = 'es',
     void Function(String)? onStatus,
   }) async {
@@ -59,19 +60,18 @@ class ProcessOCR {
         throw Exception('Document not found: $documentId');
       }
 
-      final jpgPath = document.filePath;
-      debugPrint('[ProcessOCR] JPG path: $jpgPath');
+      final jpgFile = File(document.filePath);
+      debugPrint('[ProcessOCR] JPG path: ${document.filePath}');
 
-      final jpgFile = File(jpgPath);
       if (!jpgFile.existsSync()) {
-        throw Exception('JPG file not found: $jpgPath');
+        throw Exception('JPG file not found: ${document.filePath}');
       }
 
       // 2. Extraer análisis OCR (texto + métricas)
       final startOCR = DateTime.now();
       debugPrint(
           '[ProcessOCR] 🟢 START: OCR extractAnalysis - ${startOCR.millisecondsSinceEpoch}');
-      var ocrAnalysis = await _ocrService.extractAnalysis(jpgFile, docType: tfliteClass);
+      var ocrAnalysis = await _ocrService.extractAnalysis(jpgFile, docType: tfliteKind.dbKey);
       final endOCR = DateTime.now();
       debugPrint(
           '[ProcessOCR] 🔴 END: OCR extractAnalysis - ${endOCR.difference(startOCR).inMilliseconds}ms'
@@ -80,7 +80,7 @@ class ProcessOCR {
           ' - avgConf: ${ocrAnalysis.avgConfidence.toStringAsFixed(3)}');
 
       // 3. Corrección de orientación si OCR detectó rotación
-      String activeTfliteClass = tfliteClass;
+      DocumentType activeKind = tfliteKind;
       if (ocrAnalysis.detectedRotationDegrees != 0 && _orientationService != null) {
         final degrees = ocrAnalysis.detectedRotationDegrees;
         debugPrint('[ProcessOCR] 🔄 Rotación detectada: ${degrees}° → rotando y re-procesando');
@@ -94,15 +94,15 @@ class ProcessOCR {
           onStatus?.call('status_analyzing');
           final tClassify = DateTime.now();
           final newClassification = await _imageClassifier.classify(jpgFile.path);
-          activeTfliteClass = newClassification.metadata['label'] as String? ?? tfliteClass;
+          activeKind = newClassification.type;
           debugPrint(
               '[ProcessOCR] ⏱️ Re-clasificar: ${DateTime.now().difference(tClassify).inMilliseconds}ms'
-              ' → $activeTfliteClass');
+              ' → ${activeKind.dbKey}');
         }
 
         onStatus?.call('status_extracting');
         final tReOcr = DateTime.now();
-        ocrAnalysis = await _ocrService.extractAnalysis(jpgFile, docType: activeTfliteClass);
+        ocrAnalysis = await _ocrService.extractAnalysis(jpgFile, docType: activeKind.dbKey);
         debugPrint(
             '[ProcessOCR] ⏱️ Re-OCR: ${DateTime.now().difference(tReOcr).inMilliseconds}ms'
             ' — ${ocrAnalysis.blockCount} bloques');
@@ -110,22 +110,21 @@ class ProcessOCR {
 
       final extractedText = ocrAnalysis.text;
 
-      // 4. Refinar clasificación TFLite con métricas OCR (2° paso)
-      final refinement = _refinement.call(activeTfliteClass, ocrAnalysis);
-      debugPrint('[ProcessOCR] TFLite: $tfliteClass → Refinado: ${refinement.refinedClass}');
+      // 4. Refinar clasificación con métricas OCR (2° paso)
+      final refinement = _refinement.call(activeKind, ocrAnalysis);
+      debugPrint('[ProcessOCR] TFLite: ${tfliteKind.dbKey} → Refinado: ${refinement.refinedKind.dbKey}');
 
-      // 4. Si hubo reclasificación → actualizar título
+      // 5. Si hubo reclasificación → actualizar título
       String updatedTitle = document.title;
       if (refinement.wasReclassified) {
         debugPrint('[ProcessOCR] 📝 Reclasificado: ${refinement.correctionNote}');
 
-        // Regenerar título con el tipo correcto y número secuencial
         final newDisplayName =
-            _classifier.getTypeDisplayName(refinement.refinedClass, locale);
+            _classifier.getTypeDisplayName(refinement.refinedKind, locale);
         final countForNewType = await _repository.countByTypePrefix(
             newDisplayName, document.createdAt);
         updatedTitle = _classifier.generateDocumentName(
-          refinement.refinedClass,
+          refinement.refinedKind,
           document.createdAt,
           locale,
           countForNewType + 1,
@@ -133,24 +132,24 @@ class ProcessOCR {
         debugPrint('[ProcessOCR] 🏷️  Título actualizado: ${document.title} → $updatedTitle');
       }
 
-      // 5. Si es manuscrito → anteponer aviso en el texto OCR
-      final ocrText = refinement.refinedClass == 'manuscrito'
+      // 6. Si es manuscrito → anteponer aviso en el texto OCR
+      final ocrText = refinement.refinedKind == DocumentType.manuscrito
           ? '${_manuscritoDisclaimer(locale)}$extractedText'
           : extractedText;
 
-      // 6. Extraer fecha de vencimiento si existe
+      // 7. Extraer fecha de vencimiento si existe
       final extractedDate = _classifier.extractDueDate(ocrText);
       debugPrint('[ProcessOCR] Fecha extraída: $extractedDate');
 
-      // 7. Construir nota de extracto
+      // 8. Construir nota de extracto
       final noteContent = _buildExtractNote(
-          refinement.refinedClass, extractedText, ocrAnalysis.topConfidenceText, locale);
+          refinement.refinedKind, extractedText, ocrAnalysis.topConfidenceText, locale);
       debugPrint('[ProcessOCR] 📝 Nota de extracto: ${noteContent.substring(0, noteContent.length.clamp(0, 60))}...');
 
-      // 8. Actualizar documento con texto OCR, nota, título y tipo (si hubo reclasificación)
+      // 9. Actualizar documento con texto OCR, nota, título y tipo
       final updatedDocument = document.copyWith(
         title: updatedTitle,
-        documentType: refinement.refinedClass,
+        documentType: refinement.refinedKind.dbKey,
         ocrText: ocrText,
         extractedDate: extractedDate,
         noteContent: noteContent.isNotEmpty ? noteContent : null,
@@ -163,10 +162,8 @@ class ProcessOCR {
       debugPrint(
           '[ProcessOCR] 🔴 END: Update DB con OCR - ${DateTime.now().difference(startDBUpdate).inMilliseconds}ms');
 
-      final totalDuration =
-          DateTime.now().difference(startProcess).inMilliseconds;
       debugPrint(
-          '[ProcessOCR] 🔴 END: OCR (JPG only) - Duración TOTAL: ${totalDuration}ms');
+          '[ProcessOCR] 🔴 END: OCR (JPG only) - Duración TOTAL: ${DateTime.now().difference(startProcess).inMilliseconds}ms');
 
       return updatedDocument;
     } catch (e, stackTrace) {
@@ -176,15 +173,12 @@ class ProcessOCR {
     }
   }
 
-  /// Aviso de calidad OCR para manuscritos, según idioma.
   String _manuscritoDisclaimer(String locale) {
     return locale == 'en'
         ? '⚠️ Handwritten text — recognition may contain errors.\n\n'
         : '⚠️ Texto manuscrito — el reconocimiento puede contener errores.\n\n';
   }
 
-  /// Nota para manuscritos: prefija etiqueta + top-palabras.
-  /// Si no hay palabras reconocibles, retorna solo la etiqueta.
   String _buildManuscritoNote(String topConfidenceText, String locale) {
     final label = locale == 'en' ? 'Handwritten note' : 'Nota manuscrita';
     if (topConfidenceText.trim().isEmpty) return label;
@@ -192,8 +186,6 @@ class ProcessOCR {
     return '$prefix ${topConfidenceText.trim()}';
   }
 
-  /// Nota para documentos impresos: primeros 70 chars del markdown limpio.
-  /// Quita prefijos markdown antes de truncar.
   String _buildPrintedNote(String markdown) {
     if (markdown.isEmpty) return '';
     final stripped = markdown
@@ -206,9 +198,9 @@ class ProcessOCR {
     return stripped.length > 70 ? stripped.substring(0, 70).trimRight() : stripped;
   }
 
-  /// Selecciona la nota correcta según el tipo refinado.
-  String _buildExtractNote(String refinedClass, String extractedText, String topConfidenceText, String locale) {
-    if (refinedClass == 'manuscrito') {
+  String _buildExtractNote(DocumentType refinedKind, String extractedText,
+      String topConfidenceText, String locale) {
+    if (refinedKind == DocumentType.manuscrito) {
       return _buildManuscritoNote(topConfidenceText, locale);
     }
     return _buildPrintedNote(extractedText);

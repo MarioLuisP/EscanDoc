@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:escandoc/core/services/document_classifier.dart';
+import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 
 void main() {
   late DocumentClassifier classifier;
@@ -46,71 +47,71 @@ void main() {
 
   group('DocumentClassifier - getTypeDisplayName', () {
     test('español: tipos principales', () {
-      expect(classifier.getTypeDisplayName('factura', 'es'), 'Factura');
-      expect(classifier.getTypeDisplayName('recibo', 'es'), 'Recibo');
-      expect(classifier.getTypeDisplayName('manuscrito', 'es'), 'Nota');
-      expect(classifier.getTypeDisplayName('folleto', 'es'), 'Folleto');
-      expect(classifier.getTypeDisplayName('foto', 'es'), 'Foto');
-      expect(classifier.getTypeDisplayName('documento', 'es'), 'Documento');
+      expect(classifier.getTypeDisplayName(DocumentType.factura, 'es'), 'Factura');
+      expect(classifier.getTypeDisplayName(DocumentType.recibo, 'es'), 'Recibo');
+      expect(classifier.getTypeDisplayName(DocumentType.manuscrito, 'es'), 'Nota');
+      expect(classifier.getTypeDisplayName(DocumentType.folleto, 'es'), 'Folleto');
+      expect(classifier.getTypeDisplayName(DocumentType.foto, 'es'), 'Foto');
+      expect(classifier.getTypeDisplayName(DocumentType.documento, 'es'), 'Documento');
     });
 
     test('inglés: tipos principales', () {
-      expect(classifier.getTypeDisplayName('factura', 'en'), 'Invoice');
-      expect(classifier.getTypeDisplayName('recibo', 'en'), 'Receipt');
-      expect(classifier.getTypeDisplayName('manuscrito', 'en'), 'Note');
-      expect(classifier.getTypeDisplayName('folleto', 'en'), 'Brochure');
-      expect(classifier.getTypeDisplayName('foto', 'en'), 'Photo');
-      expect(classifier.getTypeDisplayName('documento', 'en'), 'Document');
+      expect(classifier.getTypeDisplayName(DocumentType.factura, 'en'), 'Invoice');
+      expect(classifier.getTypeDisplayName(DocumentType.recibo, 'en'), 'Receipt');
+      expect(classifier.getTypeDisplayName(DocumentType.manuscrito, 'en'), 'Note');
+      expect(classifier.getTypeDisplayName(DocumentType.folleto, 'en'), 'Brochure');
+      expect(classifier.getTypeDisplayName(DocumentType.foto, 'en'), 'Photo');
+      expect(classifier.getTypeDisplayName(DocumentType.documento, 'en'), 'Document');
     });
 
     test('manuscrito se muestra como Nota (no como Manuscrito)', () {
-      expect(classifier.getTypeDisplayName('manuscrito', 'es'), 'Nota');
-      expect(classifier.getTypeDisplayName('manuscrito', 'en'), 'Note');
+      expect(classifier.getTypeDisplayName(DocumentType.manuscrito, 'es'), 'Nota');
+      expect(classifier.getTypeDisplayName(DocumentType.manuscrito, 'en'), 'Note');
     });
   });
 
   group('DocumentClassifier - generateDocumentName', () {
     test('formato ES: "Factura 1 del 17/2"', () {
       final date = DateTime(2026, 2, 17);
-      expect(classifier.generateDocumentName('factura', date, 'es', 1), 'Factura 1 del 17/2');
+      expect(classifier.generateDocumentName(DocumentType.factura, date, 'es', 1), 'Factura 1 del 17/2');
     });
 
     test('formato EN: "Invoice 1 of 17/2"', () {
       final date = DateTime(2026, 2, 17);
-      expect(classifier.generateDocumentName('factura', date, 'en', 1), 'Invoice 1 of 17/2');
+      expect(classifier.generateDocumentName(DocumentType.factura, date, 'en', 1), 'Invoice 1 of 17/2');
     });
 
     test('número secuencial se refleja en el nombre', () {
       final date = DateTime(2026, 2, 17);
-      expect(classifier.generateDocumentName('factura', date, 'es', 1), 'Factura 1 del 17/2');
-      expect(classifier.generateDocumentName('factura', date, 'es', 2), 'Factura 2 del 17/2');
-      expect(classifier.generateDocumentName('factura', date, 'es', 3), 'Factura 3 del 17/2');
+      expect(classifier.generateDocumentName(DocumentType.factura, date, 'es', 1), 'Factura 1 del 17/2');
+      expect(classifier.generateDocumentName(DocumentType.factura, date, 'es', 2), 'Factura 2 del 17/2');
+      expect(classifier.generateDocumentName(DocumentType.factura, date, 'es', 3), 'Factura 3 del 17/2');
     });
 
     test('manuscrito genera "Nota N del D/M"', () {
       final date = DateTime(2026, 11, 5);
-      expect(classifier.generateDocumentName('manuscrito', date, 'es', 1), 'Nota 1 del 5/11');
-      expect(classifier.generateDocumentName('manuscrito', date, 'en', 1), 'Note 1 of 5/11');
+      expect(classifier.generateDocumentName(DocumentType.manuscrito, date, 'es', 1), 'Nota 1 del 5/11');
+      expect(classifier.generateDocumentName(DocumentType.manuscrito, date, 'en', 1), 'Note 1 of 5/11');
     });
 
     test('todos los tipos en ES', () {
       final date = DateTime(2026, 2, 17);
-      expect(classifier.generateDocumentName('documento', date, 'es', 1), 'Documento 1 del 17/2');
-      expect(classifier.generateDocumentName('factura', date, 'es', 1), 'Factura 1 del 17/2');
-      expect(classifier.generateDocumentName('recibo', date, 'es', 1), 'Recibo 1 del 17/2');
-      expect(classifier.generateDocumentName('manuscrito', date, 'es', 1), 'Nota 1 del 17/2');
-      expect(classifier.generateDocumentName('folleto', date, 'es', 1), 'Folleto 1 del 17/2');
-      expect(classifier.generateDocumentName('foto', date, 'es', 1), 'Foto 1 del 17/2');
+      expect(classifier.generateDocumentName(DocumentType.documento, date, 'es', 1), 'Documento 1 del 17/2');
+      expect(classifier.generateDocumentName(DocumentType.factura, date, 'es', 1), 'Factura 1 del 17/2');
+      expect(classifier.generateDocumentName(DocumentType.recibo, date, 'es', 1), 'Recibo 1 del 17/2');
+      expect(classifier.generateDocumentName(DocumentType.manuscrito, date, 'es', 1), 'Nota 1 del 17/2');
+      expect(classifier.generateDocumentName(DocumentType.folleto, date, 'es', 1), 'Folleto 1 del 17/2');
+      expect(classifier.generateDocumentName(DocumentType.foto, date, 'es', 1), 'Foto 1 del 17/2');
     });
 
     test('todos los tipos en EN', () {
       final date = DateTime(2026, 2, 17);
-      expect(classifier.generateDocumentName('documento', date, 'en', 1), 'Document 1 of 17/2');
-      expect(classifier.generateDocumentName('factura', date, 'en', 1), 'Invoice 1 of 17/2');
-      expect(classifier.generateDocumentName('recibo', date, 'en', 1), 'Receipt 1 of 17/2');
-      expect(classifier.generateDocumentName('manuscrito', date, 'en', 1), 'Note 1 of 17/2');
-      expect(classifier.generateDocumentName('folleto', date, 'en', 1), 'Brochure 1 of 17/2');
-      expect(classifier.generateDocumentName('foto', date, 'en', 1), 'Photo 1 of 17/2');
+      expect(classifier.generateDocumentName(DocumentType.documento, date, 'en', 1), 'Document 1 of 17/2');
+      expect(classifier.generateDocumentName(DocumentType.factura, date, 'en', 1), 'Invoice 1 of 17/2');
+      expect(classifier.generateDocumentName(DocumentType.recibo, date, 'en', 1), 'Receipt 1 of 17/2');
+      expect(classifier.generateDocumentName(DocumentType.manuscrito, date, 'en', 1), 'Note 1 of 17/2');
+      expect(classifier.generateDocumentName(DocumentType.folleto, date, 'en', 1), 'Brochure 1 of 17/2');
+      expect(classifier.generateDocumentName(DocumentType.foto, date, 'en', 1), 'Photo 1 of 17/2');
     });
   });
 

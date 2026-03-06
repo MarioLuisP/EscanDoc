@@ -409,7 +409,7 @@ class _HomePageState extends State<HomePage> {
 
     if (!mounted) return;
 
-    if (preparation.classification.type == DocumentType.photo) {
+    if (preparation.classification.type == DocumentType.foto) {
       if (!mounted) return;
       // ignore: use_build_context_synchronously
       final action = await PhotoDetectedDialog.show(context,
@@ -603,7 +603,7 @@ class _HomePageState extends State<HomePage> {
         return;
       }
 
-      if (preparation.classification.type == DocumentType.photo) {
+      if (preparation.classification.type == DocumentType.foto) {
         if (!mounted) return;
         // ignore: use_build_context_synchronously
         final action = await PhotoDetectedDialog.show(context,

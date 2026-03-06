@@ -75,7 +75,7 @@ class DocumentPipeline {
     bool isNormalized;
     File? thumbnailFile;
 
-    if (classification.type == DocumentType.document) {
+    if (classification.type == DocumentType.documento) {
       // 3a. Documento: comprimir a <850KB ahora
       onStatus?.call('status_optimizing');
       debugPrint('[$tag] Es documento → comprimiendo a <850KB');
@@ -126,7 +126,6 @@ class DocumentPipeline {
     }
 
     final docsDir = await getApplicationDocumentsDirectory();
-    final label = prep.classification.metadata['label'] as String? ?? 'desconocido';
 
     onStatus?.call('status_saving');
     final startSave = DateTime.now();
@@ -135,7 +134,7 @@ class DocumentPipeline {
       finalFile,
       docsDir.path,
       locale,
-      tfliteClass: label,
+      tfliteKind: prep.classification.type,
       currentDate: currentDate,
     );
     debugPrint('[$tag] 🔴 END: Guardar - ${DateTime.now().difference(startSave).inMilliseconds}ms');
@@ -148,7 +147,7 @@ class DocumentPipeline {
   /// [onStatus] se llama con claves de localización durante el proceso OCR.
   Future<void> processOCRBackground(
     int documentId,
-    String tfliteClass,
+    DocumentType tfliteKind,
     String locale, {
     void Function(String)? onStatus,
   }) async {
@@ -158,7 +157,7 @@ class DocumentPipeline {
     try {
       await _processOCR.call(
         documentId,
-        tfliteClass: tfliteClass,
+        tfliteKind: tfliteKind,
         locale: locale,
         onStatus: onStatus,
       );

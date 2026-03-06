@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:escandoc/core/services/document_classifier.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
+import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 
 /// UseCase para guardar documento escaneado (JPG only)
 ///
@@ -31,14 +32,14 @@ class SaveScannedDocument {
 
   /// Guarda documento y retorna modelo con ID
   ///
-  /// - [tfliteClass]: tipo inicial del clasificador TFLite (ej: 'documento', 'manuscrito')
+  /// - [tfliteKind]: tipo inicial del clasificador TFLite
   /// - [locale]: idioma para el nombre (es/en)
   Future<DocumentModel> call(
     File scannedFile,
     String outputDirectory,
     String locale, {
     DateTime? currentDate,
-    String tfliteClass = 'documento',
+    DocumentType tfliteKind = DocumentType.documento,
   }) async {
     final date = currentDate ?? DateTime.now();
 
@@ -47,13 +48,13 @@ class SaveScannedDocument {
     debugPrint('[SaveScannedDocument] JPG: ${scannedFile.path}');
 
     // 1. Obtener nombre visible del tipo y contar existentes hoy
-    final displayName = _classifier.getTypeDisplayName(tfliteClass, locale);
+    final displayName = _classifier.getTypeDisplayName(tfliteKind, locale);
     final todayCount = await _repository.countByTypePrefix(displayName, date);
-    debugPrint('[SaveScannedDocument] Tipo: $tfliteClass → "$displayName", hoy: $todayCount');
+    debugPrint('[SaveScannedDocument] Tipo: ${tfliteKind.dbKey} → "$displayName", hoy: $todayCount');
 
     // 2. Generar nombre: "Factura 1 del 17/2"
     final documentName = _classifier.generateDocumentName(
-      tfliteClass,
+      tfliteKind,
       date,
       locale,
       todayCount + 1,
@@ -64,7 +65,7 @@ class SaveScannedDocument {
     final document = DocumentModel(
       title: documentName,
       filePath: scannedFile.path,
-      documentType: tfliteClass,
+      documentType: tfliteKind.dbKey,
       ocrText: null,
       extractedDate: null,
       createdAt: date,

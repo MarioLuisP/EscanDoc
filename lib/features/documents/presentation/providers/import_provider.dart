@@ -134,8 +134,7 @@ class ImportProvider with ChangeNotifier {
       debugPrint('[ImportProvider] 🔴 END: Completar TOTAL - ${DateTime.now().difference(startTotal).inMilliseconds}ms');
       debugPrint('[ImportProvider] Documento guardado. ID: ${document.id}');
 
-      final label = preparation.classification.metadata['label'] as String? ?? 'desconocido';
-      _processOCRInBackground(document.id!, label, locale, onComplete: onOcrComplete);
+      _processOCRInBackground(document.id!, preparation.classification.type, locale, onComplete: onOcrComplete);
 
       return document;
     } catch (e, stackTrace) {
@@ -157,7 +156,7 @@ class ImportProvider with ChangeNotifier {
   }
 
   Future<void> _processOCRInBackground(
-      int documentId, String tfliteClass, String locale, {VoidCallback? onComplete}) async {
+      int documentId, DocumentType tfliteKind, String locale, {VoidCallback? onComplete}) async {
     _processingOcrIds.add(documentId);
     _isProcessingOCR = true;
     _statusMessage = 'status_extracting';
@@ -165,7 +164,7 @@ class ImportProvider with ChangeNotifier {
 
     await _pipeline.processOCRBackground(
       documentId,
-      tfliteClass,
+      tfliteKind,
       locale,
       onStatus: (msg) {
         _statusMessage = msg;

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:escandoc/core/services/ocr_analysis.dart';
+import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 import 'package:escandoc/features/scan/domain/usecases/refine_classification.dart';
 
 void main() {
@@ -34,10 +35,10 @@ void main() {
   // ═══════════════════════════════════════
 
   group('tipos intocables', () {
-    for (final type in ['foto', 'folleto', 'recibo']) {
-      test('$type queda como $type sin nota', () {
-        final result = useCase.call(type, highConf());
-        expect(result.refinedClass, type);
+    for (final kind in [DocumentType.foto, DocumentType.folleto, DocumentType.recibo]) {
+      test('${kind.dbKey} queda como ${kind.dbKey} sin nota', () {
+        final result = useCase.call(kind, highConf());
+        expect(result.refinedKind, kind);
         expect(result.correctionNote, isNull);
         expect(result.wasReclassified, isFalse);
       });
@@ -50,19 +51,19 @@ void main() {
 
   group('documento con baja confianza', () {
     test('→ manuscrito', () {
-      final result = useCase.call('documento', lowConf());
-      expect(result.refinedClass, 'manuscrito');
+      final result = useCase.call(DocumentType.documento, lowConf());
+      expect(result.refinedKind, DocumentType.manuscrito);
     });
 
     test('genera nota con confianza', () {
-      final result = useCase.call('documento', lowConf());
+      final result = useCase.call(DocumentType.documento, lowConf());
       expect(result.correctionNote, contains('documento → manuscrito'));
       expect(result.correctionNote, contains('2° paso'));
       expect(result.correctionNote, contains('0.38'));
     });
 
     test('wasReclassified es true', () {
-      final result = useCase.call('documento', lowConf());
+      final result = useCase.call(DocumentType.documento, lowConf());
       expect(result.wasReclassified, isTrue);
     });
   });
@@ -73,8 +74,8 @@ void main() {
 
   group('documento con alta confianza sin keywords', () {
     test('→ documento sin nota', () {
-      final result = useCase.call('documento', highConf(text: 'Informe médico'));
-      expect(result.refinedClass, 'documento');
+      final result = useCase.call(DocumentType.documento, highConf(text: 'Informe médico'));
+      expect(result.refinedKind, DocumentType.documento);
       expect(result.correctionNote, isNull);
       expect(result.wasReclassified, isFalse);
     });
@@ -86,12 +87,12 @@ void main() {
 
   group('documento con alta confianza + keywords + bloques > 80', () {
     test('→ factura', () {
-      final result = useCase.call('documento', invoiceAnalysis());
-      expect(result.refinedClass, 'factura');
+      final result = useCase.call(DocumentType.documento, invoiceAnalysis());
+      expect(result.refinedKind, DocumentType.factura);
     });
 
     test('genera nota con bloques y keyword', () {
-      final result = useCase.call('documento', invoiceAnalysis());
+      final result = useCase.call(DocumentType.documento, invoiceAnalysis());
       expect(result.correctionNote, contains('documento → factura'));
       expect(result.correctionNote, contains('2° paso'));
       expect(result.correctionNote, contains('120 bloques'));
@@ -105,8 +106,8 @@ void main() {
         blockCount: 50,
         avgConf: 0.85,
       );
-      final result = useCase.call('documento', a);
-      expect(result.refinedClass, 'documento');
+      final result = useCase.call(DocumentType.documento, a);
+      expect(result.refinedKind, DocumentType.documento);
       expect(result.correctionNote, isNull);
     });
   });
@@ -117,12 +118,12 @@ void main() {
 
   group('manuscrito con alta confianza', () {
     test('→ documento', () {
-      final result = useCase.call('manuscrito', highConf());
-      expect(result.refinedClass, 'documento');
+      final result = useCase.call(DocumentType.manuscrito, highConf());
+      expect(result.refinedKind, DocumentType.documento);
     });
 
     test('genera nota con confianza', () {
-      final result = useCase.call('manuscrito', highConf());
+      final result = useCase.call(DocumentType.manuscrito, highConf());
       expect(result.correctionNote, contains('manuscrito → documento'));
       expect(result.correctionNote, contains('2° paso'));
       expect(result.correctionNote, contains('0.88'));
@@ -140,8 +141,8 @@ void main() {
         blockCount: 110,
         avgConfidence: 0.80,
       );
-      final result = useCase.call('manuscrito', a);
-      expect(result.refinedClass, 'factura');
+      final result = useCase.call(DocumentType.manuscrito, a);
+      expect(result.refinedKind, DocumentType.factura);
     });
 
     test('nota menciona la cadena manuscrito → factura', () {
@@ -150,15 +151,15 @@ void main() {
         blockCount: 110,
         avgConfidence: 0.80,
       );
-      final result = useCase.call('manuscrito', a);
+      final result = useCase.call(DocumentType.manuscrito, a);
       expect(result.correctionNote, contains('manuscrito → factura'));
     });
   });
 
   group('manuscrito con baja confianza', () {
     test('→ manuscrito sin nota', () {
-      final result = useCase.call('manuscrito', lowConf());
-      expect(result.refinedClass, 'manuscrito');
+      final result = useCase.call(DocumentType.manuscrito, lowConf());
+      expect(result.refinedKind, DocumentType.manuscrito);
       expect(result.correctionNote, isNull);
       expect(result.wasReclassified, isFalse);
     });
@@ -185,8 +186,8 @@ void main() {
           blockCount: 100,
           avgConf: 0.85,
         );
-        final result = useCase.call('documento', a);
-        expect(result.refinedClass, 'factura',
+        final result = useCase.call(DocumentType.documento, a);
+        expect(result.refinedKind, DocumentType.factura,
             reason: 'keyword "$kw" debería detectar factura');
       });
     }
@@ -209,8 +210,8 @@ void main() {
           blockCount: 100,
           avgConf: 0.85,
         );
-        final result = useCase.call('documento', a);
-        expect(result.refinedClass, 'factura',
+        final result = useCase.call(DocumentType.documento, a);
+        expect(result.refinedKind, DocumentType.factura,
             reason: 'keyword "$kw" debería detectar factura');
       });
     }
@@ -222,18 +223,18 @@ void main() {
 
   group('umbrales exactos', () {
     test('avgConf = 0.72 → documento (límite superior del manuscrito)', () {
-      final result = useCase.call('documento', analysis(avgConf: 0.72));
-      expect(result.refinedClass, 'documento');
+      final result = useCase.call(DocumentType.documento, analysis(avgConf: 0.72));
+      expect(result.refinedKind, DocumentType.documento);
     });
 
     test('avgConf = 0.719 → manuscrito (límite inferior)', () {
-      final result = useCase.call('documento', analysis(avgConf: 0.719));
-      expect(result.refinedClass, 'manuscrito');
+      final result = useCase.call(DocumentType.documento, analysis(avgConf: 0.719));
+      expect(result.refinedKind, DocumentType.manuscrito);
     });
 
     test('receta mixta (0.657) → manuscrito', () {
-      final result = useCase.call('manuscrito', analysis(avgConf: 0.657));
-      expect(result.refinedClass, 'manuscrito');
+      final result = useCase.call(DocumentType.manuscrito, analysis(avgConf: 0.657));
+      expect(result.refinedKind, DocumentType.manuscrito);
     });
 
     test('blockCount = 81 + keywords → factura (justo sobre el umbral)', () {
@@ -242,8 +243,8 @@ void main() {
         blockCount: 81,
         avgConf: 0.85,
       );
-      final result = useCase.call('documento', a);
-      expect(result.refinedClass, 'factura');
+      final result = useCase.call(DocumentType.documento, a);
+      expect(result.refinedKind, DocumentType.factura);
     });
 
     test('blockCount = 80 + keywords → documento (justo en el umbral)', () {
@@ -252,8 +253,8 @@ void main() {
         blockCount: 80,
         avgConf: 0.85,
       );
-      final result = useCase.call('documento', a);
-      expect(result.refinedClass, 'documento');
+      final result = useCase.call(DocumentType.documento, a);
+      expect(result.refinedKind, DocumentType.documento);
     });
   });
 }

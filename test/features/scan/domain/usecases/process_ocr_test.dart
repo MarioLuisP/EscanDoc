@@ -40,6 +40,7 @@ void main() {
     registerFallbackValue(FakeDocumentModel());
     registerFallbackValue(FakeFile());
     registerFallbackValue(FakeOcrAnalysis());
+    registerFallbackValue(DocumentType.documento);
   });
 
   setUp(() async {
@@ -76,8 +77,8 @@ void main() {
       );
 
   // Helper para RefinementResult sin cambio
-  RefinementResult noChange(String type) =>
-      RefinementResult(refinedClass: type);
+  RefinementResult noChange(DocumentType kind) =>
+      RefinementResult(refinedKind: kind);
 
   group('ProcessOCR', () {
     DocumentModel createTestDocument() {
@@ -99,7 +100,7 @@ void main() {
       when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => analysis);
       when(() => mockRefinement.call(any(), any()))
-          .thenReturn(noChange('documento'));
+          .thenReturn(noChange(DocumentType.documento));
       when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
       when(() => mockRepository.updateDocument(any()))
           .thenAnswer((_) async => 1);
@@ -124,7 +125,7 @@ void main() {
       when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => analysis);
       when(() => mockRefinement.call(any(), any()))
-          .thenReturn(noChange('documento'));
+          .thenReturn(noChange(DocumentType.documento));
       when(() => mockClassifier.extractDueDate(extractedText)).thenReturn(null);
       when(() => mockRepository.updateDocument(any()))
           .thenAnswer((_) async => 1);
@@ -148,16 +149,16 @@ void main() {
       when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => analysis);
       when(() => mockRefinement.call(any(), any()))
-          .thenReturn(noChange('documento'));
+          .thenReturn(noChange(DocumentType.documento));
       when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
       when(() => mockRepository.updateDocument(any()))
           .thenAnswer((_) async => 1);
 
       // Act
-      await useCase.call(1, tfliteClass: 'manuscrito');
+      await useCase.call(1, tfliteKind: DocumentType.manuscrito);
 
       // Assert
-      verify(() => mockRefinement.call('manuscrito', any())).called(1);
+      verify(() => mockRefinement.call(DocumentType.manuscrito, any())).called(1);
     });
 
     test('nota de impreso: guarda primeros 70 chars en note_content', () async {
@@ -169,7 +170,7 @@ void main() {
       when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(text));
       when(() => mockRefinement.call(any(), any()))
-          .thenReturn(noChange('documento'));
+          .thenReturn(noChange(DocumentType.documento));
       when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
       when(() => mockRepository.updateDocument(any()))
           .thenAnswer((_) async => 1);
@@ -193,7 +194,7 @@ void main() {
       when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(longText));
       when(() => mockRefinement.call(any(), any()))
-          .thenReturn(noChange('documento'));
+          .thenReturn(noChange(DocumentType.documento));
       when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
       when(() => mockRepository.updateDocument(any()))
           .thenAnswer((_) async => 1);
@@ -219,13 +220,13 @@ void main() {
                 topConfidenceText: 'Hospital Central',
               ));
       when(() => mockRefinement.call(any(), any()))
-          .thenReturn(RefinementResult(refinedClass: 'manuscrito'));
+          .thenReturn(RefinementResult(refinedKind: DocumentType.manuscrito));
       when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
       when(() => mockRepository.updateDocument(any()))
           .thenAnswer((_) async => 1);
 
       // Act
-      await useCase.call(1, tfliteClass: 'manuscrito');
+      await useCase.call(1, tfliteKind: DocumentType.manuscrito);
 
       // Assert
       final captured =
@@ -245,13 +246,13 @@ void main() {
                 topConfidenceText: '',
               ));
       when(() => mockRefinement.call(any(), any()))
-          .thenReturn(RefinementResult(refinedClass: 'manuscrito'));
+          .thenReturn(RefinementResult(refinedKind: DocumentType.manuscrito));
       when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
       when(() => mockRepository.updateDocument(any()))
           .thenAnswer((_) async => 1);
 
       // Act
-      await useCase.call(1, tfliteClass: 'manuscrito');
+      await useCase.call(1, tfliteKind: DocumentType.manuscrito);
 
       // Assert
       final captured =
@@ -268,7 +269,7 @@ void main() {
       when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => OcrAnalysis.empty);
       when(() => mockRefinement.call(any(), any()))
-          .thenReturn(noChange('documento'));
+          .thenReturn(noChange(DocumentType.documento));
       when(() => mockClassifier.extractDueDate('')).thenReturn(null);
       when(() => mockRepository.updateDocument(any()))
           .thenAnswer((_) async => 1);
@@ -293,7 +294,7 @@ void main() {
       when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(extractedText));
       when(() => mockRefinement.call(any(), any()))
-          .thenReturn(noChange('documento'));
+          .thenReturn(noChange(DocumentType.documento));
       when(() => mockClassifier.extractDueDate(extractedText))
           .thenReturn(expectedDate);
       when(() => mockRepository.updateDocument(any()))
@@ -316,7 +317,7 @@ void main() {
       when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(extractedText));
       when(() => mockRefinement.call(any(), any()))
-          .thenReturn(noChange('documento'));
+          .thenReturn(noChange(DocumentType.documento));
       when(() => mockClassifier.extractDueDate(extractedText))
           .thenReturn(expectedDate);
       when(() => mockRepository.updateDocument(any()))
@@ -341,7 +342,7 @@ void main() {
       when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(extractedText));
       when(() => mockRefinement.call(any(), any()))
-          .thenReturn(noChange('documento'));
+          .thenReturn(noChange(DocumentType.documento));
       when(() => mockClassifier.extractDueDate(extractedText)).thenReturn(null);
       when(() => mockRepository.updateDocument(any()))
           .thenAnswer((_) async => 1);
@@ -363,13 +364,13 @@ void main() {
       when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(rawText));
       when(() => mockRefinement.call(any(), any()))
-          .thenReturn(RefinementResult(refinedClass: 'manuscrito'));
+          .thenReturn(RefinementResult(refinedKind: DocumentType.manuscrito));
       when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
       when(() => mockRepository.updateDocument(any()))
           .thenAnswer((_) async => 1);
 
       // Act
-      final result = await useCase.call(1, tfliteClass: 'manuscrito');
+      final result = await useCase.call(1, tfliteKind: DocumentType.manuscrito);
 
       // Assert
       expect(result.ocrText, startsWith('⚠️ Texto manuscrito'));
@@ -385,21 +386,21 @@ void main() {
           .thenAnswer((_) async => makeAnalysis('texto'));
       when(() => mockRefinement.call(any(), any())).thenReturn(
         RefinementResult(
-          refinedClass: 'factura',
+          refinedKind: DocumentType.factura,
           correctionNote: 'documento → factura (2° paso: keywords + 132 bloques)',
         ),
       );
       when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
-      when(() => mockClassifier.getTypeDisplayName('factura', 'es'))
+      when(() => mockClassifier.getTypeDisplayName(DocumentType.factura, 'es'))
           .thenReturn('Factura');
       when(() => mockRepository.countByTypePrefix('Factura', any()))
           .thenAnswer((_) async => 0);
-      when(() => mockClassifier.generateDocumentName('factura', any(), 'es', 1))
+      when(() => mockClassifier.generateDocumentName(DocumentType.factura, any(), 'es', 1))
           .thenReturn('Factura 1 del 17/2');
       when(() => mockRepository.updateDocument(any())).thenAnswer((_) async => 1);
 
       // Act
-      final result = await useCase.call(1, tfliteClass: 'documento', locale: 'es');
+      final result = await useCase.call(1, tfliteKind: DocumentType.documento, locale: 'es');
 
       // Assert
       expect(result.title, 'Factura 1 del 17/2');
@@ -415,22 +416,22 @@ void main() {
           .thenAnswer((_) async => makeAnalysis(rawText));
       when(() => mockRefinement.call(any(), any())).thenReturn(
         RefinementResult(
-          refinedClass: 'manuscrito',
+          refinedKind: DocumentType.manuscrito,
           correctionNote: 'documento → manuscrito (2° paso: confianza promedio baja: 0.37)',
         ),
       );
       when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
-      when(() => mockClassifier.getTypeDisplayName('manuscrito', any()))
+      when(() => mockClassifier.getTypeDisplayName(DocumentType.manuscrito, any()))
           .thenReturn('Nota');
       when(() => mockRepository.countByTypePrefix('Nota', any()))
           .thenAnswer((_) async => 0);
-      when(() => mockClassifier.generateDocumentName('manuscrito', any(), any(), any()))
+      when(() => mockClassifier.generateDocumentName(DocumentType.manuscrito, any(), any(), any()))
           .thenReturn('Nota 1 del 17/2');
       when(() => mockRepository.updateDocument(any()))
           .thenAnswer((_) async => 1);
 
       // Act
-      final result = await useCase.call(1, tfliteClass: 'documento');
+      final result = await useCase.call(1, tfliteKind: DocumentType.documento);
 
       // Assert
       expect(result.ocrText, startsWith('⚠️ Texto manuscrito'));
@@ -446,7 +447,7 @@ void main() {
       when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
           .thenAnswer((_) async => makeAnalysis(rawText));
       when(() => mockRefinement.call(any(), any()))
-          .thenReturn(noChange('documento'));
+          .thenReturn(noChange(DocumentType.documento));
       when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
       when(() => mockRepository.updateDocument(any()))
           .thenAnswer((_) async => 1);
@@ -476,7 +477,7 @@ void main() {
       // Refinador cambia 'documento' → 'manuscrito'
       when(() => mockRefinement.call(any(), any()))
           .thenReturn(RefinementResult(
-            refinedClass: 'manuscrito',
+            refinedKind: DocumentType.manuscrito,
             correctionNote: 'documento → manuscrito',
           ));
       when(() => mockClassifier.getTypeDisplayName(any(), any()))
@@ -490,7 +491,7 @@ void main() {
           .thenAnswer((_) async => 1);
 
       // Act
-      await useCase.call(1, tfliteClass: 'documento');
+      await useCase.call(1, tfliteKind: DocumentType.documento);
 
       // Assert: documentType en el doc guardado debe ser 'manuscrito'
       final captured =
@@ -549,13 +550,13 @@ void main() {
         // Re-clasificación (path es String → equality normal)
         when(() => mockImageClassifier.classify(testJpgFile.path))
             .thenAnswer((_) async => ClassificationResult(
-                  type: DocumentType.document,
+                  type: DocumentType.documento,
                   confidence: 0.9,
                   metadata: {'label': 'documento'},
                 ));
 
         when(() => mockRefinement.call(any(), any()))
-            .thenReturn(noChange('documento'));
+            .thenReturn(noChange(DocumentType.documento));
 
         final useCase2 = ProcessOCR(
           mockOCRService,
@@ -566,7 +567,7 @@ void main() {
           imageClassifier: mockImageClassifier,
         );
 
-        final result = await useCase2.call(1, tfliteClass: 'documento');
+        final result = await useCase2.call(1, tfliteKind: DocumentType.documento);
 
         verify(() => mockOrientationService.rotateImage(any(), 90)).called(1);
         verify(() => mockImageClassifier.classify(testJpgFile.path)).called(1);
@@ -582,7 +583,7 @@ void main() {
         when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
             .thenAnswer((_) async => makeRotatedAnalysis(90));
         when(() => mockRefinement.call(any(), any()))
-            .thenReturn(noChange('documento'));
+            .thenReturn(noChange(DocumentType.documento));
 
         // Sin services: comportamiento normal
         final result = await useCase.call(1);
@@ -599,7 +600,7 @@ void main() {
         when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
             .thenAnswer((_) async => makeCorrectAnalysis());
         when(() => mockRefinement.call(any(), any()))
-            .thenReturn(noChange('documento'));
+            .thenReturn(noChange(DocumentType.documento));
 
         final useCase2 = ProcessOCR(
           mockOCRService,

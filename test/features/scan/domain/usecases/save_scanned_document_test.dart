@@ -5,6 +5,7 @@ import 'package:escandoc/features/scan/domain/usecases/save_scanned_document.dar
 import 'package:escandoc/core/services/document_classifier.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
+import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 
 // Mocks
 class MockDocumentClassifier extends Mock implements DocumentClassifier {}
@@ -35,18 +36,18 @@ void main() {
 
   // Helper para stubs mínimos en cada test
   void stubDefaults({
-    String tfliteClass = 'documento',
+    DocumentType tfliteKind = DocumentType.documento,
     String locale = 'es',
     String displayName = 'Documento',
     int todayCount = 0,
     String generatedName = 'Documento 1 del 25/1',
     int insertedId = 1,
   }) {
-    when(() => mockClassifier.getTypeDisplayName(tfliteClass, locale))
+    when(() => mockClassifier.getTypeDisplayName(tfliteKind, locale))
         .thenReturn(displayName);
     when(() => mockRepository.countByTypePrefix(displayName, any()))
         .thenAnswer((_) async => todayCount);
-    when(() => mockClassifier.generateDocumentName(tfliteClass, any(), locale, todayCount + 1))
+    when(() => mockClassifier.generateDocumentName(tfliteKind, any(), locale, todayCount + 1))
         .thenReturn(generatedName);
     when(() => mockRepository.insertDocument(any())).thenAnswer((_) async => insertedId);
   }
@@ -66,7 +67,7 @@ void main() {
 
     test('nombre usa el tipo TFLite y número secuencial', () async {
       stubDefaults(
-        tfliteClass: 'factura',
+        tfliteKind: DocumentType.factura,
         displayName: 'Factura',
         todayCount: 0,
         generatedName: 'Factura 1 del 25/1',
@@ -75,7 +76,7 @@ void main() {
       final result = await useCase.call(
         testImage, '/test/output', 'es',
         currentDate: now,
-        tfliteClass: 'factura',
+        tfliteKind: DocumentType.factura,
       );
 
       expect(result.title, 'Factura 1 del 25/1');
@@ -83,7 +84,7 @@ void main() {
 
     test('si ya hay 2 facturas hoy → nuevo es Factura 3', () async {
       stubDefaults(
-        tfliteClass: 'factura',
+        tfliteKind: DocumentType.factura,
         displayName: 'Factura',
         todayCount: 2,
         generatedName: 'Factura 3 del 25/1',
@@ -92,16 +93,16 @@ void main() {
       final result = await useCase.call(
         testImage, '/test/output', 'es',
         currentDate: now,
-        tfliteClass: 'factura',
+        tfliteKind: DocumentType.factura,
       );
 
       expect(result.title, 'Factura 3 del 25/1');
-      verify(() => mockClassifier.generateDocumentName('factura', any(), 'es', 3)).called(1);
+      verify(() => mockClassifier.generateDocumentName(DocumentType.factura, any(), 'es', 3)).called(1);
     });
 
     test('manuscrito → nombre es "Nota N del D/M"', () async {
       stubDefaults(
-        tfliteClass: 'manuscrito',
+        tfliteKind: DocumentType.manuscrito,
         displayName: 'Nota',
         generatedName: 'Nota 1 del 25/1',
       );
@@ -109,7 +110,7 @@ void main() {
       final result = await useCase.call(
         testImage, '/test/output', 'es',
         currentDate: now,
-        tfliteClass: 'manuscrito',
+        tfliteKind: DocumentType.manuscrito,
       );
 
       expect(result.title, 'Nota 1 del 25/1');

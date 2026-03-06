@@ -80,11 +80,11 @@ void main() {
 
       // Assert - verificar que hay 5 probabilidades
       expect(probabilities.length, 5);
-      expect(probabilities.containsKey('document'), true);
-      expect(probabilities.containsKey('brochure'), true);
-      expect(probabilities.containsKey('photo'), true);
-      expect(probabilities.containsKey('handwritten'), true);
-      expect(probabilities.containsKey('ticket'), true);
+      expect(probabilities.containsKey('documento'), true);
+      expect(probabilities.containsKey('folleto'), true);
+      expect(probabilities.containsKey('foto'), true);
+      expect(probabilities.containsKey('manuscrito'), true);
+      expect(probabilities.containsKey('recibo'), true);
 
       // Todas las probabilidades deben sumar ~1.0 (con margen de error)
       final sum = probabilities.values.fold<double>(
@@ -103,7 +103,7 @@ void main() {
       final result = await classifier.classify(invalidPath);
 
       // Assert - debe retornar fallback con error
-      expect(result.type, DocumentType.document); // Fallback
+      expect(result.type, DocumentType.documento); // Fallback
       expect(result.confidence, 0.5); // Confianza baja
       expect(result.metadata.containsKey('error'), true);
     });
