@@ -70,7 +70,7 @@ class SearchResult {
       type: map['type'] as String,
       title: map['title'] as String,
       snippet: map['snippet'] as String,
-      date: map['date'] != null ? DateTime.parse(map['date'] as String) : null,
+      date: map['date'] != null ? DateTime.tryParse(map['date'] as String) : null,
       documentId: map['document_id'] as int?,
     );
   }

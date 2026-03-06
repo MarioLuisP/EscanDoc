@@ -147,14 +147,6 @@ class ImportProvider with ChangeNotifier {
     }
   }
 
-  /// MÉTODO LEGACY: Flujo completo sin clasificación (para compatibilidad).
-  @Deprecated('Use prepareImport() + completeImport() for classification support')
-  Future<DocumentModel?> importAndSave(File importedFile, String locale) async {
-    final preparation = await prepareImport(importedFile);
-    if (preparation == null) return null;
-    return await completeImport(preparation, locale);
-  }
-
   Future<void> _processOCRInBackground(
       int documentId, DocumentType tfliteKind, String locale, {VoidCallback? onComplete}) async {
     _processingOcrIds.add(documentId);

@@ -117,14 +117,6 @@ class ScanProvider with ChangeNotifier {
     }
   }
 
-  /// MÉTODO LEGACY: Flujo completo sin clasificación (para compatibilidad).
-  @Deprecated('Use prepareScan() + completeScan() for classification support')
-  Future<DocumentModel?> scanAndSave(String locale) async {
-    final preparation = await prepareScan();
-    if (preparation == null) return null;
-    return await completeScan(preparation, locale);
-  }
-
   Future<void> _processOCRInBackground(
       int documentId, DocumentType tfliteKind, String locale) async {
     _isProcessingOCR = true;

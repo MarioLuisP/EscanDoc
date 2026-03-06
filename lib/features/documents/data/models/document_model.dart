@@ -33,11 +33,11 @@ class DocumentModel {
       noteContent: map['note_content'] as String?,
       ocrText: map['ocr_text'] as String?,
       extractedDate: map['extracted_date'] != null
-          ? DateTime.parse(map['extracted_date'] as String)
+          ? DateTime.tryParse(map['extracted_date'] as String)
           : null,
-      createdAt: DateTime.parse(map['created_at'] as String),
+      createdAt: DateTime.tryParse(map['created_at'] as String? ?? '') ?? DateTime.now(),
       updatedAt: map['updated_at'] != null
-          ? DateTime.parse(map['updated_at'] as String)
+          ? DateTime.tryParse(map['updated_at'] as String)
           : null,
     );
   }

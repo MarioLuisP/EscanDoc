@@ -56,7 +56,7 @@ class SearchRepositoryImpl implements SearchRepository {
         title: title,
         snippet: snippet,
         date: row['created_at'] != null
-            ? DateTime.parse(row['created_at'] as String)
+            ? DateTime.tryParse(row['created_at'] as String)
             : null,
       ));
     }
