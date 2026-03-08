@@ -47,8 +47,6 @@ import 'features/onboarding/presentation/pages/onboarding_page.dart';
 import 'features/documents/presentation/pages/documents_list_page.dart';
 import 'features/documents/presentation/pages/home_page.dart';
 import 'features/documents/presentation/pages/document_detail_page.dart';
-import 'features/scan/presentation/pages/camera_page.dart';
-import 'features/scan/presentation/pages/crop_page.dart';
 import 'features/search/presentation/pages/search_page.dart';
 import 'features/notes/presentation/pages/note_editor_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
@@ -199,8 +197,6 @@ class MyApp extends StatelessWidget {
           '/onboarding': (context) => const OnboardingPage(),
           '/home': (context) => const HomePage(),
           '/documents': (context) => const DocumentsListPage(),
-          '/scan': (context) => const CameraPage(),
-          '/scan/crop': (context) => const CropPage(),
           '/document/detail': (context) => const DocumentDetailPage(),
           '/note/edit': (context) => const NoteEditorPage(),
           '/search': (context) => const SearchPage(),

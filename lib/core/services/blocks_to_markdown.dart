@@ -3,7 +3,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONTRATO
-// Entrada : List<TextBlock> de MLKit + DocumentType del clasificador
+// Entrada : List<TextBlock> de MLKit + DocumentType + rotationDegrees (ya calculado)
 // Salida  : String Markdown con estructura detectada automáticamente
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -13,28 +13,21 @@ enum DocumentType { documento, factura, folleto, recibo, manuscrito }
 const double _kColumnGapThreshold = 0.25;
 
 // Mínimo de líneas para que un cluster sea considerado columna válida.
-// Clusters con menos líneas se colapsan a la columna más cercana.
 const int _kMinLinesPerColumn = 3;
 
 String blocksToMarkdown(
   List<TextBlock> blocks,
   DocumentType docType,
+  int rotationDegrees,
 ) {
   if (blocks.isEmpty) return '';
 
   // ── 1. imageSize desde max de bboxes ────────────────────────────────────
-  final imageWidth = blocks.map((b) => b.boundingBox.right).reduce(max);
+  final imageWidth  = blocks.map((b) => b.boundingBox.right).reduce(max);
   final imageHeight = blocks.map((b) => b.boundingBox.bottom).reduce(max);
 
-  // ── 2. Rotación dominante (mediana de ángulos de TextLine) ───────────────
-  final allAngles = <double>[];
-  for (final block in blocks) {
-    for (final line in block.lines) {
-      final angle = line.angle;
-      if (angle != null) allAngles.add(angle);
-    }
-  }
-  final rotation = _detectRotation(allAngles);
+  // ── 2. Rotación ya detectada por el caller ───────────────────────────────
+  final rotation = _rotationFromDegrees(rotationDegrees);
 
   // ── 3. Aplanar a _Line con coordenadas transformadas ────────────────────
   final lines = <_Line>[];
@@ -45,27 +38,73 @@ String blocksToMarkdown(
         bbox.top, bbox.left, bbox.bottom, bbox.right,
         rotation, imageWidth, imageHeight,
       );
-      final isRotated =
-          rotation == _Rotation.deg90 || rotation == _Rotation.deg270;
+      final isRotated = rotation == _Rotation.deg90 || rotation == _Rotation.deg270;
       lines.add(_Line(
-        text: line.text,
-        readTop: readTop,
-        readLeft: readLeft,
-        readHeight: isRotated ? bbox.width : bbox.height,
-        readWidth: isRotated ? bbox.height : bbox.width,
-        lineCount: block.lines.length,
+        text:       line.text,
+        readTop:    readTop,
+        readLeft:   readLeft,
+        readHeight: isRotated ? bbox.width  : bbox.height,
+        readWidth:  isRotated ? bbox.height : bbox.width,
+        lineCount:  block.lines.length,
       ));
     }
   }
 
   if (lines.isEmpty) return '';
 
-  // ── 4. Detectar columnas por clustering de centros horizontales ──────────
   final totalReadWidth = lines.map((l) => l.readLeft + l.readWidth).reduce(max);
-  final columns = _clusterColumns(lines, totalReadWidth);
 
-  // ── 5. Construir markdown según docType y cantidad de columnas ───────────
-  return _buildMarkdown(columns, docType);
+  // ── 4. Separar líneas anchas (títulos/sección) de narrow (columnas) ──────
+  // Las wide lines (readWidth > 50%) actúan de puente entre columnas y
+  // destruyen el clustering si se incluyen. Se renderizan aparte, intercaladas
+  // por posición vertical.
+  bool isWideSeparator(_Line l) {
+    final t = l.text.trim();
+    return l.readWidth > totalReadWidth * 0.5 &&
+        t == t.toUpperCase() &&
+        t.contains(RegExp(r'[A-ZÁÉÍÓÚÑ]'));
+  }
+
+  final wideLines   = lines.where(isWideSeparator).toList()
+    ..sort((a, b) => a.readTop.compareTo(b.readTop));
+  final narrowLines = lines.where((l) => !isWideSeparator(l)).toList();
+
+  // ── 5. maxCapsHeight para jerarquía ALL_CAPS ────────────────────────────
+  // Comparación directa contra el máximo: >= 80% → #, >= 50% → ##, resto → ###
+  final maxCapsHeight = lines.fold(0.0, (m, l) {
+    final t = l.text.trim();
+    return (t == t.toUpperCase() && t.contains(RegExp(r'[A-ZÁÉÍÓÚÑ]')))
+        ? max(m, l.readHeight)
+        : m;
+  });
+
+  // ── 6. Renderizar: wide lines como divisores de bandas verticales ────────
+  final buffer = StringBuffer();
+  double bandStart = -double.infinity;
+
+  for (final wide in wideLines) {
+    // Narrow lines que caen en la banda anterior a esta wide line
+    final band = narrowLines.where((l) => l.readTop >= bandStart && l.readTop < wide.readTop).toList();
+    if (band.isNotEmpty) {
+      _renderBand(buffer, band, docType, totalReadWidth, maxCapsHeight);
+    }
+    // Insertar la wide line como texto jerárquico
+    final formatted = _formatLine(wide, maxCapsHeight);
+    if (formatted.isNotEmpty) {
+      if (buffer.isNotEmpty) buffer.writeln();
+      buffer.writeln(formatted);
+    }
+    bandStart = wide.readTop;
+  }
+
+  // Última banda: narrow lines después de la última wide line (o todas si no hay wide)
+  final remaining = narrowLines.where((l) => l.readTop >= bandStart).toList();
+  if (remaining.isNotEmpty) {
+    if (buffer.isNotEmpty) buffer.writeln();
+    _renderBand(buffer, remaining, docType, totalReadWidth, maxCapsHeight);
+  }
+
+  return buffer.toString().trim();
 }
 
 /// Mapea el string del clasificador TFLite → DocumentType
@@ -91,7 +130,7 @@ class _Line {
   final double readLeft;
   final double readHeight;
   final double readWidth;
-  final int lineCount;
+  final int    lineCount;
 
   const _Line({
     required this.text,
@@ -103,35 +142,13 @@ class _Line {
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DETECCIÓN DE ROTACIÓN
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Retorna los grados de rotación necesarios para enderezar el texto (0, 90, 180 o 270).
-///
-/// Entrada: lista de ángulos de líneas de texto reportados por ML Kit (pueden ser negativos).
-/// Usado por [blocksToMarkdown] internamente y por [DocumentOrientationServiceImpl].
-int detectOrientationDegrees(List<double> angles) {
-  switch (_detectRotation(angles)) {
-    case _Rotation.deg0:   return 0;
-    case _Rotation.deg90:  return 90;
-    case _Rotation.deg180: return 180;
-    case _Rotation.deg270: return 270;
+_Rotation _rotationFromDegrees(int deg) {
+  switch (deg) {
+    case 90:  return _Rotation.deg90;
+    case 180: return _Rotation.deg180;
+    case 270: return _Rotation.deg270;
+    default:  return _Rotation.deg0;
   }
-}
-
-_Rotation _detectRotation(List<double> angles) {
-  if (angles.isEmpty) return _Rotation.deg0;
-
-  // Normalizar negativos: -90 → 270, -180 → 180, etc.
-  final normalized = angles.map((a) => a < 0 ? a + 360 : a).toList();
-  final sorted = List<double>.from(normalized)..sort();
-  final median = sorted[sorted.length ~/ 2];
-
-  if (median >= 315 || median < 45) return _Rotation.deg0;
-  if (median >= 45 && median < 135) return _Rotation.deg90;
-  if (median >= 135 && median < 225) return _Rotation.deg180;
-  return _Rotation.deg270;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -143,14 +160,34 @@ _Rotation _detectRotation(List<double> angles) {
   _Rotation rotation, double imgW, double imgH,
 ) {
   switch (rotation) {
-    case _Rotation.deg0:
-      return (top, left);
-    case _Rotation.deg90:
-      return (left, imgH - bottom);
-    case _Rotation.deg180:
-      return (imgH - bottom, imgW - right);
-    case _Rotation.deg270:
-      return (imgW - right, top);
+    case _Rotation.deg0:   return (top,         left);
+    case _Rotation.deg90:  return (left,         imgH - bottom);
+    case _Rotation.deg180: return (imgH - bottom, imgW - right);
+    case _Rotation.deg270: return (imgW - right,  top);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDERIZADO DE BANDA
+// Una banda es el conjunto de narrow lines entre dos wide lines consecutivas.
+// ─────────────────────────────────────────────────────────────────────────────
+
+void _renderBand(
+  StringBuffer buffer,
+  List<_Line> lines,
+  DocumentType docType,
+  double totalReadWidth,
+  double maxCapsHeight,
+) {
+  final columns = _clusterColumns(lines, totalReadWidth);
+  final isStructured = docType == DocumentType.factura || docType == DocumentType.recibo;
+
+  if (columns.length > 1 && isStructured) {
+    _buildTableMarkdown(buffer, columns);
+  } else if (columns.length > 1) {
+    _buildInlineColumns(buffer, columns, maxCapsHeight);
+  } else {
+    _appendColumnMarkdown(buffer, columns.isEmpty ? lines : columns.first, maxCapsHeight);
   }
 }
 
@@ -159,22 +196,21 @@ _Rotation _detectRotation(List<double> angles) {
 //
 // FIX 2a — Referencia: centro del bbox (readLeft + readWidth/2).
 // FIX 2b — Densidad mínima: clusters con < _kMinLinesPerColumn líneas
-//           se colapsan a la columna válida más cercana (eliminación de
-//           columnas fantasma por ruido: logos, números sueltos, etc.).
+//           se colapsan a la columna válida más cercana.
+// Nota: las wide lines ya fueron separadas antes de llegar aquí.
 // ─────────────────────────────────────────────────────────────────────────────
 
 double _centerX(_Line l) => l.readLeft + l.readWidth / 2;
 
 List<List<_Line>> _clusterColumns(List<_Line> lines, double totalWidth) {
+  if (lines.isEmpty) return [];
   if (totalWidth <= 0) return [lines];
 
-  // Ordenar por centro horizontal
+  final threshold = totalWidth * _kColumnGapThreshold;
   final sorted = List<_Line>.from(lines)
     ..sort((a, b) => _centerX(a).compareTo(_centerX(b)));
 
-  final threshold = totalWidth * _kColumnGapThreshold;
   final columnCenters = <double>[_centerX(sorted.first)];
-
   for (int i = 1; i < sorted.length; i++) {
     final gap = _centerX(sorted[i]) - _centerX(sorted[i - 1]);
     if (gap > threshold) {
@@ -185,34 +221,29 @@ List<List<_Line>> _clusterColumns(List<_Line> lines, double totalWidth) {
     }
   }
 
-  // Asignación inicial: cada línea → columna de centro más cercano
+  // Asignación: cada línea → columna de centro más cercano
   final rawColumns = List.generate(columnCenters.length, (_) => <_Line>[]);
   for (final line in lines) {
     int best = 0;
     double bestDist = double.infinity;
     for (int i = 0; i < columnCenters.length; i++) {
       final dist = (_centerX(line) - columnCenters[i]).abs();
-      if (dist < bestDist) {
-        bestDist = dist;
-        best = i;
-      }
+      if (dist < bestDist) { bestDist = dist; best = i; }
     }
     rawColumns[best].add(line);
   }
 
-  // FIX 2b — Eliminar columnas fantasma por densidad insuficiente.
-  // Las líneas huérfanas se reasignan a la columna válida más cercana.
+  // FIX 2b — Eliminar columnas fantasma por densidad insuficiente
   final validIndices = <int>[];
   for (int i = 0; i < rawColumns.length; i++) {
     if (rawColumns[i].length >= _kMinLinesPerColumn) validIndices.add(i);
   }
 
-  // Si ninguna columna supera el mínimo (doc muy corto), devolver todas sin filtrar
   final columns = validIndices.isEmpty
       ? rawColumns
       : List.generate(validIndices.length, (i) => List<_Line>.from(rawColumns[validIndices[i]]));
 
-  // Reasignar huérfanas (columnas descartadas) a la columna válida más cercana
+  // Reasignar líneas de columnas descartadas a la válida más cercana
   if (validIndices.isNotEmpty && validIndices.length < rawColumns.length) {
     final validCenters = validIndices.map((i) => columnCenters[i]).toList();
     for (int i = 0; i < rawColumns.length; i++) {
@@ -222,17 +253,13 @@ List<List<_Line>> _clusterColumns(List<_Line> lines, double totalWidth) {
         double bestDist = double.infinity;
         for (int j = 0; j < validCenters.length; j++) {
           final dist = (_centerX(line) - validCenters[j]).abs();
-          if (dist < bestDist) {
-            bestDist = dist;
-            best = j;
-          }
+          if (dist < bestDist) { bestDist = dist; best = j; }
         }
         columns[best].add(line);
       }
     }
   }
 
-  // Ordenar cada columna por readTop
   for (final col in columns) {
     col.sort((a, b) => a.readTop.compareTo(b.readTop));
   }
@@ -241,67 +268,20 @@ List<List<_Line>> _clusterColumns(List<_Line> lines, double totalWidth) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CONSTRUCCIÓN DE MARKDOWN
-// ─────────────────────────────────────────────────────────────────────────────
-
-String _buildMarkdown(List<List<_Line>> columns, DocumentType docType) {
-  final buffer = StringBuffer();
-
-  // Percentiles de readHeight sobre todas las líneas → umbrales relativos
-  final heights = columns.expand((c) => c).map((l) => l.readHeight).toList()
-    ..sort();
-  final p50 = _percentile(heights, 0.50);
-  final p75 = _percentile(heights, 0.75);
-
-  final useTable = columns.length > 1 &&
-      (docType == DocumentType.factura || docType == DocumentType.recibo);
-
-  if (useTable) {
-    _buildTableMarkdown(buffer, columns, p50: p50, p75: p75);
-  } else {
-    for (int i = 0; i < columns.length; i++) {
-      if (i > 0) {
-        buffer.writeln();
-        buffer.writeln('---');
-        buffer.writeln();
-      }
-      _appendColumnMarkdown(buffer, columns[i], p50: p50, p75: p75);
-    }
-  }
-
-  return buffer.toString().trim();
-}
-
-double _percentile(List<double> sorted, double p) {
-  if (sorted.isEmpty) return 0;
-  final index = (p * (sorted.length - 1)).round();
-  return sorted[index];
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // FORMATO TABLA (factura / recibo)
 //
 // FIX 3 — Anchor: la columna con más líneas, no necesariamente la columna 0.
-//          Evita filas huérfanas cuando la columna izquierda es más corta.
 // ─────────────────────────────────────────────────────────────────────────────
 
-void _buildTableMarkdown(
-  StringBuffer buffer,
-  List<List<_Line>> columns, {
-  required double p50,
-  required double p75,
-}) {
+void _buildTableMarkdown(StringBuffer buffer, List<List<_Line>> columns) {
   final allLines = columns.expand((c) => c).toList();
-  final avgH =
-      allLines.map((l) => l.readHeight).reduce((a, b) => a + b) / allLines.length;
+  final avgH = allLines.map((l) => l.readHeight).reduce((a, b) => a + b) / allLines.length;
   final rowTolerance = avgH * 0.8;
 
-  // FIX 3: usar la columna con más líneas como ancla de filas
   int anchorIndex = 0;
   for (int i = 1; i < columns.length; i++) {
     if (columns[i].length > columns[anchorIndex].length) anchorIndex = i;
   }
-  // Reordenar: ancla primero, resto en orden original
   final orderedColumns = [
     columns[anchorIndex],
     ...columns.asMap().entries
@@ -324,10 +304,45 @@ void _buildTableMarkdown(
   final colCount = orderedColumns.length;
   buffer.writeln(List.generate(colCount, (i) => 'Col${i + 1}').join(' | '));
   buffer.writeln(List.filled(colCount, '---').join(' | '));
-
   for (final row in rows) {
-    final cells = row.map((l) => l != null ? _formatText(l) : '').toList();
-    buffer.writeln(cells.join(' | '));
+    buffer.writeln(row.map((l) => l != null ? _formatText(l) : '').join(' | '));
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FORMATO INLINE COLUMNAS (documento / folleto con múltiples columnas)
+//
+// Misma lógica de matching que _buildTableMarkdown (anchor + rowTolerance),
+// pero salida como "izq\t\tder" sin headers ni separadores.
+// ─────────────────────────────────────────────────────────────────────────────
+
+void _buildInlineColumns(StringBuffer buffer, List<List<_Line>> columns, double maxCapsHeight) {
+  final allLines = columns.expand((c) => c).toList();
+  final avgH = allLines.map((l) => l.readHeight).reduce((a, b) => a + b) / allLines.length;
+  final rowTolerance = avgH * 0.8;
+
+  int anchorIndex = 0;
+  for (int i = 1; i < columns.length; i++) {
+    if (columns[i].length > columns[anchorIndex].length) anchorIndex = i;
+  }
+  final orderedColumns = [
+    columns[anchorIndex],
+    ...columns.asMap().entries
+        .where((e) => e.key != anchorIndex)
+        .map((e) => e.value),
+  ];
+
+  for (final anchor in orderedColumns[0]) {
+    final cells = <String>[_formatLine(anchor, maxCapsHeight)];
+    for (int c = 1; c < orderedColumns.length; c++) {
+      final match = orderedColumns[c].where(
+        (l) => (l.readTop - anchor.readTop).abs() < rowTolerance,
+      );
+      cells.add(match.isNotEmpty ? _formatText(match.first) : '');
+    }
+    // Eliminar celdas vacías del final; si solo queda una, sin tab
+    while (cells.length > 1 && cells.last.isEmpty) cells.removeLast();
+    buffer.writeln(cells.join('\t\t'));
   }
 }
 
@@ -335,37 +350,30 @@ void _buildTableMarkdown(
 // FORMATO SECUENCIAL (documento / folleto / manuscrito)
 // ─────────────────────────────────────────────────────────────────────────────
 
-void _appendColumnMarkdown(
-  StringBuffer buffer,
-  List<_Line> lines, {
-  required double p50,
-  required double p75,
-}) {
+void _appendColumnMarkdown(StringBuffer buffer, List<_Line> lines, double maxCapsHeight) {
   for (final line in lines) {
-    buffer.writeln(_formatLine(line, p50: p50, p75: p75));
+    buffer.writeln(_formatLine(line, maxCapsHeight));
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // JERARQUÍA VISUAL
-// Todo mayúsculas + readHeight relativo al documento → nivel de heading.
+// ALL_CAPS → heading según ratio respecto al máximo ALL_CAPS del documento.
 // ─────────────────────────────────────────────────────────────────────────────
 
-String _formatLine(_Line line, {required double p50, required double p75}) {
+String _formatLine(_Line line, double maxCapsHeight) {
   final text = line.text.trim();
   if (text.isEmpty) return '';
 
   if (text.startsWith('•') || text.startsWith('-')) {
-    final content = text.replaceFirst(RegExp(r'^[•\-]\s*'), '');
-    return '- $content';
+    return '- ${text.replaceFirst(RegExp(r'^[•\-]\s*'), '')}';
   }
 
-  final isAllCaps =
-      text == text.toUpperCase() && text.contains(RegExp(r'[A-ZÁÉÍÓÚÑ]'));
-
-  if (isAllCaps) {
-    if (line.readHeight >= p75) return '# $text';
-    if (line.readHeight >= p50) return '## $text';
+  final isAllCaps = text == text.toUpperCase() && text.contains(RegExp(r'[A-ZÁÉÍÓÚÑ]'));
+  if (isAllCaps && maxCapsHeight > 0) {
+    final ratio = line.readHeight / maxCapsHeight;
+    if (ratio >= 0.80) return '# $text';
+    if (ratio >= 0.50) return '## $text';
     return '### $text';
   }
 

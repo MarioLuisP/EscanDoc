@@ -53,24 +53,16 @@ class DocumentScannerServiceImpl implements DocumentScannerService {
         return null;
       }
 
-      // getScannedDocumentAsImages() retorna Map con: images, count, Uri, Count
-      String? filePath;
-
-      if (scannedResult is Map) {
-        // Extraer path del archivo (Android: JPG, iOS: PNG)
-        final images = scannedResult['images'] as List?;
-        if (images == null || images.isEmpty) {
-          debugPrint('[DocumentScanner] ERROR: images está vacío o null');
-          return null;
-        }
-
-        filePath = images.first.toString();
-        debugPrint('[DocumentScanner] Path desde map (images): $filePath');
-        debugPrint('[DocumentScanner] count: ${scannedResult['count']}');
-      } else {
-        debugPrint('[DocumentScanner] ERROR: Tipo de resultado desconocido: ${scannedResult.runtimeType}');
+      // getScannedDocumentAsImages() retorna ImageScanResult con: images, count
+      final images = scannedResult.images;
+      if (images.isEmpty) {
+        debugPrint('[DocumentScanner] ERROR: images está vacío');
         return null;
       }
+
+      String filePath = images.first;
+      debugPrint('[DocumentScanner] Path: $filePath');
+      debugPrint('[DocumentScanner] count: ${scannedResult.count}');
 
       if (filePath.isEmpty) {
         debugPrint('[DocumentScanner] ERROR: No se pudo extraer el path del resultado');

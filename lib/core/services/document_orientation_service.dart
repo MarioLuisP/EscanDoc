@@ -1,5 +1,20 @@
 import 'dart:io';
 
+/// Determina los grados de rotación del texto en una imagen a partir de los
+/// ángulos de líneas reportados por ML Kit (pueden ser negativos).
+///
+/// Retorna 0, 90, 180 o 270 — cuánto está rotada la imagen respecto a lo normal.
+/// Usado por [OCRServiceImpl] y [DocumentOrientationServiceImpl].
+int detectOrientationDegrees(List<double> angles) {
+  if (angles.isEmpty) return 0;
+  final normalized = angles.map((a) => a < 0 ? a + 360 : a).toList()..sort();
+  final median = normalized[normalized.length ~/ 2];
+  if (median >= 315 || median < 45)  return 0;
+  if (median >= 45  && median < 135) return 90;
+  if (median >= 135 && median < 225) return 180;
+  return 270;
+}
+
 /// Servicio para detectar y corregir la orientación de imágenes de documentos.
 ///
 /// Dos capas independientes:

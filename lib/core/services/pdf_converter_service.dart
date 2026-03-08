@@ -16,10 +16,7 @@ abstract class PdfConverterService {
   /// Retorna el File del PDF generado.
   Future<File> convertJpgToPdf(String jpgPath, String outputPdfPath);
 
-  /// Convierte bytes de imagen (PNG/JPG) a PDF de tamaño A4 fijo (2480×3508).
-  ///
-  /// Usado para exportar imágenes ya normalizadas por [A4NormalizerService].
-  /// No lee headers: las dimensiones son siempre kA4Width × kA4Height.
+  /// Convierte bytes de imagen (PNG/JPG) a PDF de tamaño A4.
   Future<File> convertImageBytesToPdfA4(
       Uint8List imageBytes, String outputPdfPath);
 }

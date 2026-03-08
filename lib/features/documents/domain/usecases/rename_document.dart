@@ -19,7 +19,9 @@ class RenameDocument {
       final document = await repository.getDocumentById(id);
       if (document == null) return false;
 
-      final renamed = document.copyWith(title: newTitle.trim());
+      final trimmed = newTitle.trim();
+      final capitalized = trimmed[0].toUpperCase() + trimmed.substring(1);
+      final renamed = document.copyWith(title: capitalized);
       await repository.updateDocument(renamed);
       return true;
     } catch (e) {

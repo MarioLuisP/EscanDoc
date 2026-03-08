@@ -108,11 +108,27 @@ class ProcessOCR {
             ' — ${ocrAnalysis.blockCount} bloques');
       }
 
-      final extractedText = ocrAnalysis.text;
-
       // 4. Refinar clasificación con métricas OCR (2° paso)
       final refinement = _refinement.call(activeKind, ocrAnalysis);
       debugPrint('[ProcessOCR] TFLite: ${tfliteKind.dbKey} → Refinado: ${refinement.refinedKind.dbKey}');
+
+      // Si el tipo cambió, regenerar markdown con el tipo correcto (puede cambiar
+      // el formato, ej: documento → recibo activa la tabla en blocksToMarkdown).
+      final rebuilt = refinement.wasReclassified
+          ? _ocrService.rebuildMarkdown(refinement.refinedKind.dbKey)
+          : '';
+      final extractedText = rebuilt.isNotEmpty ? rebuilt : ocrAnalysis.text;
+
+      // DEBUG: volcar markdown completo a consola Flutter en chunks de 800 chars
+      if (kDebugMode && extractedText.isNotEmpty) {
+        debugPrint('[ProcessOCR] ── MD OUTPUT ──────────────────────────────');
+        var offset = 0;
+        while (offset < extractedText.length) {
+          debugPrint(extractedText.substring(offset, (offset + 800).clamp(0, extractedText.length)));
+          offset += 800;
+        }
+        debugPrint('[ProcessOCR] ── MD END ────────────────────────────────');
+      }
 
       // 5. Si hubo reclasificación → actualizar título
       String updatedTitle = document.title;

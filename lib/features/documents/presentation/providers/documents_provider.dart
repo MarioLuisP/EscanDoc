@@ -108,12 +108,13 @@ class DocumentsProvider extends ChangeNotifier {
       final success = await _renameDocument(id, newTitle);
       if (success) {
         final trimmed = newTitle.trim();
+        final capitalized = trimmed[0].toUpperCase() + trimmed.substring(1);
         if (_selectedDocument?.id == id) {
-          _selectedDocument = _selectedDocument!.copyWith(title: trimmed);
+          _selectedDocument = _selectedDocument!.copyWith(title: capitalized);
         }
         final index = _documents.indexWhere((d) => d.id == id);
         if (index != -1) {
-          _documents[index] = _documents[index].copyWith(title: trimmed);
+          _documents[index] = _documents[index].copyWith(title: capitalized);
         }
         notifyListeners();
       }

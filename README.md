@@ -87,6 +87,22 @@ flutter run
 
 ---
 
+     Package Name              Current   Upgradable  Resolvable  Latest
+
+     direct dependencies:
+     image                     *4.5.4    *4.5.4      *4.5.4      4.8.0
+
+     dev_dependencies: all up-to-date.
+
+     transitive dependencies:
+     characters                *1.4.0    *1.4.0      *1.4.0      1.4.1
+     matcher                   *0.12.17  *0.12.17    *0.12.17    0.12.19
+     material_color_utilities  *0.11.1   *0.11.1     *0.11.1     0.13.0
+     meta                      *1.17.0   *1.17.0     *1.17.0     1.18.1
+     test_api                  *0.7.7    *0.7.7      *0.7.7      0.7.10
+     win32                     *5.15.0   *5.15.0     *5.15.0     6.0.0
+     You are already using the newest resolvable versions listed in the 'Resolvable' column.
+
 ## 📋 Roadmap
 
 - [x] Definición de arquitectura

@@ -3,17 +3,16 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  flutter_doc_scanner
   gal
   permission_handler_windows
   printing
   share_plus
   speech_to_text_windows
-  sqlite3_flutter_libs
   url_launcher_windows
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
+  flutter_local_notifications_windows
   pdfium_flutter
   tflite_flutter
 )

@@ -28,7 +28,6 @@ dependencies:
   # DATABASE & STORAGE
   # ═══════════════════════════════════════════════════════════════════════════
   sqflite: ^2.4.2                    # SQLite local
-  sqlite3_flutter_libs: ^0.5.41      # SQLite con FTS para tests (via sqflite_common_ffi)
   path_provider: ^2.1.5              # Rutas de storage
   shared_preferences: ^2.3.2         # Preferencias (onboarding, settings)
   file_picker: ^10.3.10              # Seleccionar archivos/imágenes de galería (importar)
@@ -55,7 +54,7 @@ dependencies:
   printing: ^5.14.2                  # Vista previa e impresión de PDFs
   pdfrx: ^2.2.24                     # Visualización de PDFs con zoom
   gal: ^2.3.0                        # Guardar imágenes en galería (feature: escanear fotos)
-  share_plus: ^10.1.0               # Compartir archivos via share sheet del SO
+  share_plus: ^12.0.0               # Compartir archivos via share sheet del SO
 
   # ═══════════════════════════════════════════════════════════════════════════
   # VOICE SEARCH
@@ -65,19 +64,18 @@ dependencies:
   # ═══════════════════════════════════════════════════════════════════════════
   # NOTIFICATIONS (Fase 2 - Vencimientos)
   # ═══════════════════════════════════════════════════════════════════════════
-  flutter_local_notifications: ^18.0.1  # Notificaciones locales
+  flutter_local_notifications: ^21.0.0  # Notificaciones locales
 
   # ═══════════════════════════════════════════════════════════════════════════
   # MARKDOWN RENDERING
   # ═══════════════════════════════════════════════════════════════════════════
   flutter_markdown_plus: ^1.0.7        # Renderizado Markdown en UI
-  google_fonts: ^6.2.1                 # Dancing Script para pergamino de notas
+  google_fonts: ^8.0.0                 # Dancing Script para pergamino de notas
 
   # ═══════════════════════════════════════════════════════════════════════════
   # UTILITIES
   # ═══════════════════════════════════════════════════════════════════════════
   path: ^1.9.1                       # Manipulación de rutas
-  uuid: ^4.5.1                       # Generación de IDs únicos
   permission_handler: ^12.0.1        # Manejo de permisos (camera, microphone)
 
 dev_dependencies:
@@ -89,7 +87,7 @@ dev_dependencies:
   # ═══════════════════════════════════════════════════════════════════════════
   mocktail: ^1.0.4                   # Mocks para tests
   sqflite_common_ffi: ^2.3.4         # SQLite para tests en desktop
-  sqlite3: ^2.4.6                    # Para configurar SQLite con FTS en tests
+  sqlite3: ^3.1.6                    # Para configurar SQLite con FTS en tests
 
   # ═══════════════════════════════════════════════════════════════════════════
   # APP ICON
@@ -99,7 +97,7 @@ dev_dependencies:
   # ═══════════════════════════════════════════════════════════════════════════
   # LINTING
   # ═══════════════════════════════════════════════════════════════════════════
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true

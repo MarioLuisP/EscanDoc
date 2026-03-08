@@ -53,6 +53,19 @@ void main() {
       expect(captured.title, 'Mi factura del gas');
     });
 
+    test('capitaliza la primera letra del título', () async {
+      when(() => mockRepository.getDocumentById(1))
+          .thenAnswer((_) async => testDoc);
+      when(() => mockRepository.updateDocument(any()))
+          .thenAnswer((_) async => 1);
+
+      await useCase(1, 'factura de luz febrero');
+
+      final captured = verify(() => mockRepository.updateDocument(captureAny()))
+          .captured.single as DocumentModel;
+      expect(captured.title, 'Factura de luz febrero');
+    });
+
     test('hace trim del título', () async {
       when(() => mockRepository.getDocumentById(1))
           .thenAnswer((_) async => testDoc);

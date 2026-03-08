@@ -183,7 +183,9 @@ class _PhotoFullscreenPageState extends State<PhotoFullscreenPage> {
   }
 
   Future<void> _shareFile(String path, {required String mimeType}) async {
-    await Share.shareXFiles([XFile(path, mimeType: mimeType)]);
+    await SharePlus.instance.share(
+      ShareParams(files: [XFile(path, mimeType: mimeType)]),
+    );
   }
 
   Future<void> _shareAsDocumentPdf(BuildContext context) async {
@@ -203,8 +205,8 @@ class _PhotoFullscreenPageState extends State<PhotoFullscreenPage> {
       if (!mounted) return;
       setState(() => _sharing = false);
 
-      await Share.shareXFiles(
-        [XFile(tempPdf.path, mimeType: 'application/pdf')],
+      await SharePlus.instance.share(
+        ShareParams(files: [XFile(tempPdf.path, mimeType: 'application/pdf')]),
       );
     } catch (e) {
       debugPrint('[Export] Error al exportar PDF: $e');
