@@ -77,6 +77,7 @@
   "rename_empty_error": "Name cannot be empty",
 
   "delete_confirm_title": "Delete this document?",
+  "delete_confirm_many": "Delete {} documents?",
   "delete_confirm_message": "This action cannot be undone",
   "delete_yes_button": "YES, DELETE",
   "delete_no_button": "NO, CANCEL",
@@ -122,6 +123,9 @@
   "import_cancelled": "Import cancelled",
   "document_imported": "Document imported successfully",
   "print_tooltip": "Print",
+  "create_pdf_button": "Create PDF",
+  "pdf_order_title": "Order pages",
+  "pdf_export_button": "Export PDF ({})",
   "share_title": "Share as...",
   "share_as_photo": "As photo (JPG)",
   "share_as_document": "As document (PDF)",
@@ -135,6 +139,8 @@
   "scan_subtitle": "Scan and save your documents.",
 
   "all_documents_title": "Documents",
+  "selection_count": "{} selected",
+  "documents_deleted": "{} documents deleted",
   "go_home": "Home",
   "sort_recent": "Most recent",
   "sort_oldest": "Oldest",

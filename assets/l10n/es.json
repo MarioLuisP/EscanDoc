@@ -77,6 +77,7 @@
   "rename_empty_error": "El nombre no puede estar vacío",
 
   "delete_confirm_title": "¿Eliminar este documento?",
+  "delete_confirm_many": "¿Eliminar {} documentos?",
   "delete_confirm_message": "Esta acción no se puede deshacer",
   "delete_yes_button": "SÍ, ELIMINAR",
   "delete_no_button": "NO, CANCELAR",
@@ -122,6 +123,9 @@
   "import_cancelled": "Importación cancelada",
   "document_imported": "Documento importado exitosamente",
   "print_tooltip": "Imprimir",
+  "create_pdf_button": "Crear PDF",
+  "pdf_order_title": "Ordenar páginas",
+  "pdf_export_button": "Exportar PDF ({})",
   "share_title": "¿Compartir como?",
   "share_as_photo": "Como foto (JPG)",
   "share_as_document": "Como documento (PDF)",
@@ -135,6 +139,8 @@
   "scan_subtitle": "Escaneá y guardá tus documentos.",
 
   "all_documents_title": "Documentos",
+  "selection_count": "{} seleccionados",
+  "documents_deleted": "{} documentos eliminados",
   "go_home": "Inicio",
   "sort_recent": "Más recientes",
   "sort_oldest": "Más antiguos",

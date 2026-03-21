@@ -148,7 +148,10 @@ class ImportProvider with ChangeNotifier {
   }
 
   Future<void> _processOCRInBackground(
-      int documentId, DocumentType tfliteKind, String locale, {VoidCallback? onComplete}) async {
+      int documentId, DocumentType tfliteKind, String locale, {
+      bool skipRefinement = false,
+      VoidCallback? onComplete,
+    }) async {
     _processingOcrIds.add(documentId);
     _isProcessingOCR = true;
     _statusMessage = 'status_extracting';
@@ -158,6 +161,7 @@ class ImportProvider with ChangeNotifier {
       documentId,
       tfliteKind,
       locale,
+      skipRefinement: skipRefinement,
       onStatus: (msg) {
         _statusMessage = msg;
         notifyListeners();
@@ -220,12 +224,17 @@ class ImportProvider with ChangeNotifier {
 
     final savedDocuments = <DocumentModel>[];
 
-    // Procesar de primera a última (nombres naturales: p1=N+1, p2=N+2...).
     // Timestamps decrecientes → p1 queda arriba (más reciente) en la UI.
     final baseTime = DateTime.now();
+
+    // Para PDFs multipágina: nombre base del archivo (sin extensión).
+    // Cada página hereda ese nombre + número: "tutorial_1", "tutorial_2"…
+    final isMultiPage = actualPages > 1;
+    final pdfBaseName = isMultiPage ? p.basenameWithoutExtension(pdfPath) : '';
+
     for (var i = 0; i < actualPages; i++) {
       _pdfCurrentPage = i + 1;
-      _statusMessage = actualPages > 1 ? null : 'status_processing_pdf';
+      _statusMessage = isMultiPage ? null : 'status_processing_pdf';
       notifyListeners();
 
       // 1. Renderizar solo esta página
@@ -254,16 +263,29 @@ class ImportProvider with ChangeNotifier {
       await tempPageFile.delete().catchError((_) {});
 
       // 4. Procesar
+      final pageDate = baseTime.add(Duration(milliseconds: actualPages - 1 - i));
       try {
-        final preparation = await prepareImport(permFile);
-        if (preparation == null) {
-          await permFile.delete().catchError((_) {});
-          continue;
+        if (isMultiPage) {
+          // PDF multipágina: sin TFLite, sin refinador, nombre heredado del PDF.
+          final title = '${pdfBaseName}_${i + 1}';
+          final document = await _pipeline.completePdfPage(permFile, title, locale, pageDate);
+          savedDocuments.add(document);
+          _processOCRInBackground(
+            document.id!,
+            DocumentType.documento,
+            locale,
+            skipRefinement: true,
+          );
+        } else {
+          // PDF de 1 página: pipeline normal con TFLite y refinador.
+          final preparation = await prepareImport(permFile);
+          if (preparation == null) {
+            await permFile.delete().catchError((_) {});
+            continue;
+          }
+          final document = await completeImport(preparation, locale, currentDate: pageDate);
+          if (document != null) savedDocuments.add(document);
         }
-
-        final pageDate = baseTime.add(Duration(milliseconds: actualPages - 1 - i));
-        final document = await completeImport(preparation, locale, currentDate: pageDate);
-        if (document != null) savedDocuments.add(document);
       } catch (e) {
         debugPrint('[ImportProvider] Error importando página ${i + 1}: $e');
         await permFile.delete().catchError((_) {});

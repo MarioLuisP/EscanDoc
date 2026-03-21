@@ -36,6 +36,9 @@ class RefinementResult {
 class RefineClassification {
   static const double _avgConfidenceThreshold = 0.72;
   static const int _minBlocksForInvoice = 80;
+  static const int _maxBlocksForHandwritten = 15;
+  static const int _maxCharsForHandwritten = 250;
+  static const double _minAspectRatioForReceipt = 2.0;
 
   /// Keywords en español que identifican facturas de servicio
   static const List<String> _invoiceKeywordsEs = [
@@ -98,19 +101,48 @@ class RefineClassification {
       return RefinementResult(refinedKind: kind);
     }
 
+    // recibo y folleto: solo pueden promover a factura
+    if (kind == DocumentType.recibo || kind == DocumentType.folleto) {
+      if (_hasInvoiceKeyword(analysis.text) &&
+          analysis.blockCount > _minBlocksForInvoice) {
+        final fromKind = kind == DocumentType.recibo ? 'recibo' : 'folleto';
+        return RefinementResult(
+          refinedKind: DocumentType.factura,
+          correctionNote:
+              '$fromKind → factura (2° paso: keywords + ${analysis.blockCount} bloques)',
+        );
+      }
+      if (kind == DocumentType.folleto &&
+          analysis.imageAspectRatio > _minAspectRatioForReceipt) {
+        return RefinementResult(
+          refinedKind: DocumentType.recibo,
+          correctionNote:
+              'folleto → recibo (2° paso: aspectRatio=${analysis.imageAspectRatio.toStringAsFixed(2)})',
+        );
+      }
+      return RefinementResult(refinedKind: kind);
+    }
+
     final isHandwritten = analysis.avgConfidence < _avgConfidenceThreshold;
 
     if (isHandwritten) {
-      if (kind == DocumentType.documento) {
+      final isRealHandwritten = analysis.text.length <= _maxCharsForHandwritten &&
+          analysis.blockCount <= _maxBlocksForHandwritten;
+
+      if (!isRealHandwritten) {
+        // Baja confianza pero muchos chars/bloques → impreso de mala calidad
+        // Tratar como documento y verificar factura (continúa abajo)
+      } else if (kind == DocumentType.documento) {
         final conf = analysis.avgConfidence.toStringAsFixed(2);
         return RefinementResult(
           refinedKind: DocumentType.manuscrito,
           correctionNote:
               'documento → manuscrito (2° paso: confianza promedio baja: $conf)',
         );
+      } else {
+        // manuscrito real con baja confianza → sin cambio
+        return RefinementResult(refinedKind: DocumentType.manuscrito);
       }
-      // manuscrito → sigue siendo manuscrito, sin cambio
-      return RefinementResult(refinedKind: DocumentType.manuscrito);
     }
 
     // Texto legible → documento
@@ -122,7 +154,7 @@ class RefineClassification {
       note = 'manuscrito → documento (2° paso: confianza promedio alta: $conf)';
     }
 
-    // Verificar si es factura
+    // 1. Verificar si es factura (máxima prioridad)
     if (_hasInvoiceKeyword(analysis.text) &&
         analysis.blockCount > _minBlocksForInvoice) {
       if (note != null) {
@@ -134,11 +166,26 @@ class RefineClassification {
       refined = DocumentType.factura;
     }
 
+    // 2. Si no es factura, verificar formato ticket por aspectRatio
+    if (refined != DocumentType.factura &&
+        analysis.imageAspectRatio > _minAspectRatioForReceipt) {
+      final fromKind =
+          kind == DocumentType.manuscrito ? 'manuscrito' : 'documento';
+      return RefinementResult(
+        refinedKind: DocumentType.recibo,
+        correctionNote:
+            '$fromKind → recibo (2° paso: aspectRatio=${analysis.imageAspectRatio.toStringAsFixed(2)})',
+      );
+    }
+
     return RefinementResult(refinedKind: refined, correctionNote: note);
   }
 
   bool _isRefineable(DocumentType kind) =>
-      kind == DocumentType.documento || kind == DocumentType.manuscrito;
+      kind == DocumentType.documento ||
+      kind == DocumentType.manuscrito ||
+      kind == DocumentType.recibo ||
+      kind == DocumentType.folleto;
 
   bool _hasInvoiceKeyword(String text) {
     final lower = text.toLowerCase();

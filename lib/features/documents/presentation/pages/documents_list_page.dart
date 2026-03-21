@@ -5,8 +5,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
 import 'package:escandoc/features/documents/presentation/providers/import_provider.dart';
-import 'package:escandoc/features/documents/presentation/widgets/delete_confirmation_dialog.dart';
 import 'package:escandoc/core/theme/document_type_colors.dart';
+import 'package:escandoc/features/documents/presentation/pages/pdf_order_page.dart';
 
 /// Retorna la clave i18n del tipo de documento a partir del campo documentType.
 String _docTypeKey(String? documentType) {
@@ -21,7 +21,8 @@ String _docTypeKey(String? documentType) {
 
 enum _SortOrder { recent, oldest, byName, byType }
 
-/// Pantalla "Ver Todos" — lista completa de documentos con filtro de orden.
+/// Pantalla "Ver Todos" — lista completa de documentos con filtro de orden
+/// y modo selección múltiple (long-press).
 class DocumentsListPage extends StatefulWidget {
   const DocumentsListPage({super.key});
 
@@ -31,6 +32,10 @@ class DocumentsListPage extends StatefulWidget {
 
 class _DocumentsListPageState extends State<DocumentsListPage> {
   _SortOrder _sort = _SortOrder.recent;
+
+  // --- Modo selección ---
+  bool _selectionMode = false;
+  final Set<int> _selectedIds = {};
 
   @override
   void initState() {
@@ -44,7 +49,7 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
     final list = [...docs];
     switch (_sort) {
       case _SortOrder.recent:
-        return list; // ya viene DESC por created_at
+        return list;
       case _SortOrder.oldest:
         return list.reversed.toList();
       case _SortOrder.byName:
@@ -64,27 +69,155 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    context.locale; // Registra dependencia en EasyLocalization → rebuild al cambiar idioma
-    return Scaffold(
+  // --- Selección ---
+
+  void _enterSelectionMode(int docId) {
+    setState(() {
+      _selectionMode = true;
+      _selectedIds.add(docId);
+    });
+  }
+
+  void _toggleSelection(int docId) {
+    setState(() {
+      if (_selectedIds.contains(docId)) {
+        _selectedIds.remove(docId);
+        if (_selectedIds.isEmpty) _selectionMode = false;
+      } else {
+        _selectedIds.add(docId);
+      }
+    });
+  }
+
+  void _exitSelectionMode() {
+    setState(() {
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+  }
+
+  Future<void> _deleteSelected() async {
+    final count = _selectedIds.length;
+    final title = count == 1
+        ? 'delete_confirm_title'.tr()
+        : 'delete_confirm_many'.tr(args: [count.toString()]);
+
+    final confirmed = await _showDeleteConfirmation(title);
+    if (confirmed != true || !mounted) return;
+
+    final ids = List<int>.from(_selectedIds);
+    final provider = context.read<DocumentsProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    _exitSelectionMode();
+
+    for (final id in ids) {
+      await provider.deleteDocument(id);
+    }
+
+    if (!mounted) return;
+    final msg = count == 1
+        ? 'document_deleted'.tr()
+        : 'documents_deleted'.tr(args: [count.toString()]);
+    messenger.showSnackBar(SnackBar(
+      content: Text(msg, style: const TextStyle(fontSize: 16)),
+      duration: const Duration(seconds: 3),
+    ));
+  }
+
+  Future<bool?> _showDeleteConfirmation(String title) {
+    return showModalBottomSheet<bool>(
+      context: context,
       backgroundColor: const Color(0xFFF5F0E8),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildCompactHeader(),
-            _buildTitleRow(),
-            _buildSortBar(context),
-            Expanded(child: _buildList(context)),
-            _buildBottomBar(context),
-          ],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'delete_confirm_message'.tr(),
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 28),
+              _Btn3D(
+                icon: Icons.delete_outline,
+                label: 'delete_yes_button'.tr(),
+                gradientColors: const [Color(0xFFFFEBEE), Color(0xFFFFCDD2)],
+                borderColor: const Color(0xFFE57373),
+                shadowColor: const Color(0xFFD32F2F),
+                iconColor: const Color(0xFFD32F2F),
+                onTap: () => Navigator.pop(ctx, true),
+              ),
+              const SizedBox(height: 12),
+              _Btn3D(
+                icon: Icons.close,
+                label: 'delete_no_button'.tr(),
+                gradientColors: const [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+                borderColor: const Color(0xFFBBAA88),
+                shadowColor: const Color(0xFF9A8060),
+                iconColor: const Color(0xFF5A4A30),
+                onTap: () => Navigator.pop(ctx, false),
+              ),
+              const SizedBox(height: 4),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // --- Header compacto (logo pequeño, igual en todas las sub-pantallas) ---
+  // ---------------------------------------------------------------------------
+
+  @override
+  Widget build(BuildContext context) {
+    context.locale;
+    return PopScope(
+      canPop: !_selectionMode,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _exitSelectionMode();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F0E8),
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildCompactHeader(),
+              _buildTitleRow(),
+              if (!_selectionMode) _buildSortBar(context),
+              Expanded(child: _buildList(context)),
+              _buildBottomBar(context),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- Header compacto ---
 
   Widget _buildCompactHeader() {
     return Padding(
@@ -122,6 +255,30 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
   }
 
   Widget _buildTitleRow() {
+    if (_selectionMode) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(8, 10, 8, 4),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.close, size: 26, color: Colors.black87),
+              onPressed: _exitSelectionMode,
+              tooltip: 'cancel_button'.tr(),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'selection_count'.tr(args: [_selectedIds.length.toString()]),
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
       child: Text(
@@ -297,11 +454,18 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
             itemBuilder: (context, index) {
               final doc = docs[index];
               final importProvider = context.watch<ImportProvider>();
+              final isSelected = _selectedIds.contains(doc.id);
               return _DocItem(
                 document: doc,
                 isProcessingOcr: importProvider.processingOcrIds.contains(doc.id),
-                onTap: () => _navigateToDetail(doc.id!),
-                onLongPress: () => _showDeleteDialog(doc.id!),
+                isSelected: isSelected,
+                selectionMode: _selectionMode,
+                onTap: _selectionMode
+                    ? () => _toggleSelection(doc.id!)
+                    : () => _navigateToDetail(doc.id!),
+                onLongPress: _selectionMode
+                    ? null
+                    : () => _enterSelectionMode(doc.id!),
               );
             },
           ),
@@ -311,6 +475,9 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
   }
 
   Widget _buildBottomBar(BuildContext context) {
+    if (_selectionMode) {
+      return _buildSelectionBar(context);
+    }
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
       decoration: BoxDecoration(
@@ -339,6 +506,56 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
     );
   }
 
+  Widget _buildSelectionBar(BuildContext context) {
+    final canExport = _selectedIds.length >= 2;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F0E8),
+        border: Border(top: BorderSide(color: Colors.grey.shade300, width: 1)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (canExport) ...[
+            _Btn3D(
+              icon: Icons.picture_as_pdf_outlined,
+              label: 'create_pdf_button'.tr(),
+              gradientColors: const [Color(0xFFE3F2FD), Color(0xFFB3D4EC)],
+              borderColor: const Color(0xFF7AAFC8),
+              shadowColor: const Color(0xFF3A7A9A),
+              iconColor: const Color(0xFF1565C0),
+              onTap: _openPdfOrder,
+            ),
+            const SizedBox(height: 10),
+          ],
+          _Btn3D(
+            icon: Icons.delete_outline,
+            label: 'delete_button'.tr(),
+            gradientColors: const [Color(0xFFFFEBEE), Color(0xFFFFCDD2)],
+            borderColor: const Color(0xFFE57373),
+            shadowColor: const Color(0xFFD32F2F),
+            iconColor: const Color(0xFFD32F2F),
+            onTap: _deleteSelected,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openPdfOrder() {
+    final provider = context.read<DocumentsProvider>();
+    // Mantener el orden de la lista actual (sort aplicado)
+    final docs = _sorted(provider.documents)
+        .where((d) => _selectedIds.contains(d.id))
+        .toList();
+    _exitSelectionMode();
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => PdfOrderPage(documents: docs)),
+    );
+  }
+
   // --- Lógica ---
 
   void _navigateToDetail(int documentId) async {
@@ -346,20 +563,6 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
         arguments: documentId);
     if (!mounted) return;
     context.read<DocumentsProvider>().loadDocuments();
-  }
-
-  void _showDeleteDialog(int documentId) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final confirmed = await DeleteConfirmationDialog.show(context);
-    if (confirmed != true || !mounted) return;
-    final success =
-        await context.read<DocumentsProvider>().deleteDocument(documentId);
-    if (!success || !mounted) return;
-    messenger.showSnackBar(SnackBar(
-      content: Text('document_deleted'.tr(),
-          style: const TextStyle(fontSize: 16)),
-      duration: const Duration(seconds: 3),
-    ));
   }
 }
 
@@ -370,80 +573,115 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
 class _DocItem extends StatelessWidget {
   final DocumentModel document;
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  final VoidCallback? onLongPress;
   final bool isProcessingOcr;
+  final bool isSelected;
+  final bool selectionMode;
 
   const _DocItem({
     required this.document,
     required this.onTap,
-    required this.onLongPress,
+    this.onLongPress,
     this.isProcessingOcr = false,
+    this.isSelected = false,
+    this.selectionMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final scheme = DocumentTypeColors.of(document.documentType);
-    return Ink(
-      color: scheme.bg.withValues(alpha: 0.38),
+
+    // En modo selección: fondo verde tenue si está seleccionado
+    final bgColor = isSelected
+        ? const Color(0xFFD7EDD7)
+        : scheme.bg.withValues(alpha: 0.38);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      color: bgColor,
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: Row(
-          children: [
-            _buildThumbnail(),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    document.title,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    _formatDate(document.createdAt),
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  ),
-                  if (isProcessingOcr) ...[
-                    const SizedBox(height: 3),
-                    Row(children: [
-                      SizedBox(
-                        width: 10,
-                        height: 10,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 1.5,
-                          color: Colors.grey[500],
+          child: Row(
+            children: [
+              // Checkbox animado en modo selección
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: selectionMode
+                    ? Padding(
+                        key: const ValueKey('checkbox'),
+                        padding: const EdgeInsets.only(right: 12),
+                        child: Icon(
+                          isSelected
+                              ? Icons.check_circle
+                              : Icons.radio_button_unchecked,
+                          size: 28,
+                          color: isSelected
+                              ? const Color(0xFF388E3C)
+                              : Colors.grey[400],
                         ),
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        'status_extracting'.tr(),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[500],
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ]),
-                  ],
-                ],
+                      )
+                    : const SizedBox.shrink(key: ValueKey('no-checkbox')),
               ),
-            ),
-            const SizedBox(width: 10),
-            _TypeChip(documentType: document.documentType, typeKey: _docTypeKey(document.documentType)),
-          ],
+              _buildThumbnail(),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      document.title,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _formatDate(document.createdAt),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                    if (isProcessingOcr) ...[
+                      const SizedBox(height: 3),
+                      Row(children: [
+                        SizedBox(
+                          width: 10,
+                          height: 10,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          'status_extracting'.tr(),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[500],
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ]),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              if (!selectionMode)
+                _TypeChip(
+                  documentType: document.documentType,
+                  typeKey: _docTypeKey(document.documentType),
+                ),
+            ],
+          ),
         ),
       ),
-    ));
+    );
   }
 
   Widget _buildThumbnail() {
@@ -510,6 +748,71 @@ class _TypeChip extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: scheme.fg,
+        ),
+      ),
+    );
+  }
+}
+
+/// Botón 3D genérico con gradiente, borde y sombra.
+/// Usado en selección (eliminar), confirmación y futuro export.
+class _Btn3D extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final List<Color> gradientColors;
+  final Color borderColor;
+  final Color shadowColor;
+  final Color iconColor;
+  final VoidCallback onTap;
+
+  const _Btn3D({
+    required this.icon,
+    required this.label,
+    required this.gradientColors,
+    required this.borderColor,
+    required this.shadowColor,
+    required this.iconColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: gradientColors,
+          ),
+          borderRadius: BorderRadius.circular(50),
+          border: Border.all(color: borderColor, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor.withValues(alpha: 0.38),
+              offset: const Offset(0, 4),
+              blurRadius: 7,
+              spreadRadius: -1,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: iconColor, size: 26),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: iconColor,
+              ),
+            ),
+          ],
         ),
       ),
     );

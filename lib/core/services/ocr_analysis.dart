@@ -37,12 +37,21 @@ class OcrAnalysis {
   /// Distinto de 0 = [ProcessOCR] debe rotar el archivo y re-procesar.
   final int detectedRotationDegrees;
 
+  /// Ratio alto/ancho del documento calculado desde los bboxes del OCR.
+  ///
+  /// Referencia empírica:
+  /// - Documento A4: ~1.41
+  /// - Ticket/recibo largo: 2.5–4.0+
+  /// 0.0 = no calculado (OCR vacío o sin bloques)
+  final double imageAspectRatio;
+
   const OcrAnalysis({
     required this.text,
     required this.blockCount,
     required this.avgConfidence,
     this.topConfidenceText = '',
     this.detectedRotationDegrees = 0,
+    this.imageAspectRatio = 0.0,
   });
 
   /// Resultado vacío cuando OCR falla o la imagen es inválida

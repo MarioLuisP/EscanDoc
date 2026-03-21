@@ -22,6 +22,7 @@ void main() {
   setUpAll(() {
     TestWidgetsFlutterBinding.ensureInitialized();
     registerFallbackValue(FakeDocumentModel());
+    registerFallbackValue(DocumentType.documento);
   });
 
   setUp(() {
@@ -140,6 +141,58 @@ void main() {
       final captured = verify(() => mockRepository.insertDocument(captureAny()))
           .captured.first as DocumentModel;
       expect(captured.filePath, testImage.path);
+    });
+  });
+
+  group('SaveScannedDocument - customTitle (PDF multipágina)', () {
+    final testImage = File('page.jpg');
+    final now = DateTime(2026, 1, 25);
+
+    test('customTitle provisto → usa ese título sin llamar al clasificador', () async {
+      when(() => mockRepository.insertDocument(any())).thenAnswer((_) async => 1);
+
+      final result = await useCase.call(
+        testImage, '/test/output', 'es',
+        currentDate: now,
+        customTitle: 'tutorial_flutter_1',
+      );
+
+      expect(result.title, 'tutorial_flutter_1');
+      verifyNever(() => mockClassifier.getTypeDisplayName(any(), any()));
+      verifyNever(() => mockRepository.countByTypePrefix(any(), any()));
+      verifyNever(() => mockClassifier.generateDocumentName(any(), any(), any(), any()));
+    });
+
+    test('customTitle provisto → guarda en BD con ese título', () async {
+      when(() => mockRepository.insertDocument(any())).thenAnswer((_) async => 42);
+
+      await useCase.call(
+        testImage, '/test/output', 'es',
+        currentDate: now,
+        customTitle: 'mi_documento_3',
+      );
+
+      final captured = verify(() => mockRepository.insertDocument(captureAny()))
+          .captured.first as DocumentModel;
+      expect(captured.title, 'mi_documento_3');
+    });
+
+    test('customTitle null → comportamiento normal con clasificador', () async {
+      when(() => mockClassifier.getTypeDisplayName(DocumentType.documento, 'es'))
+          .thenReturn('Documento');
+      when(() => mockRepository.countByTypePrefix('Documento', any()))
+          .thenAnswer((_) async => 0);
+      when(() => mockClassifier.generateDocumentName(DocumentType.documento, any(), 'es', 1))
+          .thenReturn('Documento 1 del 25/1');
+      when(() => mockRepository.insertDocument(any())).thenAnswer((_) async => 1);
+
+      final result = await useCase.call(
+        testImage, '/test/output', 'es',
+        currentDate: now,
+      );
+
+      expect(result.title, 'Documento 1 del 25/1');
+      verify(() => mockClassifier.getTypeDisplayName(any(), any())).called(1);
     });
   });
 

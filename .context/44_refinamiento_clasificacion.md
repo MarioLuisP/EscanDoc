@@ -5,6 +5,54 @@
 
 ---
 
+## Diagrama del módulo
+
+```
+INPUT
+  tfliteClass  ──────────────────────────────────────────────────┐
+  OcrAnalysis                                                     │
+    avgConfidence                                                 │
+    blockCount                                                    │
+    topConfidenceText                                             │
+                                                                  │
+         ↓                                                        │
+┌─────────────────────────────────────────────────────────────┐  │
+│                   RefineClassification                       │  │
+│                                                              │  │
+│  foto / folleto ───────────────────────────────────────────────→ INTOCABLE
+│                                                              │
+│  recibo ──── keywords + blockCount > 80? ──── SÍ ─────────────→ factura
+│                          │                                   │
+│                          NO ──────────────────────────────────→ INTOCABLE
+│                                                              │
+│  documento ─┐                                                │
+│             ├── avgConf < 0.72? ─── SÍ ───────────────────────→ manuscrito
+│  manuscrito ┘         │                                      │
+│                       NO                                     │
+│                       │                                      │
+│                       ├── keywords + blockCount > 80? ─ SÍ ──→ factura
+│                       │                                      │
+│                       NO ─────────────────────────────────────→ documento
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+         │
+         ↓
+  wasReclassified?
+     SÍ  ──→ rebuildMarkdown(refinedKind)
+          ──→ regenerar título  [Tipo N del D/M]
+          ──→ nota en BD: "X → Y (2° paso: ...)"
+     NO  ──→ pass-through
+         ↓
+OUTPUT: refinedKind + markdown actualizado (si hubo cambio)
+```
+
+**Umbrales empíricos:**
+- Manuscrito: `avgConf < 0.72`
+- Factura/Recibo-boleta: `blockCount > 80` + keyword presente
+- Recibo real: 13–46 bloques | Factura/boleta: 80–150+ bloques
+
+---
+
 ## Contexto
 
 El clasificador TFLite distingue 5 categorías: documento, folleto, foto, manuscrito, recibo.

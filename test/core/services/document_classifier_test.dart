@@ -117,12 +117,12 @@ void main() {
 
   group('DocumentClassifier - extractDueDate', () {
     test('debe extraer fecha DD/MM/YYYY', () {
-      expect(classifier.extractDueDate('Vencimiento: 15/03/2026'), DateTime(2026, 3, 15));
-      expect(classifier.extractDueDate('Pagar antes de: 31/12/2026'), DateTime(2026, 12, 31));
+      expect(classifier.extractDueDate('Vencimiento: 15/03/2099'), DateTime(2099, 3, 15));
+      expect(classifier.extractDueDate('Pagar antes de: 31/12/2099'), DateTime(2099, 12, 31));
     });
 
     test('debe extraer fecha DD-MM-YYYY', () {
-      expect(classifier.extractDueDate('Due date: 20-03-2026'), DateTime(2026, 3, 20));
+      expect(classifier.extractDueDate('Due date: 20-03-2099'), DateTime(2099, 3, 20));
     });
 
     test('debe extraer fecha YYYY-MM-DD', () {

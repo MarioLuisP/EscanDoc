@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
@@ -201,6 +202,7 @@ class MyApp extends StatelessWidget {
           '/note/edit': (context) => const NoteEditorPage(),
           '/search': (context) => const SearchPage(),
           '/settings': (context) => const SettingsPage(),
+
         },
       ),
     );

@@ -145,10 +145,12 @@ class DocumentPipeline {
   /// Ejecuta OCR en background. Los errores se capturan silenciosamente.
   ///
   /// [onStatus] se llama con claves de localización durante el proceso OCR.
+  /// [skipRefinement]: si true, omite RefineClassification (PDFs multipágina).
   Future<void> processOCRBackground(
     int documentId,
     DocumentType tfliteKind,
     String locale, {
+    bool skipRefinement = false,
     void Function(String)? onStatus,
   }) async {
     const tag = 'DocumentPipeline';
@@ -159,11 +161,46 @@ class DocumentPipeline {
         documentId,
         tfliteKind: tfliteKind,
         locale: locale,
+        skipRefinement: skipRefinement,
         onStatus: onStatus,
       );
       debugPrint('[$tag] 🔴 END: OCR background - ${DateTime.now().difference(start).inMilliseconds}ms');
     } catch (e) {
       debugPrint('[$tag] ❌ OCR background error: $e');
     }
+  }
+
+  /// Guarda una página de PDF multipágina: normaliza + guarda con título custom.
+  ///
+  /// Bypasea TFLite — el tipo es siempre [DocumentType.documento].
+  /// El título viene del nombre del archivo PDF original + número de página.
+  Future<DocumentModel> completePdfPage(
+    File jpgFile,
+    String title,
+    String locale,
+    DateTime date,
+  ) async {
+    const tag = 'DocumentPipeline';
+
+    final startCompress = DateTime.now();
+    debugPrint('[$tag] PDF page → comprimiendo: ${jpgFile.path}');
+    final finalFile = await _importDocument.normalize(jpgFile);
+    debugPrint('[$tag] Comprimido en ${DateTime.now().difference(startCompress).inMilliseconds}ms');
+
+    final docsDir = await getApplicationDocumentsDirectory();
+
+    final startSave = DateTime.now();
+    debugPrint('[$tag] PDF page → guardando como "$title"');
+    final document = await _saveDocument.call(
+      finalFile,
+      docsDir.path,
+      locale,
+      tfliteKind: DocumentType.documento,
+      customTitle: title,
+      currentDate: date,
+    );
+    debugPrint('[$tag] Guardado en ${DateTime.now().difference(startSave).inMilliseconds}ms — ID: ${document.id}');
+
+    return document;
   }
 }

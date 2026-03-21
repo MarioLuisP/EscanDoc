@@ -43,10 +43,13 @@ class ProcessOCR {
   ///
   /// [tfliteKind]: clasificación inicial del TFLite.
   /// [locale]: idioma para regenerar el título si hay reclasificación.
+  /// [skipRefinement]: si true, omite RefineClassification (usado en PDFs
+  ///   multipágina donde el tipo y título ya fueron asignados correctamente).
   Future<DocumentModel> call(
     int documentId, {
     DocumentType tfliteKind = DocumentType.documento,
     String locale = 'es',
+    bool skipRefinement = false,
     void Function(String)? onStatus,
   }) async {
     try {
@@ -109,8 +112,13 @@ class ProcessOCR {
       }
 
       // 4. Refinar clasificación con métricas OCR (2° paso)
-      final refinement = _refinement.call(activeKind, ocrAnalysis);
-      debugPrint('[ProcessOCR] TFLite: ${tfliteKind.dbKey} → Refinado: ${refinement.refinedKind.dbKey}');
+      // skipRefinement=true en PDFs multipágina: el tipo ya es correcto,
+      // no queremos que cada página se reclasifique individualmente.
+      final refinement = skipRefinement
+          ? RefinementResult(refinedKind: activeKind)
+          : _refinement.call(activeKind, ocrAnalysis);
+      debugPrint('[ProcessOCR] TFLite: ${tfliteKind.dbKey} → Refinado: ${refinement.refinedKind.dbKey}'
+          '${skipRefinement ? ' (refinement omitido)' : ''}');
 
       // Si el tipo cambió, regenerar markdown con el tipo correcto (puede cambiar
       // el formato, ej: documento → recibo activa la tabla en blocksToMarkdown).

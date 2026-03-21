@@ -26,7 +26,7 @@ abstract class OCRService {
 /// - Retorna [OcrAnalysis.empty] si falla
 class OCRServiceImpl implements OCRService {
   final TextRecognizer _textRecognizer;
-  RecognizedText? _lastRecognized;
+  List<OcrBlock> _lastOcrBlocks = [];
   int _lastDetectedDegrees = 0;
 
   OCRServiceImpl()
@@ -49,10 +49,23 @@ class OCRServiceImpl implements OCRService {
       final recognizedText = await _textRecognizer
           .processImage(inputImage)
           .timeout(const Duration(seconds: 30));
-      _lastRecognized = recognizedText;
+      _lastOcrBlocks = _toOcrBlocks(recognizedText.blocks);
 
-      // DEBUG: log estructura completa de ML Kit
-      _logOCRStructure(recognizedText);
+      // DEBUG: log estructura completa de ML Kit (descomentar para diagnóstico)
+      // _logOCRStructure(recognizedText);
+
+      // Aspect ratio desde bboxes (altura/ancho del área total reconocida)
+      double imageAspectRatio = 0.0;
+      if (_lastOcrBlocks.isNotEmpty) {
+        final ocrLines = _lastOcrBlocks.expand((b) => b.lines).toList();
+        final minTop    = ocrLines.map((l) => l.top).reduce((a, b) => a < b ? a : b);
+        final maxBottom = ocrLines.map((l) => l.bottom).reduce((a, b) => a > b ? a : b);
+        final minLeft   = ocrLines.map((l) => l.left).reduce((a, b) => a < b ? a : b);
+        final maxRight  = ocrLines.map((l) => l.right).reduce((a, b) => a > b ? a : b);
+        final h = maxBottom - minTop;
+        final w = maxRight - minLeft;
+        imageAspectRatio = w > 0 ? h / w : 0.0;
+      }
 
       // Recopilar todas las líneas para métricas
       final allLines = recognizedText.blocks
@@ -85,7 +98,7 @@ class OCRServiceImpl implements OCRService {
       // Si hay rotación, ProcessOCR rotará el JPG y hará un 2do OCR —
       // este markdown se descartaría de todos modos.
       final markdown = rotationCorrection == 0
-          ? blocksToMarkdown(recognizedText.blocks, documentTypeFromString(docType), detected)
+          ? blocksToMarkdown(_lastOcrBlocks, documentTypeFromString(docType), detected)
           : '';
 
       return OcrAnalysis(
@@ -94,6 +107,7 @@ class OCRServiceImpl implements OCRService {
         avgConfidence: avgConf,
         topConfidenceText: topConfidenceText,
         detectedRotationDegrees: rotationCorrection,
+        imageAspectRatio: imageAspectRatio,
       );
     } catch (e) {
       return OcrAnalysis.empty;
@@ -102,14 +116,26 @@ class OCRServiceImpl implements OCRService {
 
   @override
   String rebuildMarkdown(String docType) {
-    final recognized = _lastRecognized;
-    if (recognized == null) return '';
+    if (_lastOcrBlocks.isEmpty) return '';
     return blocksToMarkdown(
-      recognized.blocks,
+      _lastOcrBlocks,
       documentTypeFromString(docType),
       _lastDetectedDegrees,
     );
   }
+
+  /// Convierte bloques de ML Kit al DTO interno, desacoplando de google_mlkit.
+  List<OcrBlock> _toOcrBlocks(List<TextBlock> blocks) => blocks.map((b) =>
+    OcrBlock(
+      lines: b.lines.map((l) => OcrLine(
+        text:   l.text,
+        left:   l.boundingBox.left,
+        top:    l.boundingBox.top,
+        right:  l.boundingBox.right,
+        bottom: l.boundingBox.bottom,
+      )).toList(),
+    ),
+  ).toList();
 
   /// Libera recursos de ML Kit
   @override

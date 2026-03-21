@@ -34,12 +34,15 @@ class SaveScannedDocument {
   ///
   /// - [tfliteKind]: tipo inicial del clasificador TFLite
   /// - [locale]: idioma para el nombre (es/en)
+  /// - [customTitle]: si se provee, lo usa como título sin llamar al clasificador
+  ///   (usado en import de PDFs multipágina para heredar el nombre del archivo)
   Future<DocumentModel> call(
     File scannedFile,
     String outputDirectory,
     String locale, {
     DateTime? currentDate,
     DocumentType tfliteKind = DocumentType.documento,
+    String? customTitle,
   }) async {
     final date = currentDate ?? DateTime.now();
 
@@ -47,19 +50,18 @@ class SaveScannedDocument {
     debugPrint('[SaveScannedDocument] 🟢 START: Guardado (JPG only) - ${startSave.millisecondsSinceEpoch}');
     debugPrint('[SaveScannedDocument] JPG: ${scannedFile.path}');
 
-    // 1. Obtener nombre visible del tipo y contar existentes hoy
-    final displayName = _classifier.getTypeDisplayName(tfliteKind, locale);
-    final todayCount = await _repository.countByTypePrefix(displayName, date);
-    debugPrint('[SaveScannedDocument] Tipo: ${tfliteKind.dbKey} → "$displayName", hoy: $todayCount');
-
-    // 2. Generar nombre: "Factura 1 del 17/2"
-    final documentName = _classifier.generateDocumentName(
-      tfliteKind,
-      date,
-      locale,
-      todayCount + 1,
-    );
-    debugPrint('[SaveScannedDocument] Nombre generado: $documentName');
+    // 1. Determinar nombre del documento
+    final String documentName;
+    if (customTitle != null) {
+      documentName = customTitle;
+      debugPrint('[SaveScannedDocument] Nombre custom (PDF multipágina): $documentName');
+    } else {
+      final displayName = _classifier.getTypeDisplayName(tfliteKind, locale);
+      final todayCount = await _repository.countByTypePrefix(displayName, date);
+      debugPrint('[SaveScannedDocument] Tipo: ${tfliteKind.dbKey} → "$displayName", hoy: $todayCount');
+      documentName = _classifier.generateDocumentName(tfliteKind, date, locale, todayCount + 1);
+      debugPrint('[SaveScannedDocument] Nombre generado: $documentName');
+    }
 
     // 3. Crear modelo de documento
     final document = DocumentModel(

@@ -45,6 +45,7 @@ void main() {
 
   setUp(() async {
     mockOCRService = MockOCRService();
+    when(() => mockOCRService.rebuildMarkdown(any())).thenReturn('');
     mockClassifier = MockDocumentClassifier();
     mockRepository = MockDocumentRepository();
     mockRefinement = MockRefineClassification();
@@ -616,6 +617,54 @@ void main() {
         verifyNever(() => mockOrientationService.rotateImage(any(), any()));
         verify(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
             .called(1);
+      });
+    });
+
+    group('skipRefinement (PDF multipágina)', () {
+      test('skipRefinement true → refinement no se llama', () async {
+        final testDoc = createTestDocument();
+        when(() => mockRepository.getDocumentById(1)).thenAnswer((_) async => testDoc);
+        when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
+            .thenAnswer((_) async => makeAnalysis('texto del tutorial'));
+        when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
+        when(() => mockRepository.updateDocument(any())).thenAnswer((_) async => 1);
+
+        await useCase.call(1, skipRefinement: true);
+
+        verifyNever(() => mockRefinement.call(any(), any()));
+      });
+
+      test('skipRefinement true → título y documentType no cambian', () async {
+        final testDoc = createTestDocument();
+        when(() => mockRepository.getDocumentById(1)).thenAnswer((_) async => testDoc);
+        when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
+            .thenAnswer((_) async => makeAnalysis('TOTAL PAGAR keywords factura'));
+        when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
+        when(() => mockRepository.updateDocument(any())).thenAnswer((_) async => 1);
+
+        final result = await useCase.call(
+          1,
+          tfliteKind: DocumentType.documento,
+          skipRefinement: true,
+        );
+
+        expect(result.title, testDoc.title);
+        expect(result.documentType, 'documento');
+      });
+
+      test('skipRefinement false (default) → refinement se llama normalmente', () async {
+        final testDoc = createTestDocument();
+        when(() => mockRepository.getDocumentById(1)).thenAnswer((_) async => testDoc);
+        when(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')))
+            .thenAnswer((_) async => makeAnalysis('texto'));
+        when(() => mockRefinement.call(any(), any()))
+            .thenReturn(noChange(DocumentType.documento));
+        when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
+        when(() => mockRepository.updateDocument(any())).thenAnswer((_) async => 1);
+
+        await useCase.call(1);
+
+        verify(() => mockRefinement.call(any(), any())).called(1);
       });
     });
 

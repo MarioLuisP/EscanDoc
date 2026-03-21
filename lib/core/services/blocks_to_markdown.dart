@@ -1,9 +1,31 @@
 import 'dart:math';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DTOs DE ENTRADA — independientes de ML Kit
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Bloque de texto con sus líneas. Equivale a TextBlock de ML Kit.
+class OcrBlock {
+  final List<OcrLine> lines;
+  const OcrBlock({required this.lines});
+}
+
+/// Línea de texto con su bounding box. Equivale a TextLine de ML Kit.
+class OcrLine {
+  final String text;
+  final double left, top, right, bottom;
+  const OcrLine({
+    required this.text,
+    required this.left,
+    required this.top,
+    required this.right,
+    required this.bottom,
+  });
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONTRATO
-// Entrada : List<TextBlock> de MLKit + DocumentType + rotationDegrees (ya calculado)
+// Entrada : List<OcrBlock> + DocumentType + rotationDegrees (ya calculado)
 // Salida  : String Markdown con estructura detectada automáticamente
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -16,15 +38,16 @@ const double _kColumnGapThreshold = 0.25;
 const int _kMinLinesPerColumn = 3;
 
 String blocksToMarkdown(
-  List<TextBlock> blocks,
+  List<OcrBlock> blocks,
   DocumentType docType,
   int rotationDegrees,
 ) {
   if (blocks.isEmpty) return '';
 
-  // ── 1. imageSize desde max de bboxes ────────────────────────────────────
-  final imageWidth  = blocks.map((b) => b.boundingBox.right).reduce(max);
-  final imageHeight = blocks.map((b) => b.boundingBox.bottom).reduce(max);
+  // ── 1. imageSize desde max de bboxes de líneas ──────────────────────────
+  final allOcrLines = blocks.expand((b) => b.lines).toList();
+  final imageWidth  = allOcrLines.map((l) => l.right).reduce(max);
+  final imageHeight = allOcrLines.map((l) => l.bottom).reduce(max);
 
   // ── 2. Rotación ya detectada por el caller ───────────────────────────────
   final rotation = _rotationFromDegrees(rotationDegrees);
@@ -32,25 +55,39 @@ String blocksToMarkdown(
   // ── 3. Aplanar a _Line con coordenadas transformadas ────────────────────
   final lines = <_Line>[];
   for (final block in blocks) {
-    for (final line in block.lines) {
-      final bbox = line.boundingBox;
+    final blockLines = block.lines;
+    for (int i = 0; i < blockLines.length; i++) {
+      final line = blockLines[i];
       final (readTop, readLeft) = _transform(
-        bbox.top, bbox.left, bbox.bottom, bbox.right,
+        line.top, line.left, line.bottom, line.right,
         rotation, imageWidth, imageHeight,
       );
       final isRotated = rotation == _Rotation.deg90 || rotation == _Rotation.deg270;
+      final w = line.right - line.left;
+      final h = line.bottom - line.top;
       lines.add(_Line(
         text:       line.text,
         readTop:    readTop,
         readLeft:   readLeft,
-        readHeight: isRotated ? bbox.width  : bbox.height,
-        readWidth:  isRotated ? bbox.height : bbox.width,
-        lineCount:  block.lines.length,
+        readHeight: isRotated ? w : h,
+        readWidth:  isRotated ? h : w,
+        isBlockEnd: i == blockLines.length - 1,
+        blockSize:  blockLines.length,
       ));
     }
   }
 
   if (lines.isEmpty) return '';
+
+  // ── 4a. Fallback: documento con texto uniformemente en mayúsculas ─────────
+  // Cuando >70% de las líneas son ALL_CAPS el algoritmo de bandas no funciona
+  // (todo se convierte en headings). En su lugar, agrupamos por fila (Y) y
+  // ordenamos por columna (X) — produce output legible para tablas/horarios.
+  if (docType == DocumentType.documento && _capsRatio(lines) > 0.70) {
+    final buffer = StringBuffer();
+    _buildRowTable(buffer, lines);
+    return buffer.toString().trim();
+  }
 
   final totalReadWidth = lines.map((l) => l.readLeft + l.readWidth).reduce(max);
 
@@ -130,7 +167,8 @@ class _Line {
   final double readLeft;
   final double readHeight;
   final double readWidth;
-  final int    lineCount;
+  final bool isBlockEnd;
+  final int blockSize;
 
   const _Line({
     required this.text,
@@ -138,7 +176,8 @@ class _Line {
     required this.readLeft,
     required this.readHeight,
     required this.readWidth,
-    required this.lineCount,
+    this.isBlockEnd = false,
+    this.blockSize = 1,
   });
 }
 
@@ -352,7 +391,13 @@ void _buildInlineColumns(StringBuffer buffer, List<List<_Line>> columns, double 
 
 void _appendColumnMarkdown(StringBuffer buffer, List<_Line> lines, double maxCapsHeight) {
   for (final line in lines) {
-    buffer.writeln(_formatLine(line, maxCapsHeight));
+    final formatted = _formatLine(line, maxCapsHeight);
+    if (formatted.isNotEmpty) {
+      buffer.writeln(formatted);
+      // Bloque corto (≤4 líneas): cada línea es un párrafo separado.
+      // Bloque largo (>4 líneas): solo separar al final del bloque (párrafo corrido).
+      if (line.blockSize <= 4 || line.isBlockEnd) buffer.writeln();
+    }
   }
 }
 
@@ -387,4 +432,49 @@ String _formatText(_Line line) {
     return text.replaceFirst(RegExp(r'^[•\-]\s*'), '');
   }
   return text;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FALLBACK: DOCUMENTO UNIFORMEMENTE EN MAYÚSCULAS (tablas, horarios)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Proporción de líneas que son ALL_CAPS con al menos una letra.
+double _capsRatio(List<_Line> lines) {
+  if (lines.isEmpty) return 0;
+  final caps = lines.where((l) {
+    final t = l.text.trim();
+    return t == t.toUpperCase() && t.contains(RegExp(r'[A-ZÁÉÍÓÚÑ]'));
+  }).length;
+  return caps / lines.length;
+}
+
+/// Agrupa líneas en filas por proximidad vertical y las ordena por X.
+/// Cada fila se emite como "celda1 | celda2 | celda3".
+void _buildRowTable(StringBuffer buffer, List<_Line> lines) {
+  if (lines.isEmpty) return;
+
+  final avgH = lines.map((l) => l.readHeight).reduce((a, b) => a + b) / lines.length;
+  final tolerance = avgH * 1.0;
+
+  final sorted = List<_Line>.from(lines)
+    ..sort((a, b) => a.readTop.compareTo(b.readTop));
+
+  final rows = <List<_Line>>[];
+  var currentRow = [sorted.first];
+  var rowY = sorted.first.readTop;
+
+  for (int i = 1; i < sorted.length; i++) {
+    if ((sorted[i].readTop - rowY) <= tolerance) {
+      currentRow.add(sorted[i]);
+    } else {
+      rows.add(currentRow..sort((a, b) => a.readLeft.compareTo(b.readLeft)));
+      currentRow = [sorted[i]];
+      rowY = sorted[i].readTop;
+    }
+  }
+  rows.add(currentRow..sort((a, b) => a.readLeft.compareTo(b.readLeft)));
+
+  for (final row in rows) {
+    buffer.writeln(row.map((l) => l.text.trim()).join(' | '));
+  }
 }

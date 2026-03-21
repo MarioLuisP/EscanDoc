@@ -19,6 +19,11 @@ abstract class PdfConverterService {
   /// Convierte bytes de imagen (PNG/JPG) a PDF de tamaño A4.
   Future<File> convertImageBytesToPdfA4(
       Uint8List imageBytes, String outputPdfPath);
+
+  /// Convierte múltiples JPGs a un PDF multipágina.
+  /// Cada JPG ocupa una página con sus dimensiones originales.
+  Future<File> convertJpgsToPdf(
+      List<String> jpgPaths, String outputPdfPath);
 }
 
 /// Implementación del servicio de conversión JPG→PDF.
@@ -107,6 +112,53 @@ class PdfConverterServiceImpl implements PdfConverterService {
       debugPrint('[PdfConverter] StackTrace: $stackTrace');
       rethrow;
     }
+  }
+
+  @override
+  Future<File> convertJpgsToPdf(
+      List<String> jpgPaths, String outputPdfPath) async {
+    debugPrint('[PdfConverter] convertJpgsToPdf → ${jpgPaths.length} páginas → $outputPdfPath');
+
+    final pdf = pw.Document();
+
+    for (final jpgPath in jpgPaths) {
+      final jpgFile = File(jpgPath);
+      if (!jpgFile.existsSync()) {
+        debugPrint('[PdfConverter] Página no encontrada, saltando: $jpgPath');
+        continue;
+      }
+
+      final jpgBytes = await jpgFile.readAsBytes();
+      final pdfImage = pw.MemoryImage(jpgBytes);
+
+      final decoder = img.JpegDecoder();
+      final imageInfo = decoder.startDecode(jpgBytes);
+      if (imageInfo == null) {
+        debugPrint('[PdfConverter] No se pudieron leer dimensiones: $jpgPath');
+        continue;
+      }
+
+      final pageFormat = PdfPageFormat(
+        imageInfo.width.toDouble(),
+        imageInfo.height.toDouble(),
+        marginAll: 0,
+      );
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: pageFormat,
+          build: (pw.Context context) =>
+              pw.Image(pdfImage, fit: pw.BoxFit.fill),
+        ),
+      );
+    }
+
+    final pdfBytes = await pdf.save();
+    final pdfFile = File(outputPdfPath);
+    await pdfFile.writeAsBytes(pdfBytes);
+    debugPrint(
+        '[PdfConverter] PDF multipágina: ${(pdfFile.lengthSync() / 1024).toStringAsFixed(2)} KB');
+    return pdfFile;
   }
 
   @override

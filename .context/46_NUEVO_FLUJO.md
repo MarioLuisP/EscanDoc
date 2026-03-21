@@ -126,62 +126,98 @@
             │ • 1er pass OCR                  │
             │   extractAnalysis(jpg,          │
             │     docType: tfliteClass)       │
-            │   → OcrAnalysis(                │
-            │       detectedRotationDegrees)  │
+            │                                 │
+            │   Dentro de extractAnalysis:    │
+            │   detectOrientationDegrees()    │
+            │   → detected (0/90/180/270)     │
+            │   rotationCorrection =          │
+            │     (360 - detected) % 360      │
+            │   Si rotación == 0:             │
+            │     blocksToMarkdown(...)       │
+            │   Si rotación != 0:             │
+            │     markdown = '' ← descartado  │
             │                                 │
             │ • Si rotación != 0°:            │
             │   → rotateImage(jpg, degrees)   │
             │     (~200ms, JPEG nativo)       │
-            │   → re-classify TFLite          │
-            │     (actualiza tfliteClass)     │
-            │   → 2do pass OCR               │
+            │   → re-classify TFLite (~280ms) │
+            │   → 2do pass OCR (con md)       │
             │                                 │
-            │ blocksToMarkdown(blocks,        │
-            │   documentTypeFromString(type)) │
+            │ blocksToMarkdown(               │
+            │   blocks, docType, detected)    │
             │ ┌───────────────────────────┐  │
             │ │ 1. imageSize desde bboxes │  │
-            │ │ 2. Rotación por mediana   │  │
-            │ │    FIX: normalizar < 0    │  │
-            │ │    -90° → 270° (CW ✓)    │  │
-            │ │    +90° → 90°  (CCW ✓)   │  │
-            │ │ 3. Coords transformadas   │  │
-            │ │ 4. Clustering columnas    │  │
-            │ │ 5a. documento/manuscrito  │  │
-            │ │     → # heading, listas   │  │
-            │ │ 5b. factura/recibo        │  │
-            │ │     + 2 cols → tabla MD   │  │
+            │ │ 2. Coords transformadas   │  │
+            │ │    (rotación ya conocida) │  │
+            │ │ 3. totalReadWidth de      │  │
+            │ │    TODAS las líneas       │  │
+            │ │ 4. Separar wideLines      │  │
+            │ │    (ancho>50% AND CAPS)   │  │
+            │ │    de narrowLines         │  │
+            │ │ 5. maxCapsHeight = max    │  │
+            │ │    readHeight de CAPS     │  │
+            │ │ 6. Bandas: wideLines como │  │
+            │ │    divisores verticales   │  │
+            │ │    → _renderBand() por   │  │
+            │ │      banda de narrowLines │  │
+            │ │      · factura/recibo     │  │
+            │ │        + cols → tabla |  │  │
+            │ │      · otros + cols      │  │
+            │ │        → inline \t\t     │  │
+            │ │      · 1 col → secuencial│  │
+            │ │    Jerarquía CAPS:        │  │
+            │ │    ≥80% maxH → #         │  │
+            │ │    ≥50% maxH → ##        │  │
+            │ │    resto    → ###        │  │
             │ └───────────────────────────┘  │
             │                                 │
             │ OcrAnalysis(text: markdown,     │
-            │   blockCount, avgConfidence)    │
+            │   blockCount, avgConfidence,    │
+            │   detectedRotationDegrees)      │
             │ • Tiempo: ~3-5s (sin rotar)     │
             │           ~4-6s (con rotación)  │
             └─────────────────────────────────┘
                                 ↓
-            ┌─────────────────────────────────┐
-            │   6. REFINAMIENTO (background)  │
-            │   RefineClassification          │
-            ├─────────────────────────────────┤
-            │ Solo ajusta 'documento' y       │
-            │ 'manuscrito' (resto intocable)  │
-            │                                 │
-            │ avgConf < 0.55                  │
-            │   → manuscrito                  │
-            │ avgConf ≥ 0.55                  │
-            │   → documento                   │
-            │   + keywords + bloques > 80     │
-            │     → factura                   │
-            │                                 │
-            │ Si hubo cambio →                │
-            │   • documentType actualizado   │
-            │   • título regenerado           │
-            │   • nota automática             │
-            │     "X → Y (2° paso: motivo)"  │
-            │                                 │
-            │ Nota extracto (150 chars):      │
-            │ strip # ## - | --- del markdown │
-            │ → texto plano legible en BD     │
-            └─────────────────────────────────┘
+            ┌──────────────────────────────────────┐
+            │   6. REFINAMIENTO (background)       │
+            │   RefineClassification               │
+            ├──────────────────────────────────────┤
+            │ foto → intocable                     │
+            │                                      │
+            │ recibo / folleto:                    │
+            │   keywords + >80 bloques → factura   │
+            │   folleto + aspectRatio > 2.0        │
+            │     → recibo                         │
+            │   si no → sin cambio                 │
+            │                                      │
+            │ documento / manuscrito:              │
+            │   avgConf < 0.72?                    │
+            │     blocks ≤15 Y chars ≤250          │
+            │       → manuscrito                   │claude
+            │     si no (impreso mala calidad)     │
+            │       → sigue abajo ↓                │
+            │   aspectRatio > 2.0 → recibo         │
+            │   keywords + >80 bloques → factura   │
+            │   si no → documento                  │
+            │                                      │
+            │ Umbrales (Mar 2026):                 │
+            │   avgConf threshold:   0.72          │
+            │   maxBlocks manuscrito: 15           │
+            │   maxChars manuscrito: 250           │
+            │   minAspectRatio recibo: 2.0         │
+            │   minBlocks factura:    80           │
+            │                                      │
+            │ Si wasReclassified:                  │
+            │   rebuildMarkdown(refinedKind)       │
+            │   → regenera MD con tipo real        │
+            │     (síncrono, usa last blocks)      │
+            │   • documentType actualizado         │
+            │   • título regenerado                │
+            │                                      │
+            │ Nota extracto (150 chars):           │
+            │ strip # ## - | --- del markdown      │
+            │ → texto plano legible en BD          │
+            └──────────────────────────────────────┘
                                 ↓
             ┌─────────────────────────────────┐
             │   7. RENDER UI                  │
@@ -386,23 +422,41 @@ extractAnalysis(jpgFile, docType: tfliteClass)
          ↓
   ML Kit processImage()
          ↓
-  blocksToMarkdown(blocks, documentTypeFromString(docType))
-  ┌─────────────────────────────────────────────────────┐
-  │  1. Calcular imageSize desde max de bboxes          │
-  │  2. Detectar rotación (mediana de ángulos)          │
-  │     ⚠️ FIX: normalizar ángulos negativos primero    │
-  │     (-90° → 270°, no 270° < 45° = deg0)            │
-  │  3. Aplanar a _Line con coords transformadas        │
-  │  4. Clustering de columnas                          │
-  │  5. Renderizar según docType:                       │
-  │     - documento/folleto/manuscrito → secuencial     │
-  │       (# heading si caps grande, ## si caps medio)  │
-  │     - factura/recibo + 2+ columnas → tabla Markdown │
-  └─────────────────────────────────────────────────────┘
+  detectOrientationDegrees(allAngles)   ← document_orientation_service.dart
+    normaliza negativos → mediana → 0/90/180/270
          ↓
-  OcrAnalysis(text: markdown, blockCount, avgConfidence)
+  rotationCorrection = (360 - detected) % 360
+         ↓
+  Si rotationCorrection == 0:
+    blocksToMarkdown(blocks, docType, detected)
+    ┌─────────────────────────────────────────────────────┐
+    │  1. imageSize desde max de bboxes                   │
+    │  2. Coords transformadas (rotación ya conocida)     │
+    │  3. totalReadWidth de TODAS las líneas              │
+    │  4. Separar wideLines (ancho>50% AND ALL_CAPS)      │
+    │     de narrowLines                                  │
+    │  5. maxCapsHeight = max readHeight de líneas CAPS   │
+    │  6. Bandas: wideLines como divisores verticales     │
+    │     Por cada banda de narrowLines → _renderBand():  │
+    │       · factura/recibo + múltiples cols → tabla |  │
+    │       · otros + múltiples cols → inline \t\t       │
+    │       · 1 columna → secuencial por readTop          │
+    │     Jerarquía ALL_CAPS: ≥80% → #, ≥50% → ##, ###  │
+    └─────────────────────────────────────────────────────┘
+  Si rotationCorrection != 0:
+    markdown = ''  ← se descartaría, no se genera
+         ↓
+  OcrAnalysis(text: markdown, blockCount, avgConfidence,
+              detectedRotationDegrees: rotationCorrection)
+         ↓
+  Si detectedRotationDegrees != 0:
+    rotateImage(jpg) → re-classify → 2do extractAnalysis
          ↓
   RefineClassification (2° paso)
+         ↓
+  Si wasReclassified:
+    rebuildMarkdown(refinedKind)  ← síncrono, reutiliza _lastRecognized
+    → regenera MD con tipo correcto (ej: doc→recibo activa tabla)
          ↓
   _buildPrintedNote(markdown)  ← strip prefijos # ## ### - | ---
          ↓
@@ -413,9 +467,10 @@ extractAnalysis(jpgFile, docType: tfliteClass)
 
 | Archivo | Rol |
 |---------|-----|
-| `lib/core/services/blocks_to_markdown.dart` | Movido desde `lib/`, + `documentTypeFromString()` |
-| `lib/core/services/ocr_service.dart` | `extractAnalysis({docType})` + llama `blocksToMarkdown` |
-| `lib/features/scan/domain/usecases/process_ocr.dart` | Pasa `docType: tfliteClass`, strip markdown en nota |
+| `lib/core/services/blocks_to_markdown.dart` | Convierte blocks ML Kit → Markdown. Recibe `rotationDegrees` pre-calculado. |
+| `lib/core/services/document_orientation_service.dart` | `detectOrientationDegrees()` — mediana de ángulos ML Kit |
+| `lib/core/services/ocr_service.dart` | `extractAnalysis()` + `rebuildMarkdown()` (cachea `_lastRecognized`) |
+| `lib/features/scan/domain/usecases/process_ocr.dart` | Orquesta pipeline: 1er OCR → rotación → 2do OCR → refinamiento → rebuild MD |
 
 ### **UI: Markdown rendering**
 
@@ -471,9 +526,9 @@ La nota en BD siempre es texto plano legible (máx 150 chars).
 
 ---
 
-**Última actualización:** 4 Marzo 2026
+**Última actualización:** 9 Marzo 2026
 **Autor:** Equipo EscanDoc
-**Versión:** 1.4 - Orientación automática post-OCR (background, zero-cost si imagen está correcta)
+**Versión:** 1.5 - blocksToMarkdown con wide/narrow separation, maxCapsHeight, rebuildMarkdown post-refinamiento
 
 
 Listo. Ahora el log solo muestra:

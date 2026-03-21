@@ -169,7 +169,15 @@ fvm flutter analyze
 
 fvm flutter build apk --release --split-per-abi
 ---
+El comando para capturar los logs en el archivo era:
 
+  fvm flutter run 2>&1 | tee .context/ocr_debug.txt
+
+  - 2>&1 — redirige stderr a stdout (Flutter imprime en stderr)
+  - tee — muestra en terminal Y escribe al archivo simultáneamente
+
+  Cuando lo necesites, corré ese comando en lugar del fvm flutter run normal, 
+  hacé el escaneo que querés diagnosticar, y el output queda guardado en .context/ocr_debug.txt.
 <p align="center">
   <i>Hecho con ❤️ pensando en nuestros mayores</i>
 </p>
