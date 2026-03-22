@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:escandoc/core/services/ocr_service.dart';
+import 'package:escandoc/core/services/ocr_analysis.dart';
 import 'package:escandoc/core/services/document_classifier.dart';
 import 'package:escandoc/core/services/document_orientation_service.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
@@ -43,13 +44,15 @@ class ProcessOCR {
   ///
   /// [tfliteKind]: clasificación inicial del TFLite.
   /// [locale]: idioma para regenerar el título si hay reclasificación.
-  /// [skipRefinement]: si true, omite RefineClassification (usado en PDFs
-  ///   multipágina donde el tipo y título ya fueron asignados correctamente).
+  /// [skipRefinement]: si true, omite RefineClassification (PDFs multipágina).
+  /// [preExtractedText]: texto ya extraído (PDF editable). Si se provee,
+  ///   omite ML Kit OCR y refinamiento — el texto se guarda directamente.
   Future<DocumentModel> call(
     int documentId, {
     DocumentType tfliteKind = DocumentType.documento,
     String locale = 'es',
     bool skipRefinement = false,
+    String? preExtractedText,
     void Function(String)? onStatus,
   }) async {
     try {
@@ -70,21 +73,33 @@ class ProcessOCR {
         throw Exception('JPG file not found: ${document.filePath}');
       }
 
-      // 2. Extraer análisis OCR (texto + métricas)
-      final startOCR = DateTime.now();
-      debugPrint(
-          '[ProcessOCR] 🟢 START: OCR extractAnalysis - ${startOCR.millisecondsSinceEpoch}');
-      var ocrAnalysis = await _ocrService.extractAnalysis(jpgFile, docType: tfliteKind.dbKey);
-      final endOCR = DateTime.now();
-      debugPrint(
-          '[ProcessOCR] 🔴 END: OCR extractAnalysis - ${endOCR.difference(startOCR).inMilliseconds}ms'
-          ' - ${ocrAnalysis.text.length} chars'
-          ' - ${ocrAnalysis.blockCount} bloques'
-          ' - avgConf: ${ocrAnalysis.avgConfidence.toStringAsFixed(3)}');
-
-      // 3. Corrección de orientación si OCR detectó rotación
+      // 2. Extraer análisis OCR — o usar texto pre-extraído (PDF editable)
+      var ocrAnalysis;
       DocumentType activeKind = tfliteKind;
-      if (ocrAnalysis.detectedRotationDegrees != 0 && _orientationService != null) {
+
+      if (preExtractedText != null) {
+        // PDF editable: texto ya disponible, sin ML Kit ni refinamiento
+        debugPrint('[ProcessOCR] 📄 PDF editable: usando texto pre-extraído (${preExtractedText.length} chars)');
+        ocrAnalysis = OcrAnalysis(
+          text: preExtractedText,
+          blockCount: 0,
+          avgConfidence: 1.0,
+        );
+        skipRefinement = true;
+      } else {
+        final startOCR = DateTime.now();
+        debugPrint('[ProcessOCR] 🟢 START: OCR extractAnalysis - ${startOCR.millisecondsSinceEpoch}');
+        ocrAnalysis = await _ocrService.extractAnalysis(jpgFile, docType: tfliteKind.dbKey);
+        final endOCR = DateTime.now();
+        debugPrint(
+            '[ProcessOCR] 🔴 END: OCR extractAnalysis - ${endOCR.difference(startOCR).inMilliseconds}ms'
+            ' - ${ocrAnalysis.text.length} chars'
+            ' - ${ocrAnalysis.blockCount} bloques'
+            ' - avgConf: ${ocrAnalysis.avgConfidence.toStringAsFixed(3)}');
+      }
+
+      // 3. Corrección de orientación (solo si no es PDF editable)
+      if (preExtractedText == null && ocrAnalysis.detectedRotationDegrees != 0 && _orientationService != null) {
         final degrees = ocrAnalysis.detectedRotationDegrees;
         debugPrint('[ProcessOCR] 🔄 Rotación detectada: ${degrees}° → rotando y re-procesando');
 

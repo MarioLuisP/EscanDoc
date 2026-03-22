@@ -30,6 +30,14 @@ abstract class PdfImportService {
   ///
   /// Lanza [PdfImportException] si falla.
   Future<File> renderPageToJpg(String pdfPath, int pageIndex, String outputDir);
+
+  /// Detecta si el PDF tiene texto nativo extraíble.
+  /// Retorna true si la primera página contiene más de 50 caracteres reales.
+  Future<bool> isEditablePdf(String pdfPath);
+
+  /// Extrae el texto nativo de una página (0-indexada).
+  /// Retorna string vacío si la página no tiene texto.
+  Future<String> extractPageText(String pdfPath, int pageIndex);
 }
 
 /// Excepción para errores de importación de PDF.

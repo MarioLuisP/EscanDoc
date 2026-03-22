@@ -150,6 +150,7 @@ class ImportProvider with ChangeNotifier {
   Future<void> _processOCRInBackground(
       int documentId, DocumentType tfliteKind, String locale, {
       bool skipRefinement = false,
+      String? preExtractedText,
       VoidCallback? onComplete,
     }) async {
     _processingOcrIds.add(documentId);
@@ -162,6 +163,7 @@ class ImportProvider with ChangeNotifier {
       tfliteKind,
       locale,
       skipRefinement: skipRefinement,
+      preExtractedText: preExtractedText,
       onStatus: (msg) {
         _statusMessage = msg;
         notifyListeners();
@@ -232,6 +234,9 @@ class ImportProvider with ChangeNotifier {
     final isMultiPage = actualPages > 1;
     final pdfBaseName = isMultiPage ? p.basenameWithoutExtension(pdfPath) : '';
 
+    // Detectar si el PDF tiene texto nativo (PDF editable).
+    final isEditable = await _pdfImportService!.isEditablePdf(pdfPath);
+
     for (var i = 0; i < actualPages; i++) {
       _pdfCurrentPage = i + 1;
       _statusMessage = isMultiPage ? null : 'status_processing_pdf';
@@ -265,8 +270,23 @@ class ImportProvider with ChangeNotifier {
       // 4. Procesar
       final pageDate = baseTime.add(Duration(milliseconds: actualPages - 1 - i));
       try {
-        if (isMultiPage) {
-          // PDF multipágina: sin TFLite, sin refinador, nombre heredado del PDF.
+        if (isEditable) {
+          // PDF editable: texto nativo, sin TFLite ni ML Kit.
+          final title = isMultiPage ? '${pdfBaseName}_${i + 1}' : null;
+          final extractedText = await _pdfImportService!.extractPageText(pdfPath, i);
+          final document = await _pipeline.completePdfPage(
+            permFile, title ?? p.basenameWithoutExtension(pdfPath), locale, pageDate,
+          );
+          savedDocuments.add(document);
+          _processOCRInBackground(
+            document.id!,
+            DocumentType.documento,
+            locale,
+            skipRefinement: true,
+            preExtractedText: extractedText.isNotEmpty ? extractedText : null,
+          );
+        } else if (isMultiPage) {
+          // PDF multipágina imagen: sin TFLite, sin refinador.
           final title = '${pdfBaseName}_${i + 1}';
           final document = await _pipeline.completePdfPage(permFile, title, locale, pageDate);
           savedDocuments.add(document);
@@ -277,7 +297,7 @@ class ImportProvider with ChangeNotifier {
             skipRefinement: true,
           );
         } else {
-          // PDF de 1 página: pipeline normal con TFLite y refinador.
+          // PDF de 1 página imagen: pipeline normal con TFLite y refinador.
           final preparation = await prepareImport(permFile);
           if (preparation == null) {
             await permFile.delete().catchError((_) {});

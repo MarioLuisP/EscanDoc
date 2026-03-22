@@ -668,6 +668,42 @@ void main() {
       });
     });
 
+    group('preExtractedText (PDF editable)', () {
+      test('preExtractedText → no llama a extractAnalysis', () async {
+        final testDoc = createTestDocument();
+        when(() => mockRepository.getDocumentById(1)).thenAnswer((_) async => testDoc);
+        when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
+        when(() => mockRepository.updateDocument(any())).thenAnswer((_) async => 1);
+
+        await useCase.call(1, preExtractedText: 'Texto nativo del PDF');
+
+        verifyNever(() => mockOCRService.extractAnalysis(any(), docType: any(named: 'docType')));
+      });
+
+      test('preExtractedText → se guarda como ocrText', () async {
+        const nativeText = 'Contrato de alquiler vigente desde enero 2026';
+        final testDoc = createTestDocument();
+        when(() => mockRepository.getDocumentById(1)).thenAnswer((_) async => testDoc);
+        when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
+        when(() => mockRepository.updateDocument(any())).thenAnswer((_) async => 1);
+
+        final result = await useCase.call(1, preExtractedText: nativeText);
+
+        expect(result.ocrText, nativeText);
+      });
+
+      test('preExtractedText → refinement no se llama', () async {
+        final testDoc = createTestDocument();
+        when(() => mockRepository.getDocumentById(1)).thenAnswer((_) async => testDoc);
+        when(() => mockClassifier.extractDueDate(any())).thenReturn(null);
+        when(() => mockRepository.updateDocument(any())).thenAnswer((_) async => 1);
+
+        await useCase.call(1, preExtractedText: 'texto nativo');
+
+        verifyNever(() => mockRefinement.call(any(), any()));
+      });
+    });
+
     test('debe lanzar excepción si documento no existe', () async {
       // Arrange
       when(() => mockRepository.getDocumentById(999))

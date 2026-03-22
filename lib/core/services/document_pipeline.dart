@@ -146,11 +146,13 @@ class DocumentPipeline {
   ///
   /// [onStatus] se llama con claves de localización durante el proceso OCR.
   /// [skipRefinement]: si true, omite RefineClassification (PDFs multipágina).
+  /// [preExtractedText]: texto ya disponible (PDF editable), omite ML Kit.
   Future<void> processOCRBackground(
     int documentId,
     DocumentType tfliteKind,
     String locale, {
     bool skipRefinement = false,
+    String? preExtractedText,
     void Function(String)? onStatus,
   }) async {
     const tag = 'DocumentPipeline';
@@ -162,6 +164,7 @@ class DocumentPipeline {
         tfliteKind: tfliteKind,
         locale: locale,
         skipRefinement: skipRefinement,
+        preExtractedText: preExtractedText,
         onStatus: onStatus,
       );
       debugPrint('[$tag] 🔴 END: OCR background - ${DateTime.now().difference(start).inMilliseconds}ms');

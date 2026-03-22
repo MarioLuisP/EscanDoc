@@ -92,6 +92,32 @@ class PdfImportServiceImpl implements PdfImportService {
     }
   }
 
+  @override
+  Future<bool> isEditablePdf(String pdfPath) async {
+    final text = await extractPageText(pdfPath, 0);
+    final meaningfulChars = text.replaceAll(RegExp(r'\s+'), '').length;
+    final result = meaningfulChars > 50;
+    debugPrint('[PdfImportService] isEditablePdf: $meaningfulChars chars → $result');
+    return result;
+  }
+
+  @override
+  Future<String> extractPageText(String pdfPath, int pageIndex) async {
+    PdfDocument? document;
+    try {
+      document = await PdfDocument.openFile(pdfPath)
+          .timeout(const Duration(seconds: 15));
+      if (pageIndex >= document.pages.length) return '';
+      final pageText = await document.pages[pageIndex].loadText();
+      return pageText?.fullText ?? '';
+    } catch (e) {
+      debugPrint('[PdfImportService] Error extrayendo texto página $pageIndex: $e');
+      return '';
+    } finally {
+      await document?.dispose();
+    }
+  }
+
   Future<File> _renderPageToJpg(
     PdfPage page,
     String outputDir,
