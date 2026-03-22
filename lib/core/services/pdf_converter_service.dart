@@ -131,24 +131,12 @@ class PdfConverterServiceImpl implements PdfConverterService {
       final jpgBytes = await jpgFile.readAsBytes();
       final pdfImage = pw.MemoryImage(jpgBytes);
 
-      final decoder = img.JpegDecoder();
-      final imageInfo = decoder.startDecode(jpgBytes);
-      if (imageInfo == null) {
-        debugPrint('[PdfConverter] No se pudieron leer dimensiones: $jpgPath');
-        continue;
-      }
-
-      final pageFormat = PdfPageFormat(
-        imageInfo.width.toDouble(),
-        imageInfo.height.toDouble(),
-        marginAll: 0,
-      );
-
       pdf.addPage(
         pw.Page(
-          pageFormat: pageFormat,
+          pageFormat: PdfPageFormat.a4,
+          margin: pw.EdgeInsets.zero,
           build: (pw.Context context) =>
-              pw.Image(pdfImage, fit: pw.BoxFit.fill),
+              pw.Center(child: pw.Image(pdfImage, fit: pw.BoxFit.contain)),
         ),
       );
     }

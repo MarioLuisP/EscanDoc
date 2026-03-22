@@ -196,8 +196,14 @@ class _PhotoFullscreenPageState extends State<PhotoFullscreenPage> {
       final imageBytes = await File(widget.filePath).readAsBytes();
 
       final tempDir = await getTemporaryDirectory();
-      final tempPath =
-          '${tempDir.path}/export_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      final now = DateTime.now();
+      const monthKeys = [
+        'month_jan','month_feb','month_mar','month_apr',
+        'month_may','month_jun','month_jul','month_aug',
+        'month_sep','month_oct','month_nov','month_dec',
+      ];
+      final dateSuffix = '${now.day}${monthKeys[now.month - 1].tr()}';
+      final tempPath = '${tempDir.path}/EscanDoc_$dateSuffix.pdf';
 
       final converter = PdfConverterServiceImpl();
       tempPdf = await converter.convertImageBytesToPdfA4(imageBytes, tempPath);
@@ -219,12 +225,9 @@ class _PhotoFullscreenPageState extends State<PhotoFullscreenPage> {
           backgroundColor: Colors.red[700],
         ),
       );
-    } finally {
-      // Limpiar PDF temporal después de que share_plus lo haya procesado
-      if (tempPdf != null && await tempPdf.exists()) {
-        await tempPdf.delete();
-      }
     }
+    // No borramos el archivo temporal: el OS limpia getTemporaryDirectory()
+    // automáticamente. Borrarlo manualmente puede romper el share a la misma app.
   }
 }
 

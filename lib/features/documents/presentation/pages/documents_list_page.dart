@@ -545,11 +545,11 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
 
   void _openPdfOrder() {
     final provider = context.read<DocumentsProvider>();
-    // Mantener el orden de la lista actual (sort aplicado)
+    // Mantener el orden de la lista actual (sort aplicado).
+    // NO salir del modo selección → el usuario puede volver y ajustar.
     final docs = _sorted(provider.documents)
         .where((d) => _selectedIds.contains(d.id))
         .toList();
-    _exitSelectionMode();
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => PdfOrderPage(documents: docs)),
