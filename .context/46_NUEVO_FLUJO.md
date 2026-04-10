@@ -14,20 +14,50 @@
 └──────────────────────┴───────────────────────┴───────────────────────┘
          ↓                        ↓                        ↓
          │                        │          ┌─────────────────────────┐
-         │                        │          │  0. RENDER PDF → JPGs   │
+         │                        │          │  0. DETECCIÓN PDF       │
          │                        │          │  PdfImportServiceImpl   │
          │                        │          ├─────────────────────────┤
-         │                        │          │ • pdfrx: 150 DPI        │
-         │                        │          │   (1240×1754 px A4)     │
-         │                        │          │ • dart:ui in-memory     │
-         │                        │          │   (sin PNG temporal)    │
-         │                        │          │ • flutter_image_compress│
-         │                        │          │   → JPG, una escritura  │
-         │                        │          │ • Si > 10 pág → dialog  │
-         │                        │          │ • Cada página → pipeline│
+         │                        │          │ isEditablePdf():        │
+         │                        │          │ extraer texto pág 0     │
+         │                        │          │ > 50 chars → editable   │
+         │                        │          │ Si > 10 pág → dialog    │
          │                        │          └─────────────────────────┘
-         │                        │                        ↓ (N veces)
-         └────────────────────────┴────────────────────────┘
+         │                        │            ↓            ↓         ↓
+         │                        │     ┌──────┴───┐ ┌──────┴──┐ ┌───┴──────┐
+         │                        │     │ EDITABLE │ │ IMAGEN  │ │ IMAGEN   │
+         │                        │     │ (texto   │ │ MULTI   │ │ 1 PÁGINA │
+         │                        │     │ nativo)  │ │ PÁGINA  │ │          │
+         │                        │     └──────────┘ └─────────┘ └──────────┘
+         │                        │          ↓            ↓              ↓
+         │                        │  ┌───────────┐ ┌──────────┐         │
+         │                        │  │render JPG │ │render JPG│         │
+         │                        │  │pdfrx 150  │ │pdfrx 150 │         │
+         │                        │  │DPI in-mem │ │DPI in-mem│         │
+         │                        │  │extractText│ │          │         │
+         │                        │  │por página │ │          │         │
+         │                        │  └───────────┘ └──────────┘         │
+         │                        │          ↓            ↓              │
+         │                        │  ┌───────────┐ ┌──────────┐         │
+         │                        │  │completePdf│ │completePdf         │
+         │                        │  │Page() sin │ │Page() sin│         │
+         │                        │  │TFLite     │ │TFLite    │         │
+         │                        │  │customTitle│ │customTitle         │
+         │                        │  │= nombre_n │ │= nombre_n│         │
+         │                        │  └───────────┘ └──────────┘         │
+         │                        │          ↓            ↓              │
+         │                        │  ┌───────────┐ ┌──────────┐         │
+         │                        │  │OCR back-  │ │OCR back- │         │
+         │                        │  │ground con │ │ground con│         │
+         │                        │  │preExtract-│ │skipRefine│         │
+         │                        │  │edText +   │ │ment=true │         │
+         │                        │  │skipRefine │ │          │         │
+         │                        │  │ment=true  │ │          │         │
+         │                        │  └───────────┘ └──────────┘         │
+         │                        │       ↓ BD          ↓ BD             │
+         │                        │       └─────────────┘                │
+         │                        │             ✅ FIN PDF              │
+         │                        │          (no sigue pipeline)         │
+         └────────────────────────┴──────────────────────────────────────┘
                                   ↓
             ┌─────────────────────────────────┐
             │   1. CONVERTIR A JPG            │
@@ -110,12 +140,12 @@
             │   4. GUARDAR EN BD              │
             │   SaveScannedDocument           │
             ├─────────────────────────────────┤
-            │ • Generar nombre (fecha/OCR)    │
+            │ • Si customTitle → usa ese      │
+            │   nombre (PDF multipágina)      │
+            │ • Si no → genera por fecha/tipo │
             │ • Mover archivo a storage       │
             │ • Insertar documento en BD      │
             │   - documentType = tfliteClass  │
-            │ • Crear nota automática         │
-            │   "Clasificado como: X (99%)"   │
             │ • Tiempo: ~300ms                │
             └─────────────────────────────────┘
                                 ↓
@@ -233,6 +263,57 @@
             └─────────────────────────────────┘
                                 ↓
                           ✅ LISTO
+
+
+════════════════════════════════════════
+         FLUJO DE EXPORT PDF
+════════════════════════════════════════
+
+DocumentsListPage
+─────────────────
+Long-press en item → modo selección
+  │  Tap items → toggle ☑/☐
+  │  Header: "N seleccionados" + ✕
+  │
+  ├─ [Eliminar] (≥1 seleccionado)
+  │     ↓
+  │   bottom sheet confirmación 3D
+  │     ↓
+  │   repository.deleteDocuments()
+  │     ✅ FIN
+  │
+  └─ [Crear PDF] (≥2 seleccionados)
+        ↓
+     PdfOrderPage
+     ─────────────────────────────────
+     Lista documentos seleccionados
+     con número de posición + miniatura
+     + título + fecha
+     Botones ▲ ▼ por item
+     (primer item: ▲ deshabilitado)
+     (último item: ▼ deshabilitado)
+        ↓ [Exportar PDF (N)]
+     ─────────────────────────────────
+     convertJpgsToPdf(jpgPaths, tmpPath)
+       PdfConverterService
+       PdfPageFormat.a4 + BoxFit.contain
+       → margen blanco si no es A4
+       → una página por documento
+        ↓
+     Share sheet del SO
+     (WhatsApp, mail, Drive, etc.)
+        ↓
+     addPostFrameCallback:
+       Navigator.pop() → vuelve a lista
+     (temporal en getTemporaryDirectory,
+      el SO limpia — no borrar a mano)
+
+     Nombre: EscanDoc_{día}{MesAbrev}.pdf
+     Ej: EscanDoc_22Mar.pdf
+     (claves i18n de meses ya existentes)
+     ─────────────────────────────────
+     ← (back) → vuelve a lista
+               CON selección preservada
 ```
 
 ---

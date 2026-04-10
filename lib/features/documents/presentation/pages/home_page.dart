@@ -87,16 +87,61 @@ class _HomePageState extends State<HomePage> {
 
     try {
       final tempDir = await getTemporaryDirectory();
-      final ext = sourcePath.contains('.')
-          ? sourcePath.split('.').last.split('?').first.toLowerCase()
-          : 'jpg';
+
+      // Extraer extensión solo del nombre de archivo — evita confundir puntos
+      // del package name (com.app.package) con la extensión del archivo.
+      final filename = sourcePath.split('/').last;
+      final dotIndex = filename.lastIndexOf('.');
+      final rawExt = dotIndex >= 0
+          ? filename.substring(dotIndex + 1).split('?').first.toLowerCase()
+          : '';
+      const validExts = {'jpg', 'jpeg', 'png', 'pdf', 'webp', 'heic', 'heif'};
+
+      // Si la extensión no es reconocida, detectar por magic bytes.
+      final String ext;
+      if (validExts.contains(rawExt)) {
+        ext = rawExt == 'jpeg' ? 'jpg' : rawExt;
+      } else {
+        ext = await _detectFormatByMagicBytes(sourceFile) ?? 'jpg';
+      }
+
       final stableFile = await sourceFile.copy(
         '${tempDir.path}/shared_${DateTime.now().millisecondsSinceEpoch}.$ext',
       );
-      await _processImportedFile(stableFile);
+
+      if (ext == 'pdf') {
+        await _handlePdfImport(stableFile.path);
+      } else {
+        await _processImportedFile(stableFile);
+      }
     } catch (_) {
       // Si no se puede copiar, intentar con el archivo original
       await _processImportedFile(sourceFile);
+    }
+  }
+
+  /// Detecta el formato de un archivo leyendo sus primeros bytes (magic bytes).
+  /// Retorna 'pdf', 'jpg', 'png' o 'webp', o null si no se reconoce.
+  Future<String?> _detectFormatByMagicBytes(File file) async {
+    try {
+      final raf = await file.open();
+      final bytes = await raf.read(8);
+      await raf.close();
+      if (bytes.length >= 4) {
+        // PDF: %PDF (25 50 44 46)
+        if (bytes[0] == 0x25 && bytes[1] == 0x50 && bytes[2] == 0x44 && bytes[3] == 0x46) return 'pdf';
+        // JPEG: FF D8 FF
+        if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) return 'jpg';
+        // PNG: 89 50 4E 47
+        if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) return 'png';
+        // WebP: RIFF....WE
+        if (bytes.length >= 8 &&
+            bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46 &&
+            bytes[6] == 0x57 && bytes[7] == 0x45) return 'webp';
+      }
+      return null;
+    } catch (_) {
+      return null;
     }
   }
 

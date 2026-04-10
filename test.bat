@@ -1,2 +1,2 @@
 @echo off
-fvm flutter test %*
+flutter test %*

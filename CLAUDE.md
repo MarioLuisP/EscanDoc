@@ -44,7 +44,7 @@ lib/
 2. Escribir el mínimo código para pasarlo (GREEN)
 3. Refactorizar si corresponde
    **IMPORTANTE:** Este proyecto usa FVM (Flutter Version Manager).
-4. **Yo corro los tests** con `fvm flutter test` y te paso el output — vos no podés ejecutarlos
+4. **Yo corro los tests** con `flutter test` y te paso el output — vos no podés ejecutarlos
 
 **Qué se testea con TDD:**
 - Domain: UseCases, entidades, lógica de negocio — **siempre, sin excepción**

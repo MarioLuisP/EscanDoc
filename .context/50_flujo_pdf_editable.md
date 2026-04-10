@@ -339,4 +339,105 @@ Lo que NO haría
 
 - No numerar en la selección — el orden de selección (1ro clickeado = página 1) es confuso e irreversible. Mejor usar el orden de la lista + reordenar después
 - No mostrar un grid de miniaturas — ocupa mucho espacio y las fotos de documentos se parecen mucho entre sí; el título es más útil para identificar
-- No pedir el nombre del PDF antes de ordenar — primero el contenido, después el nombre (o autogenerarlo)                           
+- No pedir el nombre del PDF antes de ordenar — primero el contenido, después el nombre (o autogenerarlo)
+
+---
+
+## Estado final — Todo implementado (Mar 2026)
+
+### 1. Import PDF multipágina imagen — refinado
+
+**Problema resuelto:** las páginas de PDF imagen se clasificaban individualmente con TFLite, provocando que portadas fueran tomadas como fotos y el refinador OCR actuara sobre cada página por separado.
+
+**Solución:** bypass total de TFLite y refinamiento para PDFs de más de una página.
+
+**Archivos involucrados:**
+- `lib/features/scan/domain/usecases/save_scanned_document.dart` — parámetro `customTitle` opcional: si se provee, omite la generación de nombre por clasificador
+- `lib/core/services/document_pipeline.dart` — método `completePdfPage()`: normaliza + guarda con título custom, tipo fijo `documento`, sin TFLite
+- `lib/features/scan/domain/usecases/process_ocr.dart` — parámetro `skipRefinement`: omite `RefineClassification` cuando es `true`
+- `lib/features/documents/presentation/providers/import_provider.dart` — `importPdfPages()` bifurca en 3 ramas: editable / multipágina imagen / una sola página imagen
+
+**Nombre de cada página:** `{nombreArchivoPDF}_{n}` (ej: `tutorial_1`, `tutorial_2`). El nombre base viene del path del PDF sin extensión.
+
+**Timestamps:** decrecientes desde `baseTime` → la página 1 queda más reciente arriba en la lista.
+
+---
+
+### 2. Import PDF editable (texto nativo)
+
+**Concepto:** PDFs generados digitalmente contienen texto extraíble directamente. No hace falta ML Kit OCR ni clasificación TFLite.
+
+**Detección:** se intenta extraer texto de la primera página con pdfrx. Si tiene más de 50 caracteres no-espacios → editable.
+
+**Flujo por página:**
+1. Renderizar a JPG (imagen del documento, misma calidad que imagen)
+2. Guardar en BD con `completePdfPage()` (sin TFLite)
+3. Lanzar `processOCRBackground()` con `preExtractedText` = texto ya extraído + `skipRefinement: true`
+4. `ProcessOCR` recibe el texto, construye `OcrAnalysis` sin llamar ML Kit, omite corrección de orientación, omite refinador, guarda directamente en BD
+
+**Archivos involucrados:**
+- `lib/features/documents/domain/services/pdf_import_service.dart` — interface: `isEditablePdf()` y `extractPageText(pdfPath, pageIndex)`
+- `lib/features/documents/data/services/pdf_import_service_impl.dart` — implementación con pdfrx: `page.loadText()` → `PdfPageText.fullText`
+- `lib/features/scan/domain/usecases/process_ocr.dart` — parámetro `preExtractedText`: cuando presente, construye `OcrAnalysis` internamente, fuerza `skipRefinement`, omite orientación
+- `lib/core/services/ocr_analysis.dart` — `OcrAnalysis` (ya existía, reutilizado)
+- `lib/core/services/document_pipeline.dart` — `processOCRBackground()` propaga `preExtractedText`
+- `lib/features/documents/presentation/providers/import_provider.dart` — `_processOCRInBackground()` propaga `preExtractedText`; rama `isEditable` en `importPdfPages()`
+
+---
+
+### 3. Selección múltiple en DocumentsListPage
+
+**Reemplaza:** el dialog de borrado por long-press (modal individual, sin posibilidad de selección múltiple).
+
+**Comportamiento:**
+- Long-press en cualquier item → entra en modo selección; ese item queda seleccionado
+- Tap en items → toggle check
+- Header muestra "N seleccionados" + botón ✕ para salir
+- Barra inferior muestra [Eliminar] y [Crear PDF] (Crear PDF solo si ≥2 seleccionados)
+- Al salir del modo selección (✕ o después de borrar) → limpia selección
+
+**Confirmación de borrado:** bottom sheet 3D con cantidad de documentos a eliminar.
+
+**Archivos involucrados:**
+- `lib/features/documents/presentation/pages/documents_list_page.dart` — estado `_selectionMode` + `_selectedIds`, métodos `_enterSelectionMode`, `_toggleSelection`, `_exitSelectionMode`, `_deleteSelected`, `_showDeleteConfirmation`, `_openPdfOrder`; widget `_Btn3D` (botón gradiente 3D reutilizable); widget `_DocItem` extendido con `isSelected`, `selectionMode`, `onToggle`
+
+---
+
+### 4. Export PDF combinado con reordenamiento
+
+**Pantalla intermedia `PdfOrderPage`:** muestra los documentos seleccionados con flechas ▲▼ para reordenar antes de exportar.
+
+**Flujo:**
+1. [Crear PDF] desde DocumentsListPage → abre `PdfOrderPage` con los documentos seleccionados
+2. Usuario reordena con ▲▼
+3. [Exportar PDF] → genera PDF en directorio temporal → share sheet del SO → vuelve a la lista
+
+**Nombre del archivo exportado:** `EscanDoc_{día}{mesAbreviado}.pdf` usando claves i18n de meses ya existentes (ej: `EscanDoc_22Mar.pdf`). No se pide nombre al usuario.
+
+**Normalización A4:** cada JPG se renderiza con `PdfPageFormat.a4` + `BoxFit.contain` — margen blanco si la imagen no es A4.
+
+**Limpieza del temporal:** se omite el borrado explícito — el SO limpia `getTemporaryDirectory()` automáticamente. Borrar antes de que el share sheet termine causaba corrupción.
+
+**Volver a la lista:** se usa `addPostFrameCallback(() => Navigator.pop(context))` después del share para garantizar que la navegación ocurre después de que el share sheet cierra.
+
+**Preservar selección:** `_openPdfOrder()` no llama `_exitSelectionMode()`, así al volver con ← la selección sigue activa.
+
+**Archivos involucrados:**
+- `lib/features/documents/presentation/pages/pdf_order_page.dart` — nuevo; `PdfOrderPage`, `_ArrowButton`, `_ExportBtn3D`
+- `lib/core/services/pdf_converter_service.dart` — método `convertJpgsToPdf(List<String> jpgPaths, String outputPdfPath)` con normalización A4
+- `lib/features/documents/presentation/pages/photo_fullscreen_page.dart` — nombre de archivo actualizado al mismo formato `EscanDoc_{día}{mes}.pdf`
+
+---
+
+### 5. i18n — claves agregadas
+
+**Archivos:** `assets/l10n/es.json` y `assets/l10n/en.json`
+
+Claves nuevas: `selection_count`, `documents_deleted`, `delete_confirm_many`, `create_pdf_button`, `pdf_order_title`, `pdf_export_button`
+
+---
+
+### Tests — cobertura agregada
+
+- `test/features/scan/domain/usecases/save_scanned_document_test.dart` — grupo `customTitle`: 3 tests
+- `test/features/scan/domain/usecases/process_ocr_test.dart` — grupo `skipRefinement`: 3 tests; grupo `preExtractedText`: 3 tests

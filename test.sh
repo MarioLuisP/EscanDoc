@@ -1,2 +1,2 @@
 ﻿#!/bin/bash
-fvm flutter test "$@"
+flutter test "$@"
