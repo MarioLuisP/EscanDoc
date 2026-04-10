@@ -277,6 +277,10 @@ class _HomePageState extends State<HomePage> {
           Navigator.pushNamed(ctx, '/note/edit',
               arguments: {'isNewNote': true});
         },
+        onCalendar: () {
+          Navigator.pop(ctx);
+          Navigator.pushNamed(ctx, '/calendar');
+        },
         onSettings: () {
           Navigator.pop(ctx);
           Navigator.pushNamed(ctx, '/settings');
@@ -709,11 +713,13 @@ class _HomePageState extends State<HomePage> {
 class _ActionsSheet extends StatelessWidget {
   final VoidCallback onImport;
   final VoidCallback onNewNote;
+  final VoidCallback onCalendar;
   final VoidCallback onSettings;
 
   const _ActionsSheet({
     required this.onImport,
     required this.onNewNote,
+    required this.onCalendar,
     required this.onSettings,
   });
 
@@ -745,6 +751,12 @@ class _ActionsSheet extends StatelessWidget {
             icon: Icons.edit_note,
             label: 'note_new_label'.tr(),
             onTap: onNewNote,
+          ),
+          const SizedBox(height: 10),
+          _SheetActionButton(
+            icon: Icons.calendar_month_outlined,
+            label: 'menu_calendar'.tr(),
+            onTap: onCalendar,
           ),
           // --- Separador visual: acciones principales / configuración ---
           const SizedBox(height: 6),

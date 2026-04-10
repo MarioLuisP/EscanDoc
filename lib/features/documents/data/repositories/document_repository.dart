@@ -126,6 +126,58 @@ class DocumentRepository {
     }
   }
 
+  /// Actualiza la fecha de vencimiento de un documento.
+  /// Pasar null para quitar el vencimiento.
+  Future<void> updateExpiryDate(int documentId, DateTime? expiryDate) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'documents',
+      {'expiry_date': expiryDate?.toIso8601String()},
+      where: 'id = ?',
+      whereArgs: [documentId],
+    );
+  }
+
+  /// Retorna todos los documentos que tienen expiry_date asignado,
+  /// ordenados por fecha de vencimiento ascendente.
+  Future<List<DocumentModel>> getDocumentsWithExpiry() async {
+    try {
+      final db = await _dbHelper.database;
+      final maps = await db.query(
+        'documents',
+        where: 'expiry_date IS NOT NULL',
+        orderBy: 'expiry_date ASC',
+      );
+      return maps.map((m) => DocumentModel.fromMap(m)).toList();
+    } catch (e) {
+      debugPrint('[DocumentRepository] ERROR getDocumentsWithExpiry: $e');
+      return [];
+    }
+  }
+
+  /// Retorna documentos con vencimiento dentro del rango [start, end] inclusive.
+  /// Útil para cargar solo los meses visibles en el calendario.
+  Future<List<DocumentModel>> getDocumentsExpiringInRange(
+    DateTime start,
+    DateTime end,
+  ) async {
+    try {
+      final db = await _dbHelper.database;
+      final startStr = start.toIso8601String().substring(0, 10);
+      final endStr = end.toIso8601String().substring(0, 10);
+      final maps = await db.query(
+        'documents',
+        where: 'expiry_date IS NOT NULL AND date(expiry_date) BETWEEN ? AND ?',
+        whereArgs: [startStr, endStr],
+        orderBy: 'expiry_date ASC',
+      );
+      return maps.map((m) => DocumentModel.fromMap(m)).toList();
+    } catch (e) {
+      debugPrint('[DocumentRepository] ERROR getDocumentsExpiringInRange: $e');
+      return [];
+    }
+  }
+
   /// Actualiza el campo note_content de un documento
   Future<void> updateNote(int documentId, String? content) async {
     final db = await _dbHelper.database;

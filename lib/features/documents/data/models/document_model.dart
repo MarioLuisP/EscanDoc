@@ -8,6 +8,7 @@ class DocumentModel {
   final String? noteContent;
   final String? ocrText;
   final DateTime? extractedDate;
+  final DateTime? expiryDate;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -19,6 +20,7 @@ class DocumentModel {
     this.noteContent,
     this.ocrText,
     this.extractedDate,
+    this.expiryDate,
     required this.createdAt,
     this.updatedAt,
   });
@@ -34,6 +36,9 @@ class DocumentModel {
       ocrText: map['ocr_text'] as String?,
       extractedDate: map['extracted_date'] != null
           ? DateTime.tryParse(map['extracted_date'] as String)
+          : null,
+      expiryDate: map['expiry_date'] != null
+          ? DateTime.tryParse(map['expiry_date'] as String)
           : null,
       createdAt: DateTime.tryParse(map['created_at'] as String? ?? '') ?? DateTime.now(),
       updatedAt: map['updated_at'] != null
@@ -52,12 +57,14 @@ class DocumentModel {
       'note_content': noteContent,
       'ocr_text': ocrText,
       'extracted_date': extractedDate?.toIso8601String(),
+      'expiry_date': expiryDate?.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
     };
   }
 
-  /// CopyWith para inmutabilidad
+  /// CopyWith para inmutabilidad.
+  /// Para limpiar expiryDate pasar [clearExpiryDate: true].
   DocumentModel copyWith({
     int? id,
     String? title,
@@ -66,6 +73,8 @@ class DocumentModel {
     String? noteContent,
     String? ocrText,
     DateTime? extractedDate,
+    DateTime? expiryDate,
+    bool clearExpiryDate = false,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -77,6 +86,7 @@ class DocumentModel {
       noteContent: noteContent ?? this.noteContent,
       ocrText: ocrText ?? this.ocrText,
       extractedDate: extractedDate ?? this.extractedDate,
+      expiryDate: clearExpiryDate ? null : (expiryDate ?? this.expiryDate),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -94,6 +104,7 @@ class DocumentModel {
         other.noteContent == noteContent &&
         other.ocrText == ocrText &&
         other.extractedDate == extractedDate &&
+        other.expiryDate == expiryDate &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
   }
@@ -108,6 +119,7 @@ class DocumentModel {
       noteContent,
       ocrText,
       extractedDate,
+      expiryDate,
       createdAt,
       updatedAt,
     );

@@ -73,6 +73,10 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                         ),
                         const SizedBox(height: 14),
 
+                        // Card Vencimiento
+                        _buildExpiryCard(context, provider, document),
+                        const SizedBox(height: 14),
+
                         // Card Texto Extraído (oculta para notas)
                         if (document.documentType != 'nota')
                           _buildOcrCard(context, document.ocrText),
@@ -239,6 +243,111 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
               ),
             ),
     );
+  }
+
+  // --- Card Vencimiento ---
+
+  Widget _buildExpiryCard(BuildContext context, DocumentsProvider provider, dynamic document) {
+    final expiry = document.expiryDate as DateTime?;
+    final hasExpiry = expiry != null;
+
+    String subtitle;
+    Color subtitleColor = Colors.black87;
+    if (!hasExpiry) {
+      subtitle = 'expiry_none'.tr();
+      subtitleColor = Colors.grey[500]!;
+    } else {
+      final daysLeft = expiry.difference(DateTime.now()).inDays;
+      if (daysLeft < 0) {
+        subtitle = 'expiry_overdue'.tr(namedArgs: {'days': '${-daysLeft}'});
+        subtitleColor = Colors.red[700]!;
+      } else if (daysLeft == 0) {
+        subtitle = 'expiry_today'.tr();
+        subtitleColor = Colors.red[700]!;
+      } else if (daysLeft == 1) {
+        subtitle = 'expiry_tomorrow'.tr();
+        subtitleColor = Colors.orange[700]!;
+      } else {
+        subtitle = 'expiry_in_days'.tr(namedArgs: {'days': '$daysLeft'});
+        subtitleColor = daysLeft <= 30 ? Colors.orange[700]! : const Color(0xFF388E3C);
+      }
+    }
+
+    return _SectionCard(
+      onTap: () => _showExpiryOptions(context, provider, document),
+      icon: Icons.calendar_month_outlined,
+      iconColor: const Color(0xFF1976D2),
+      title: 'expiry_section_title'.tr(),
+      child: Text(
+        subtitle,
+        style: TextStyle(
+          fontSize: 15,
+          color: subtitleColor,
+          fontStyle: hasExpiry ? FontStyle.normal : FontStyle.italic,
+          fontWeight: hasExpiry ? FontWeight.w600 : FontWeight.normal,
+        ),
+      ),
+    );
+  }
+
+  void _showExpiryOptions(BuildContext context, DocumentsProvider provider, dynamic document) async {
+    final expiry = document.expiryDate as DateTime?;
+    final id = document.id as int;
+
+    if (expiry == null) {
+      // Sin vencimiento: abrir DatePicker directamente
+      await _pickExpiryDate(context, provider, id, null);
+    } else {
+      // Con vencimiento: mostrar opciones
+      await showModalBottomSheet(
+        context: context,
+        backgroundColor: const Color(0xFFFDFAF4),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (ctx) => Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+              ListTile(
+                leading: const Icon(Icons.edit_calendar, color: Color(0xFF388E3C)),
+                title: Text('expiry_change'.tr(), style: const TextStyle(fontSize: 17)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await _pickExpiryDate(context, provider, id, expiry);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.cancel_outlined, color: Colors.red[400]),
+                title: Text('expiry_remove'.tr(), style: const TextStyle(fontSize: 17)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await provider.updateExpiryDate(id, null);
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _pickExpiryDate(BuildContext context, DocumentsProvider provider, int id, DateTime? initial) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial ?? DateTime.now().add(const Duration(days: 30)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2040),
+      locale: context.locale,
+      helpText: 'expiry_set'.tr(),
+      confirmText: 'save_button'.tr(),
+      cancelText: 'cancel_button'.tr(),
+    );
+    if (picked == null || !mounted) return;
+    await provider.updateExpiryDate(id, picked);
   }
 
   // --- Lógica ---

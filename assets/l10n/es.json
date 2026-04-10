@@ -172,5 +172,16 @@
   "settings_title": "Configuración",
   "settings_language": "Idioma",
   "language_es": "Español",
-  "language_en": "Inglés"
+  "language_en": "Inglés",
+
+  "menu_calendar": "Vencimientos",
+  "expiry_section_title": "Vencimiento",
+  "expiry_none": "Sin fecha de vencimiento",
+  "expiry_set": "Asignar vencimiento",
+  "expiry_change": "Cambiar vencimiento",
+  "expiry_remove": "Quitar vencimiento",
+  "expiry_today": "Vence hoy",
+  "expiry_tomorrow": "Vence mañana",
+  "expiry_in_days": "Vence en {days} días",
+  "expiry_overdue": "Venció hace {days} días"
 }

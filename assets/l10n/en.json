@@ -172,5 +172,16 @@
   "settings_title": "Settings",
   "settings_language": "Language",
   "language_es": "Spanish",
-  "language_en": "English"
+  "language_en": "English",
+
+  "menu_calendar": "Expiry Dates",
+  "expiry_section_title": "Expiry Date",
+  "expiry_none": "No expiry date set",
+  "expiry_set": "Set expiry date",
+  "expiry_change": "Change expiry date",
+  "expiry_remove": "Remove expiry date",
+  "expiry_today": "Expires today",
+  "expiry_tomorrow": "Expires tomorrow",
+  "expiry_in_days": "Expires in {days} days",
+  "expiry_overdue": "Expired {days} days ago"
 }

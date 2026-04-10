@@ -51,6 +51,7 @@ import 'features/documents/presentation/pages/document_detail_page.dart';
 import 'features/search/presentation/pages/search_page.dart';
 import 'features/notes/presentation/pages/note_editor_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
+import 'features/calendar/presentation/pages/calendar_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -202,6 +203,7 @@ class MyApp extends StatelessWidget {
           '/note/edit': (context) => const NoteEditorPage(),
           '/search': (context) => const SearchPage(),
           '/settings': (context) => const SettingsPage(),
+          '/calendar': (context) => const CalendarPage(),
 
         },
       ),

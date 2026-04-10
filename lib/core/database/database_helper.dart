@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 import 'package:escandoc/core/utils/text_normalizer.dart';
 
 /// Singleton para gestionar la base de datos SQLite local
-/// Schema simplificado: tabla única documents + due_dates (Fase 2)
+/// Schema: tabla única documents con expiry_date incorporado
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
@@ -22,7 +22,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -42,44 +42,11 @@ class DatabaseHelper {
         note_content    TEXT,
         ocr_text        TEXT,
         extracted_date  DATE,
+        expiry_date     TEXT,
         created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
         title_search    TEXT,
         note_search     TEXT
-      )
-    ''');
-
-    // =========================================================================
-    // TABLA: due_dates (Fase 2 - Preparada para futuro)
-    // =========================================================================
-    await db.execute('''
-      CREATE TABLE due_dates (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-        title TEXT NOT NULL,
-        due_date DATE NOT NULL,
-        notification_days_before INTEGER DEFAULT 1,
-        is_resolved BOOLEAN DEFAULT 0,
-
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-
-        CONSTRAINT valid_notification CHECK (notification_days_before > 0)
-      )
-    ''');
-
-    // =========================================================================
-    // TABLA: document_due_dates (Fase 2 - Preparada para futuro)
-    // =========================================================================
-    await db.execute('''
-      CREATE TABLE document_due_dates (
-        document_id INTEGER NOT NULL,
-        due_date_id INTEGER NOT NULL,
-
-        FOREIGN KEY(document_id) REFERENCES documents(id) ON DELETE CASCADE,
-        FOREIGN KEY(due_date_id) REFERENCES due_dates(id) ON DELETE CASCADE,
-
-        PRIMARY KEY(document_id, due_date_id)
       )
     ''');
 
@@ -96,16 +63,6 @@ class DatabaseHelper {
       END
     ''');
 
-    await db.execute('''
-      CREATE TRIGGER due_dates_updated_at
-      AFTER UPDATE ON due_dates
-      FOR EACH ROW
-      WHEN NEW.updated_at = OLD.updated_at
-      BEGIN
-        UPDATE due_dates SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
-      END
-    ''');
-
     // =========================================================================
     // ÍNDICES: Performance
     // =========================================================================
@@ -113,12 +70,8 @@ class DatabaseHelper {
         'CREATE INDEX idx_documents_created_at ON documents(created_at DESC)');
     await db.execute(
         'CREATE INDEX idx_documents_extracted_date ON documents(extracted_date)');
-
-    // Índices para due_dates (Fase 2)
     await db.execute(
-        'CREATE INDEX idx_due_dates_due_date ON due_dates(due_date)');
-    await db.execute(
-        'CREATE INDEX idx_due_dates_is_resolved ON due_dates(is_resolved)');
+        'CREATE INDEX idx_documents_expiry_date ON documents(expiry_date)');
   }
 
   /// Migraciones incrementales por versión
@@ -145,6 +98,17 @@ class DatabaseHelper {
           whereArgs: [id],
         );
       }
+    }
+    if (oldVersion < 3) {
+      // Agregar expiry_date a documents
+      await db.execute(
+          'ALTER TABLE documents ADD COLUMN expiry_date TEXT');
+      await db.execute(
+          'CREATE INDEX idx_documents_expiry_date ON documents(expiry_date)');
+
+      // Eliminar tablas de Fase 2 que quedaron sin uso
+      await db.execute('DROP TABLE IF EXISTS document_due_dates');
+      await db.execute('DROP TABLE IF EXISTS due_dates');
     }
   }
 
