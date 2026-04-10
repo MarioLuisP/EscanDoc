@@ -86,7 +86,9 @@ class DocumentClassifier {
               int.parse(match.group(1)!),
             );
           }
-          if (date.isAfter(DateTime.now())) return date;
+          final today = DateTime.now();
+          final todayOnly = DateTime(today.year, today.month, today.day);
+          if (!date.isBefore(todayOnly)) return date;
         } catch (e) {
           continue;
         }

@@ -4,6 +4,7 @@ import 'package:escandoc/core/services/ocr_service.dart';
 import 'package:escandoc/core/services/ocr_analysis.dart';
 import 'package:escandoc/core/services/document_classifier.dart';
 import 'package:escandoc/core/services/document_orientation_service.dart';
+import 'package:escandoc/core/services/expiry_date_extractor.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
 import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
@@ -176,23 +177,42 @@ class ProcessOCR {
           ? '${_manuscritoDisclaimer(locale)}$extractedText'
           : extractedText;
 
-      // 7. Extraer fecha de vencimiento si existe
+      // 7. Extraer fecha del documento (extracted_date) — método legacy
       final extractedDate = _classifier.extractDueDate(ocrText);
-      debugPrint('[ProcessOCR] Fecha extraída: $extractedDate');
+      debugPrint('[ProcessOCR] Fecha extraída del doc: $extractedDate');
 
-      // 8. Construir nota de extracto
+      // 8. Extraer fecha de vencimiento → expiry_date
+      //    Solo si el documento no tiene ya una asignada manualmente.
+      DateTime? expiryDate = document.expiryDate;
+      if (expiryDate == null) {
+        expiryDate = ExpiryDateExtractor().extractExpiryDate(ocrText);
+        debugPrint('[ProcessOCR] Fecha de vencimiento extraída: $expiryDate');
+      } else {
+        debugPrint('[ProcessOCR] expiryDate ya asignado manualmente, no se sobreescribe');
+      }
+
+      // 9. Construir nota de extracto
       final noteContent = _buildExtractNote(
           refinement.refinedKind, extractedText, ocrAnalysis.topConfidenceText, locale);
       debugPrint('[ProcessOCR] 📝 Nota de extracto: ${noteContent.substring(0, noteContent.length.clamp(0, 60))}...');
 
-      // 9. Actualizar documento con texto OCR, nota, título y tipo
-      final updatedDocument = document.copyWith(
-        title: updatedTitle,
-        documentType: refinement.refinedKind.dbKey,
-        ocrText: ocrText,
-        extractedDate: extractedDate,
-        noteContent: noteContent.isNotEmpty ? noteContent : null,
-      );
+      // 10. Actualizar documento con texto OCR, nota, título y tipo
+      final updatedDocument = expiryDate != null
+          ? document.copyWith(
+              title: updatedTitle,
+              documentType: refinement.refinedKind.dbKey,
+              ocrText: ocrText,
+              extractedDate: extractedDate,
+              expiryDate: expiryDate,
+              noteContent: noteContent.isNotEmpty ? noteContent : null,
+            )
+          : document.copyWith(
+              title: updatedTitle,
+              documentType: refinement.refinedKind.dbKey,
+              ocrText: ocrText,
+              extractedDate: extractedDate,
+              noteContent: noteContent.isNotEmpty ? noteContent : null,
+            );
 
       final startDBUpdate = DateTime.now();
       debugPrint(
