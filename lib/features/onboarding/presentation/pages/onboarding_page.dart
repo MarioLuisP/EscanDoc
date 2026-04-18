@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:escandoc/core/widgets/notification_permission_dialog.dart';
 import 'package:escandoc/features/onboarding/domain/usecases/complete_onboarding.dart';
 import 'package:escandoc/features/onboarding/presentation/widgets/onboarding_step.dart';
 
@@ -139,6 +140,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final prefs = await SharedPreferences.getInstance();
     final useCase = CompleteOnboarding(prefs);
     await useCase.call();
+
+    if (!mounted) return;
+    await NotificationPermissionDialog.showIfNeeded(context);
 
     if (mounted) {
       Navigator.pushReplacementNamed(context, '/home');

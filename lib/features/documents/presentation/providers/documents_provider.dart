@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:escandoc/core/services/notification_prompt_service.dart';
+import 'package:escandoc/core/services/notification_service.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/data/repositories/document_repository.dart';
 import 'package:escandoc/features/documents/domain/usecases/get_documents.dart';
@@ -173,12 +175,28 @@ class DocumentsProvider extends ChangeNotifier {
               : _documents[index].copyWith(expiryDate: date);
         }
         notifyListeners();
+        _syncNotification(documentId, date);
       }
       return success;
     } catch (e) {
       _errorMessage = e is ArgumentError ? e.message : 'Error al guardar vencimiento';
       notifyListeners();
       return false;
+    }
+  }
+
+  void _syncNotification(int documentId, DateTime? date) {
+    if (date == null) {
+      NotificationService.cancelExpiryNotifications(documentId);
+      return;
+    }
+    final title = _documents
+            .where((d) => d.id == documentId)
+            .firstOrNull
+            ?.title ??
+        _selectedDocument?.title;
+    if (title != null) {
+      NotificationService.scheduleExpiryNotifications(documentId, title, date);
     }
   }
 
@@ -209,6 +227,24 @@ class DocumentsProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('[DocumentsProvider] ERROR getDocumentsExpiringOn: $e');
       return [];
+    }
+  }
+
+  /// Cancela todas las notificaciones y deshabilita el servicio.
+  Future<void> disableNotifications() async {
+    await NotificationPromptService.setEnabled(false);
+    await NotificationService.cancelAllNotifications();
+  }
+
+  /// Habilita notificaciones y reprograma todos los documentos con vencimiento.
+  Future<void> enableNotifications() async {
+    await NotificationPromptService.setEnabled(true);
+    await NotificationService.requestPermission();
+    for (final doc in _documents) {
+      if (doc.id != null && doc.expiryDate != null) {
+        NotificationService.scheduleExpiryNotifications(
+            doc.id!, doc.title, doc.expiryDate!);
+      }
     }
   }
 

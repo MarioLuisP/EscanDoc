@@ -183,5 +183,15 @@
   "expiry_today": "Vence hoy",
   "expiry_tomorrow": "Vence mañana",
   "expiry_in_days": "Vence en {days} días",
-  "expiry_overdue": "Venció hace {days} días"
+  "expiry_overdue": "Venció hace {days} días",
+  "notif_prompt_title": "Avisarte cuando algo vence",
+  "notif_prompt_body": "EscanDoc puede recordarte 7 días antes y el día que vence cada documento.",
+  "notif_prompt_activate": "Activar avisos",
+  "notif_prompt_later": "Ahora no",
+  "settings_notif_title": "Avisos de vencimiento",
+  "settings_notif_enabled": "Activados",
+  "settings_notif_disabled": "Desactivados",
+  "settings_test_notif_title": "Notificaciones",
+  "settings_test_notif_button": "Probar (llega en 2 min)",
+  "settings_test_notif_success": "✓ Notificación programada — llegará en 2 minutos"
 }

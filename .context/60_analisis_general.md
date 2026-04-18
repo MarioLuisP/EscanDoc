@@ -953,4 +953,11 @@ main.dart — ~60 líneas menos:
 - ScanProvider y ImportProvider reciben el pipeline vía context.read<DocumentPipeline>()
                                                                                                                                                                             
 ~250 líneas netas eliminadas. Y encima el código nuevo (DocumentPipeline) 
-es más testeable que lo que reemplaza, porque es una clase pura sin ChangeNotifier.  
+es más testeable que lo que reemplaza, porque es una clase pura sin ChangeNotifier. 
+
+Note: C:\Users\Mario\AppData\Local\Pub\Cache\hosted\pub.dev\google_mlkit_commons-0.11.1\android\src\main\java\com\google_mlkit_commons\InputImageConverter.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings

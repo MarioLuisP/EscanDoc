@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:timezone/data/latest.dart' as tz;
 
 // Providers
 import 'features/scan/presentation/providers/scan_provider.dart';
@@ -43,6 +44,9 @@ import 'core/services/speech_service_impl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'features/onboarding/domain/usecases/check_onboarding_status.dart';
 
+// Notifications
+import 'core/services/notification_service.dart';
+
 // Pages
 import 'features/onboarding/presentation/pages/onboarding_page.dart';
 import 'features/documents/presentation/pages/documents_list_page.dart';
@@ -53,10 +57,15 @@ import 'features/notes/presentation/pages/note_editor_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
 import 'features/calendar/presentation/pages/calendar_page.dart';
 
+final _navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await pdfrxFlutterInitialize();
+
+  tz.initializeTimeZones();
+  NotificationService.navigatorKey = _navigatorKey;
 
   // Verificar estado de onboarding
   final prefs = await SharedPreferences.getInstance();
@@ -88,7 +97,7 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final String initialRoute;
   final String scratchpadPath;
   final String outputDirectory;
@@ -99,6 +108,25 @@ class MyApp extends StatelessWidget {
     required this.scratchpadPath,
     required this.outputDirectory,
   });
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await NotificationService.initialize();
+      await NotificationService.requestPermission();
+
+      final docId = await NotificationService.getNotificationLaunchDocumentId();
+      if (docId != null) {
+        _navigatorKey.currentState?.pushNamed('/document/detail', arguments: docId);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -167,6 +195,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'EscanDoc',
         debugShowCheckedModeBanner: false,
+        navigatorKey: _navigatorKey,
 
         // Localization
         localizationsDelegates: context.localizationDelegates,
@@ -190,7 +219,7 @@ class MyApp extends StatelessWidget {
         ),
 
         // Routing
-        initialRoute: initialRoute,
+        initialRoute: widget.initialRoute,
         onUnknownRoute: (settings) => MaterialPageRoute(
           settings: settings,
           builder: (_) => const HomePage(),

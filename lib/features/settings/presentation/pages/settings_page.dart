@@ -1,12 +1,54 @@
-import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:escandoc/core/services/notification_prompt_service.dart';
+import 'package:escandoc/core/services/notification_service.dart';
+import 'package:escandoc/core/widgets/notification_permission_dialog.dart';
+import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 /// Página de configuración — accesible desde el menú ☰ del home.
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
   @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  bool? _notifEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotifState();
+  }
+
+  Future<void> _loadNotifState() async {
+    final enabled = await NotificationPromptService.isEnabled();
+    if (mounted) setState(() => _notifEnabled = enabled);
+  }
+
+  Future<void> _toggleNotifications(bool value) async {
+    final provider = context.read<DocumentsProvider>();
+    if (value) {
+      final shouldAsk = await NotificationPromptService.shouldShow();
+      if (shouldAsk) {
+        if (!mounted) return;
+        await NotificationPermissionDialog.showIfNeeded(context);
+        final nowEnabled = await NotificationPromptService.isEnabled();
+        if (!nowEnabled) return;
+      }
+      await provider.enableNotifications();
+    } else {
+      await provider.disableNotifications();
+    }
+    final nowEnabled = await NotificationPromptService.isEnabled();
+    if (mounted) setState(() => _notifEnabled = nowEnabled);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    EasyLocalization.of(context)?.locale;
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0E8),
       body: SafeArea(
@@ -21,15 +63,12 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  // --- Header: ← "Configuración" centrado ---
-
   Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: const Color(0xFFF5F0E8),
-        border:
-            Border(bottom: BorderSide(color: Colors.grey.shade300, width: 1)),
+        border: Border(bottom: BorderSide(color: Colors.grey.shade300, width: 1)),
       ),
       child: Row(
         children: [
@@ -55,46 +94,147 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  // --- Contenido ---
-
   Widget _buildContent(BuildContext context) {
     final currentLocale = context.locale.languageCode;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.07),
-              offset: const Offset(0, 3),
-              blurRadius: 8,
-              spreadRadius: -1,
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              const Icon(Icons.language, size: 22, color: Color(0xFF388E3C)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'settings_language'.tr(),
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
+      child: Column(
+        children: [
+          // Idioma
+          _buildCard(
+            child: Row(
+              children: [
+                const Icon(Icons.language, size: 22, color: Color(0xFF388E3C)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'settings_language'.tr(),
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
                   ),
                 ),
-              ),
-              _buildLanguageDropdown(context, currentLocale),
-            ],
+                _buildLanguageDropdown(context, currentLocale),
+              ],
+            ),
           ),
-        ),
+          const SizedBox(height: 12),
+          // Avisos de vencimiento
+          _buildCard(
+            child: Row(
+              children: [
+                const Icon(Icons.notifications_outlined,
+                    size: 22, color: Color(0xFF388E3C)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'settings_notif_title'.tr(),
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      if (_notifEnabled != null)
+                        Text(
+                          _notifEnabled!
+                              ? 'settings_notif_enabled'.tr()
+                              : 'settings_notif_disabled'.tr(),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: _notifEnabled!
+                                ? const Color(0xFF388E3C)
+                                : Colors.black38,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                if (_notifEnabled == null)
+                  const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                else
+                  Switch(
+                    value: _notifEnabled!,
+                    activeThumbColor: const Color(0xFF388E3C),
+                    activeTrackColor: const Color(0xFF388E3C).withValues(alpha: 0.4),
+                    onChanged: _toggleNotifications,
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Botón de prueba provisorio
+          _buildCard(
+            child: Row(
+              children: [
+                const Icon(Icons.science_outlined,
+                    size: 22, color: Color(0xFF388E3C)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'settings_test_notif_title'.tr(),
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    await NotificationService.scheduleTestNotification();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('settings_test_notif_success'.tr()),
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  },
+                  child: Text(
+                    'settings_test_notif_button'.tr(),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF388E3C),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCard({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            offset: const Offset(0, 3),
+            blurRadius: 8,
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: child,
       ),
     );
   }
@@ -131,14 +271,8 @@ class SettingsPage extends StatelessWidget {
           dropdownColor: const Color(0xFFFDFAF4),
           borderRadius: BorderRadius.circular(12),
           items: [
-            DropdownMenuItem(
-              value: 'es',
-              child: Text('language_es'.tr()),
-            ),
-            DropdownMenuItem(
-              value: 'en',
-              child: Text('language_en'.tr()),
-            ),
+            DropdownMenuItem(value: 'es', child: Text('language_es'.tr())),
+            DropdownMenuItem(value: 'en', child: Text('language_en'.tr())),
           ],
           onChanged: (code) {
             if (code != null) context.setLocale(Locale(code));
