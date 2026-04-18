@@ -126,7 +126,7 @@ void main() {
     });
 
     test('debe extraer fecha YYYY-MM-DD', () {
-      expect(classifier.extractDueDate('Vence: 2026-04-10'), DateTime(2026, 4, 10));
+      expect(classifier.extractDueDate('Vence: 2099-04-10'), DateTime(2099, 4, 10));
     });
 
     test('debe ignorar fechas pasadas', () {
