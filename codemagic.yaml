@@ -31,9 +31,10 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
-      - name: Create Push Notifications entitlement
+      - name: Enable Push Notifications entitlement
         script: |
-          cat > ios/Runner/Runner.entitlements << 'EOF'
+          if [ ! -f "ios/Runner/Runner.entitlements" ]; then
+            cat > ios/Runner/Runner.entitlements << 'ENTITLEMENTS'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
@@ -42,7 +43,13 @@ workflows:
             <string>production</string>
           </dict>
           </plist>
-          EOF
+          ENTITLEMENTS
+          else
+            /usr/libexec/PlistBuddy -c "Add :aps-environment string production" ios/Runner/Runner.entitlements 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :aps-environment production" ios/Runner/Runner.entitlements
+          fi
+          echo "Runner.entitlements:"
+          cat ios/Runner/Runner.entitlements
       - name: Link entitlements to Xcode project
         script: |
           ENTITLEMENTS_LINE="CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;"
@@ -54,6 +61,11 @@ workflows:
           else
             echo "Entitlements ya estaba linkeado"
           fi
+      - name: Set Export Compliance
+        script: |
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" ios/Runner/Info.plist 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" ios/Runner/Info.plist
+          echo "Export Compliance configurado"
       - name: Get Flutter packages
         script: flutter pub get
       - name: Set up keychain

@@ -253,15 +253,9 @@ Updating minimum iOS deployment target to 13.0.
 Upgrading project.pbxproj
 Upgrading AppFrameworkInfo.plist
 Upgrading Podfile
-An error occurred when adding LLDB Init File:
-Running Flutter in debug mode on new iOS versions requires a LLDB Init File, but the scheme does not have it set. To ensure debug mode works, please complete the following:
-  * Open Xcode > Product > Scheme > Edit Scheme and for the Run and Test actions, set LLDB Init File to:
 
-  $(SRCROOT)/Flutter/ephemeral/flutter_lldbinit
 
-To ensure your app continues to launch on upcoming iOS versions, UIScene lifecycle support will soon be required. Please see https://flutter.dev/to/uiscene-migration for the migration guide.
-
-Running pod install...                                          Building com.passalia.escandoc for simulator (ios)...
+Building com.passalia.escandoc for simulator (ios)...
 Updating minimum iOS deployment target to 13.0.
 Upgrading project.pbxproj
 Upgrading AppFrameworkInfo.plist
@@ -274,59 +268,12 @@ Running Flutter in debug mode on new iOS versions requires a LLDB Init File, but
 
 To ensure your app continues to launch on upcoming iOS versions, UIScene lifecycle support will soon be required. Please see https://flutter.dev/to/uiscene-migration for the migration guide.
 
-Running pod install...
-
-
-Build iOS for simulator
-6m 42s
-
-
-
-Show command
-Showing the last 50 lines. Click this button to load the full log
-    /Applications/Xcode-26.2.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.2.sdk/System/Library/Frameworks/CoreServices.framework/Headers/UTType.h:317:1: note: 'UTTypeCreatePreferredIdentifierForTag' has been explicitly marked deprecated here
-      317 | UTTypeCreatePreferredIdentifierForTag(
-          | ^
-    /Users/builder/.pub-cache/hosted/pub.dev/file_picker-10.3.10/ios/file_picker/Sources/file_picker/FilePickerUtils.m:52:69: warning: 'kUTTagClassFilenameExtension' is deprecated: first deprecated in iOS 15.0 - Use UTTagClassFilenameExtension instead. [-Wdeprecated-declarations]
-       52 |             CFStringRef UTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, (__bridge CFStringRef)[format pathExtension], NULL);
-          |                                                                     ^
-    In module 'MobileCoreServices' imported from /Users/builder/.pub-cache/hosted/pub.dev/file_picker-10.3.10/ios/file_picker/Sources/file_picker/include/file_picker/FilePickerUtils.h:7:
-    In module 'CoreServices' imported from /Applications/Xcode-26.2.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks/MobileCoreServices.framework/Headers/MobileCoreServices.h:9:
-    /Applications/Xcode-26.2.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.2.sdk/System/Library/Frameworks/CoreServices.framework/Headers/UTType.h:258:26: note: 'kUTTagClassFilenameExtension' has been explicitly marked deprecated here
-      258 | extern const CFStringRef kUTTagClassFilenameExtension                API_DEPRECATED("Use UTTagClassFilenameExtension instead.", ios(3.0, 15.0), macos(10.3, 12.0), tvos(9.0, 15.0), watchos(1.0, 8.0));
-          |                          ^
-    2 warnings generated.
-    In module 'UIKit' imported from /Users/builder/clone/ios/Pods/Target Support Files/file_picker/file_picker-prefix.pch:2:
-    /Applications/Xcode-26.2.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.2.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIDocumentPickerViewController.h:66:62: note: 'documentPickerMode' has been explicitly marked deprecated here
-       66 | @property (nonatomic, assign, readonly) UIDocumentPickerMode documentPickerMode API_DEPRECATED("Use appropriate initializers instead", ios(8.0, 14.0), visionos(1.0, 1.0)) API_UNAVAILABLE(watchos);
-          |                                                              ^
-    /Users/builder/.pub-cache/hosted/pub.dev/file_picker-10.3.10/ios/file_picker/Sources/file_picker/FilePickerPlugin.m:439:41: warning: 'UIDocumentPickerModeOpen' is deprecated: first deprecated in iOS 14.0 - Use appropriate initializers instead [-Wdeprecated-declarations]
-      439 |     if(controller.documentPickerMode == UIDocumentPickerModeOpen) {
-          |                                         ^
-    In module 'UIKit' imported from /Users/builder/clone/ios/Pods/Target Support Files/file_picker/file_picker-prefix.pch:2:
-    /Applications/Xcode-26.2.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.2.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIDocumentPickerViewController.h:30:29: note: 'UIDocumentPickerMode' has been explicitly marked deprecated here
-       30 | typedef NS_ENUM(NSUInteger, UIDocumentPickerMode) {
-          |                             ^
-    19 warnings generated.
-    lib/features/documents/presentation/providers/documents_provider.dart:10:8: Error: Error when reading 'lib/features/documents/domain/usecases/update_expiry_date.dart': No such file or directory
-    import 'package:escandoc/features/documents/domain/usecases/update_expiry_date.dart';
-           ^
-    lib/features/documents/presentation/providers/documents_provider.dart:21:14: Error: Type 'UpdateExpiryDate' not found.
-      late final UpdateExpiryDate _updateExpiryDate;
-                 ^^^^^^^^^^^^^^^^
-    lib/features/documents/presentation/providers/documents_provider.dart:21:14: Error: 'UpdateExpiryDate' isn't a type.
-      late final UpdateExpiryDate _updateExpiryDate;
-                 ^^^^^^^^^^^^^^^^
-    lib/features/documents/presentation/providers/documents_provider.dart:44:25: Error: The method 'UpdateExpiryDate' isn't defined for the type 'DocumentsProvider'.
-     - 'DocumentsProvider' is from 'package:escandoc/features/documents/presentation/providers/documents_provider.dart' ('lib/features/documents/presentation/providers/documents_provider.dart').
-    Try correcting the name to the name of an existing method, or defining a method named 'UpdateExpiryDate'.
-        _updateExpiryDate = UpdateExpiryDate(repository: repo);
-                            ^^^^^^^^^^^^^^^^
-    Target kernel_snapshot_program failed: Exception
-    Failed to package /Users/builder/clone.
-    Command PhaseScriptExecution failed with a nonzero exit code
-    note: Run script build phase 'Run Script' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'Runner' from project 'Runner')
-    note: Run script build phase 'Thin Binary' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'Runner' from project 'Runner')
+Running pod install...                                            159.4s
+Running Xcode build...
+Xcode build done.                                           25.4s
+Failed to build iOS app
+Parse Issue (Xcode): Module 'file_picker' not found
+/Users/builder/clone/ios/Runner/GeneratedPluginRegistrant.m:11:8
 
 Encountered error while building for simulator.
 
