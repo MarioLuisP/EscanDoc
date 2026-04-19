@@ -1,0 +1,80 @@
+workflows:
+
+  ios-simulator:
+    name: iOS Simulator Build
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Get Flutter packages
+        script: flutter pub get
+      - name: Build iOS for simulator
+        script: flutter build ios --debug --simulator --no-codesign
+    artifacts:
+      - build/ios/iphonesimulator/Runner.app
+
+  ios-testflight:
+    name: iOS TestFlight
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: codemagic-api
+    environment:
+      groups:
+        - app_store_credentials
+      vars:
+        BUNDLE_ID: "com.passalia.escandoc"
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Create Push Notifications entitlement
+        script: |
+          cat > ios/Runner/Runner.entitlements << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>aps-environment</key>
+            <string>production</string>
+          </dict>
+          </plist>
+          EOF
+      - name: Link entitlements to Xcode project
+        script: |
+          ENTITLEMENTS_LINE="CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;"
+          PROJECT_FILE="ios/Runner.xcodeproj/project.pbxproj"
+          if ! grep -q "$ENTITLEMENTS_LINE" "$PROJECT_FILE"; then
+            sed -i.bak "/PRODUCT_BUNDLE_IDENTIFIER = com.passalia.escandoc;/a\\
+                    $ENTITLEMENTS_LINE" "$PROJECT_FILE"
+            echo "Entitlements linkeado al proyecto"
+          else
+            echo "Entitlements ya estaba linkeado"
+          fi
+      - name: Get Flutter packages
+        script: flutter pub get
+      - name: Set up keychain
+        script: keychain initialize
+      - name: Fetch signing files
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+      - name: Add certificates to keychain
+        script: keychain add-certificates
+      - name: Set up code signing
+        script: xcode-project use-profiles
+      - name: Build IPA
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
