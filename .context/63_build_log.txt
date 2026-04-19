@@ -1,0 +1,335 @@
+Mario Passalia
+Personal Account
+Mario Passalia
+Personal Account
+Create new team
+Applications
+Builds
+OTA Updates
+NEW
+App Preview
+Settings
+Billing
+All systems operational
+Mario Passalia
+User preferences
+tester.passalia@gmail.com
+
+Log out
+EscanDoc
+EscanDoc
+github.com/MarioLuisP/EscanDoc
+
+
+
+Cancel build
+Build overview
+ID:
+69e5159800be27f71308ceaf
+
+Please provide this ID when you contact our support team
+Index:
+1
+Status:
+building
+Workflow:
+iOS Simulator Build
+Started by:
+Mario Passalia
+Mario Passalia
+tester.passalia@gmail.com
+Started:
+6 minutes ago
+Apr 19th, 2026 at 14:49 -03
+Duration:
+6m 11s
+Machine:
+Mac mini M2
+Branch:
+main
+Commit:
+837
+
+
+Preparing build machine
+25s
+
+
+
+No user-defined environment variables were set
+
+== Use Xcode 26.2 ==
+> xcodebuild -version
+Xcode 26.2
+Build version 17C52
+
+== Use default version of CocoaPods ==
+> gem list '^cocoapods$' --no-verbose
+cocoapods (1.16.2)
+
+== Use Java version 17 ==
+> java -version
+openjdk version "17.0.17" 2025-10-21 LTS
+OpenJDK Runtime Environment Zulu17.62+17-CA (build 17.0.17+10-LTS)
+OpenJDK 64-Bit Server VM Zulu17.62+17-CA (build 17.0.17+10-LTS, mixed mode, sharing)
+
+== Codemagic CLI tools ==
+> codemagic-cli-tools version
+codemagic-cli-tools 0.64.0
+
+
+Fetching app sources
+9s
+
+
+
+Showing the last 50 lines. Click this button to load the full log
+Resolving deltas:  57% (514/901)
+Resolving deltas:  58% (523/901)
+Resolving deltas:  59% (532/901)
+Resolving deltas:  60% (541/901)
+Resolving deltas:  61% (550/901)
+Resolving deltas:  62% (559/901)
+Resolving deltas:  63% (568/901)
+Resolving deltas:  64% (577/901)
+Resolving deltas:  65% (586/901)
+Resolving deltas:  66% (595/901)
+Resolving deltas:  67% (604/901)
+Resolving deltas:  68% (613/901)
+Resolving deltas:  69% (622/901)
+Resolving deltas:  70% (631/901)
+Resolving deltas:  71% (640/901)
+Resolving deltas:  72% (649/901)
+Resolving deltas:  73% (659/901)
+Resolving deltas:  74% (667/901)
+Resolving deltas:  75% (676/901)
+Resolving deltas:  76% (685/901)
+Resolving deltas:  77% (694/901)
+Resolving deltas:  78% (703/901)
+Resolving deltas:  79% (712/901)
+Resolving deltas:  80% (721/901)
+Resolving deltas:  81% (730/901)
+Resolving deltas:  82% (739/901)
+Resolving deltas:  83% (749/901)
+Resolving deltas:  84% (757/901)
+Resolving deltas:  85% (766/901)
+Resolving deltas:  86% (775/901)
+Resolving deltas:  87% (786/901)
+Resolving deltas:  88% (793/901)
+Resolving deltas:  89% (803/901)
+Resolving deltas:  90% (811/901)
+Resolving deltas:  91% (820/901)
+Resolving deltas:  92% (829/901)
+Resolving deltas:  93% (838/901)
+Resolving deltas:  94% (847/901)
+Resolving deltas:  95% (857/901)
+Resolving deltas:  96% (865/901)
+Resolving deltas:  97% (874/901)
+Resolving deltas:  98% (883/901)
+Resolving deltas:  99% (893/901)
+Resolving deltas: 100% (901/901)
+Resolving deltas: 100% (901/901), done.
+
+== Checking out commit hash 8379bb6ebeac758a9803b8380d90f2e814c5ec2b ==
+> /usr/bin/git reset --hard 8379bb6ebeac758a9803b8380d90f2e814c5ec2b
+HEAD is now at 8379bb6 codemagic 1
+
+
+
+
+Installing SDKs
+1m 0s
+
+
+
+
+== Use Flutter channel stable ==
+> curl --fail --show-error --silent --output flutter_macos_arm64_3.41.7-stable.zip --connect-timeout 10.00 --max-time 300.00 https://storage.googleapis.com/flutter_infra_release/releases/stable/macos/flutter_macos_arm64_3.41.7-stable.zip
+
+> 7z -bd x flutter_macos_arm64_3.41.7-stable.zip
+
+7-Zip [64] 17.05 : Copyright (c) 1999-2021 Igor Pavlov : 2017-08-28
+p7zip Version 17.05 (locale=utf8,Utf16=on,HugeFiles=on,64 bits,8 CPUs LE)
+
+Scanning the drive for archives:
+1 file, 2145610346 bytes (2047 MiB)
+
+Extracting archive: flutter_macos_arm64_3.41.7-stable.zip
+--
+Path = flutter_macos_arm64_3.41.7-stable.zip
+Type = zip
+Physical Size = 2145610346
+
+Everything is Ok
+
+Folders: 4058
+Files: 17930
+Size:       4117135645
+Compressed: 2145610346
+
+Flutter 3.41.7 • Dart 3.11.5
+
+
+Installing SDKs
+1m 0s
+
+
+
+
+== Use Flutter channel stable ==
+> curl --fail --show-error --silent --output flutter_macos_arm64_3.41.7-stable.zip --connect-timeout 10.00 --max-time 300.00 https://storage.googleapis.com/flutter_infra_release/releases/stable/macos/flutter_macos_arm64_3.41.7-stable.zip
+
+> 7z -bd x flutter_macos_arm64_3.41.7-stable.zip
+
+7-Zip [64] 17.05 : Copyright (c) 1999-2021 Igor Pavlov : 2017-08-28
+p7zip Version 17.05 (locale=utf8,Utf16=on,HugeFiles=on,64 bits,8 CPUs LE)
+
+Scanning the drive for archives:
+1 file, 2145610346 bytes (2047 MiB)
+
+Extracting archive: flutter_macos_arm64_3.41.7-stable.zip
+--
+Path = flutter_macos_arm64_3.41.7-stable.zip
+Type = zip
+Physical Size = 2145610346
+
+Everything is Ok
+
+Folders: 4058
+Files: 17930
+Size:       4117135645
+Compressed: 2145610346
+
+Flutter 3.41.7 • Dart 3.11.5
+
+
+Get Flutter packages
+23s
+
+
+
+Show command
+Resolving dependencies...
+Downloading packages...
+  async 2.13.0 (2.13.1 available)
+  file_picker 10.3.10 (11.0.2 available)
+  flutter_doc_scanner 0.0.18 (0.0.20 available)
+  flutter_plugin_android_lifecycle 2.0.33 (2.0.34 available)
+  image 4.5.4 (4.8.0 available)
+  markdown 7.3.0 (7.3.1 available)
+> matcher 0.12.19 (was 0.12.18)
+  meta 1.17.0 (1.18.2 available)
+  mocktail 1.0.4 (1.0.5 available)
+  native_toolchain_c 0.17.5 (0.17.6 available)
+  path_provider_android 2.2.22 (2.3.1 available)
+  pdf 3.11.3 (3.12.0 available)
+  printing 5.14.2 (5.14.3 available)
+  share_plus 12.0.1 (13.0.0 available)
+  share_plus_platform_interface 6.1.0 (7.0.0 available)
+  shared_preferences 2.5.4 (2.5.5 available)
+  shared_preferences_android 2.4.21 (2.4.23 available)
+  shared_preferences_platform_interface 2.4.1 (2.4.2 available)
+  sqflite_android 2.4.2+2 (2.4.2+3 available)
+  sqlite3 3.1.6 (3.3.1 available)
+  synchronized 3.4.0 (3.4.0+1 available)
+> test_api 0.7.10 (was 0.7.8) (0.7.11 available)
+  url_launcher_android 6.3.28 (6.3.29 available)
+  vector_math 2.2.0 (2.3.0 available)
+  vm_service 15.0.2 (15.1.0 available)
+  win32 5.15.0 (6.0.1 available)
+Changed 2 dependencies!
+25 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+
+
+Build iOS for simulator
+2m 35s
+
+
+
+Show command
+Building com.passalia.escandoc for simulator (ios)...
+Updating minimum iOS deployment target to 13.0.
+Upgrading project.pbxproj
+Upgrading AppFrameworkInfo.plist
+Upgrading Podfile
+An error occurred when adding LLDB Init File:
+Running Flutter in debug mode on new iOS versions requires a LLDB Init File, but the scheme does not have it set. To ensure debug mode works, please complete the following:
+  * Open Xcode > Product > Scheme > Edit Scheme and for the Run and Test actions, set LLDB Init File to:
+
+  $(SRCROOT)/Flutter/ephemeral/flutter_lldbinit
+
+To ensure your app continues to launch on upcoming iOS versions, UIScene lifecycle support will soon be required. Please see https://flutter.dev/to/uiscene-migration for the migration guide.
+
+Running pod install...                                          Building com.passalia.escandoc for simulator (ios)...
+Updating minimum iOS deployment target to 13.0.
+Upgrading project.pbxproj
+Upgrading AppFrameworkInfo.plist
+Upgrading Podfile
+An error occurred when adding LLDB Init File:
+Running Flutter in debug mode on new iOS versions requires a LLDB Init File, but the scheme does not have it set. To ensure debug mode works, please complete the following:
+  * Open Xcode > Product > Scheme > Edit Scheme and for the Run and Test actions, set LLDB Init File to:
+
+  $(SRCROOT)/Flutter/ephemeral/flutter_lldbinit
+
+To ensure your app continues to launch on upcoming iOS versions, UIScene lifecycle support will soon be required. Please see https://flutter.dev/to/uiscene-migration for the migration guide.
+
+Running pod install...
+
+
+Build iOS for simulator
+6m 42s
+
+
+
+Show command
+Showing the last 50 lines. Click this button to load the full log
+    /Applications/Xcode-26.2.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.2.sdk/System/Library/Frameworks/CoreServices.framework/Headers/UTType.h:317:1: note: 'UTTypeCreatePreferredIdentifierForTag' has been explicitly marked deprecated here
+      317 | UTTypeCreatePreferredIdentifierForTag(
+          | ^
+    /Users/builder/.pub-cache/hosted/pub.dev/file_picker-10.3.10/ios/file_picker/Sources/file_picker/FilePickerUtils.m:52:69: warning: 'kUTTagClassFilenameExtension' is deprecated: first deprecated in iOS 15.0 - Use UTTagClassFilenameExtension instead. [-Wdeprecated-declarations]
+       52 |             CFStringRef UTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, (__bridge CFStringRef)[format pathExtension], NULL);
+          |                                                                     ^
+    In module 'MobileCoreServices' imported from /Users/builder/.pub-cache/hosted/pub.dev/file_picker-10.3.10/ios/file_picker/Sources/file_picker/include/file_picker/FilePickerUtils.h:7:
+    In module 'CoreServices' imported from /Applications/Xcode-26.2.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks/MobileCoreServices.framework/Headers/MobileCoreServices.h:9:
+    /Applications/Xcode-26.2.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.2.sdk/System/Library/Frameworks/CoreServices.framework/Headers/UTType.h:258:26: note: 'kUTTagClassFilenameExtension' has been explicitly marked deprecated here
+      258 | extern const CFStringRef kUTTagClassFilenameExtension                API_DEPRECATED("Use UTTagClassFilenameExtension instead.", ios(3.0, 15.0), macos(10.3, 12.0), tvos(9.0, 15.0), watchos(1.0, 8.0));
+          |                          ^
+    2 warnings generated.
+    In module 'UIKit' imported from /Users/builder/clone/ios/Pods/Target Support Files/file_picker/file_picker-prefix.pch:2:
+    /Applications/Xcode-26.2.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.2.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIDocumentPickerViewController.h:66:62: note: 'documentPickerMode' has been explicitly marked deprecated here
+       66 | @property (nonatomic, assign, readonly) UIDocumentPickerMode documentPickerMode API_DEPRECATED("Use appropriate initializers instead", ios(8.0, 14.0), visionos(1.0, 1.0)) API_UNAVAILABLE(watchos);
+          |                                                              ^
+    /Users/builder/.pub-cache/hosted/pub.dev/file_picker-10.3.10/ios/file_picker/Sources/file_picker/FilePickerPlugin.m:439:41: warning: 'UIDocumentPickerModeOpen' is deprecated: first deprecated in iOS 14.0 - Use appropriate initializers instead [-Wdeprecated-declarations]
+      439 |     if(controller.documentPickerMode == UIDocumentPickerModeOpen) {
+          |                                         ^
+    In module 'UIKit' imported from /Users/builder/clone/ios/Pods/Target Support Files/file_picker/file_picker-prefix.pch:2:
+    /Applications/Xcode-26.2.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.2.sdk/System/Library/Frameworks/UIKit.framework/Headers/UIDocumentPickerViewController.h:30:29: note: 'UIDocumentPickerMode' has been explicitly marked deprecated here
+       30 | typedef NS_ENUM(NSUInteger, UIDocumentPickerMode) {
+          |                             ^
+    19 warnings generated.
+    lib/features/documents/presentation/providers/documents_provider.dart:10:8: Error: Error when reading 'lib/features/documents/domain/usecases/update_expiry_date.dart': No such file or directory
+    import 'package:escandoc/features/documents/domain/usecases/update_expiry_date.dart';
+           ^
+    lib/features/documents/presentation/providers/documents_provider.dart:21:14: Error: Type 'UpdateExpiryDate' not found.
+      late final UpdateExpiryDate _updateExpiryDate;
+                 ^^^^^^^^^^^^^^^^
+    lib/features/documents/presentation/providers/documents_provider.dart:21:14: Error: 'UpdateExpiryDate' isn't a type.
+      late final UpdateExpiryDate _updateExpiryDate;
+                 ^^^^^^^^^^^^^^^^
+    lib/features/documents/presentation/providers/documents_provider.dart:44:25: Error: The method 'UpdateExpiryDate' isn't defined for the type 'DocumentsProvider'.
+     - 'DocumentsProvider' is from 'package:escandoc/features/documents/presentation/providers/documents_provider.dart' ('lib/features/documents/presentation/providers/documents_provider.dart').
+    Try correcting the name to the name of an existing method, or defining a method named 'UpdateExpiryDate'.
+        _updateExpiryDate = UpdateExpiryDate(repository: repo);
+                            ^^^^^^^^^^^^^^^^
+    Target kernel_snapshot_program failed: Exception
+    Failed to package /Users/builder/clone.
+    Command PhaseScriptExecution failed with a nonzero exit code
+    note: Run script build phase 'Run Script' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'Runner' from project 'Runner')
+    note: Run script build phase 'Thin Binary' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'Runner' from project 'Runner')
+
+Encountered error while building for simulator.
+
+
+Build failed :|
+Step 4 script `Build iOS for simulator` exited with status code 1
