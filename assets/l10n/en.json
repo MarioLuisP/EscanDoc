@@ -104,6 +104,8 @@
   "ocr_empty_hint": "Could not extract text",
   "ocr_copy_button": "COPY TEXT",
   "ocr_copied": "✓ Text copied",
+  "url_copied": "✓ URL copied",
+  "note_edit_button": "EDIT",
 
   "photo_detected_scan_title": "{name}, it looks like you captured a photo",
   "photo_detected_scan_subtitle": "Where do you want to save it?",

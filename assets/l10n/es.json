@@ -104,6 +104,8 @@
   "ocr_empty_hint": "No se pudo extraer texto",
   "ocr_copy_button": "COPIAR TEXTO",
   "ocr_copied": "✓ Texto copiado",
+  "url_copied": "✓ URL copiada",
+  "note_edit_button": "EDITAR",
 
   "photo_detected_scan_title": "{name}, parece que capturaste una foto",
   "photo_detected_scan_subtitle": "¿Dónde la guardamos?",

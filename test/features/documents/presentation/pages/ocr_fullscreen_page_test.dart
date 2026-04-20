@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:escandoc/features/documents/presentation/pages/ocr_fullscreen_page.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -23,8 +24,8 @@ void main() {
       final markdown = tester.widget<Markdown>(find.byType(Markdown));
       expect(markdown.data, ocrText);
 
-      // Debe ser seleccionable
-      expect(markdown.selectable, true);
+      // Selección manejada por SelectionArea (no por selectable en Markdown)
+      expect(find.byType(SelectionArea), findsOneWidget);
     });
 
     testWidgets('debe mostrar botón copiar cuando hay texto', (tester) async {

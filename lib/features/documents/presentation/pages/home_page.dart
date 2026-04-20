@@ -105,8 +105,11 @@ class _HomePageState extends State<HomePage> {
         ext = await _detectFormatByMagicBytes(sourceFile) ?? 'jpg';
       }
 
+      final baseName = dotIndex >= 0
+          ? filename.substring(0, dotIndex)
+          : 'import';
       final stableFile = await sourceFile.copy(
-        '${tempDir.path}/shared_${DateTime.now().millisecondsSinceEpoch}.$ext',
+        '${tempDir.path}/${baseName}_${DateTime.now().millisecondsSinceEpoch}.$ext',
       );
 
       if (ext == 'pdf') {

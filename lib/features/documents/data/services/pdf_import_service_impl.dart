@@ -12,10 +12,10 @@ import 'package:escandoc/features/documents/domain/services/pdf_import_service.d
 ///   pdfrx.render() → PdfImage → dart:ui Image → PNG bytes en memoria
 ///   → FlutterImageCompress.compressWithList() → JPG bytes → escribir una vez
 ///
-/// DPI: 150 (1240×1754 px para A4). Suficiente para OCR en texto vectorial
+/// DPI: 180 (1488×2102 px para A4). Balance calidad/tamaño para mid-range 2026.
 /// (PDF digital = sin ruido óptico, bordes nítidos a cualquier resolución).
 class PdfImportServiceImpl implements PdfImportService {
-  static const double _dpi = 150.0;
+  static const double _dpi = 180.0;
   static const double _pointsPerInch = 72.0;
   static const int _jpgQuality = 90;
 

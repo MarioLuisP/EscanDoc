@@ -16,8 +16,8 @@ import 'package:escandoc/features/image_processing/normalize_image/domain/image_
 class NormalizeImageUseCase {
   final ImageNormalizerService _service;
 
-  /// Tamaño objetivo en bytes: 850 KB
-  static const int targetSizeBytes = 850 * 1024;
+  /// Tamaño objetivo en bytes: 1.2 MB
+  static const int targetSizeBytes = 1200 * 1024;
 
   NormalizeImageUseCase(this._service);
 

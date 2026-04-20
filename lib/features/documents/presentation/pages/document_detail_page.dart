@@ -8,6 +8,8 @@ import 'package:escandoc/features/documents/presentation/providers/documents_pro
 import 'package:escandoc/features/documents/presentation/widgets/delete_confirmation_dialog.dart';
 import 'package:escandoc/features/documents/presentation/pages/photo_fullscreen_page.dart';
 import 'package:escandoc/features/documents/presentation/pages/ocr_fullscreen_page.dart';
+import 'package:escandoc/features/notes/domain/note_marker.dart';
+import 'package:escandoc/features/notes/presentation/pages/note_viewer_page.dart';
 
 /// Detalle de documento — fondo crema, imagen completa, cards de notas y OCR.
 class DocumentDetailPage extends StatefulWidget {
@@ -461,6 +463,25 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
   void _openNoteEditor(int documentId, String documentTitle, String? noteContent) async {
     final hasNote = noteContent != null && noteContent.isNotEmpty;
     final provider = context.read<DocumentsProvider>();
+
+    // Sin marker → nota ya editada por el usuario → viewer con botón Editar
+    if (hasNote && !NoteMarker.isDefault(noteContent)) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => NoteViewerPage(
+            documentId: documentId,
+            documentTitle: documentTitle,
+            content: noteContent!,
+          ),
+        ),
+      );
+      if (!mounted) return;
+      provider.selectDocument(documentId);
+      return;
+    }
+
+    // Con marker o sin contenido → editor directo
     final result = await Navigator.pushNamed(
       context,
       '/note/edit',

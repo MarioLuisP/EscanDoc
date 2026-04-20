@@ -31,7 +31,7 @@
          │                        │          ↓            ↓              ↓
          │                        │  ┌───────────┐ ┌──────────┐         │
          │                        │  │render JPG │ │render JPG│         │
-         │                        │  │pdfrx 150  │ │pdfrx 150 │         │
+         │                        │  │pdfrx 180  │ │pdfrx 180 │         │
          │                        │  │DPI in-mem │ │DPI in-mem│         │
          │                        │  │extractText│ │          │         │
          │                        │  │por página │ │          │         │
@@ -97,7 +97,7 @@
     │ Resize A4 + Compress │   │ ThumbnailGenerator   │
     ├──────────────────────┤   ├──────────────────────┤
     │ • Resize A4 si excede│   │ • dart:ui nativo     │
-    │ • Target: 850 KB     │   │ • Target: 200px width│
+    │ • Target: 1.2 MB     │   │ • Target: 200px width│
     │ • Tiempo: ~2s        │   │ • Decode+resize 188ms│
     │ • Probe Q85 → ajuste │   │ • Encode JPG 142ms   │
     └──────────────────────┘   │ • TOTAL: ~361ms      │
@@ -223,7 +223,7 @@
             │ documento / manuscrito:              │
             │   avgConf < 0.72?                    │
             │     blocks ≤15 Y chars ≤250          │
-            │       → manuscrito                   │claude
+            │       → manuscrito                   │
             │     si no (impreso mala calidad)     │
             │       → sigue abajo ↓                │
             │   aspectRatio > 2.0 → recibo         │
@@ -450,7 +450,7 @@ TOTAL (sin OCR)       4270ms   3680ms     -14%
 
 ### **Normalización:**
 - Resize A4: 2480×3508 @ 300 DPI (si excede)
-- Compress: Target 850 KB con Probe Compression
+- Compress: Target 1.2 MB con Probe Compression
 - Estrategia: Probe Q85 → medir → ajustar (lineal down, exponencial up)
 
 ### **Modal de fotos:**
@@ -607,9 +607,57 @@ La nota en BD siempre es texto plano legible (máx 150 chars).
 
 ---
 
-**Última actualización:** 9 Marzo 2026
+**Última actualización:** 20 Abril 2026
 **Autor:** Equipo EscanDoc
-**Versión:** 1.5 - blocksToMarkdown con wide/narrow separation, maxCapsHeight, rebuildMarkdown post-refinamiento
+**Versión:** 1.6 - NoteViewer, NoteMarker, OCR fullscreen mejorado, calidad de imagen
+
+---
+
+## 🔄 Cambios Abril 2026
+
+### **Calidad de imagen**
+- DPI de render PDF: 150 → **180** (`PdfImportServiceImpl._dpi`)
+- Target de normalización: 850 KB → **1.2 MB** (`NormalizeImageUseCase.targetSizeBytes`)
+- Balance óptimo para mid-range 2026: ~1488×2102px para A4, quality ~78-82
+
+### **Fix: nombre de archivo compartido**
+- `_processSharedFile()` en `home_page.dart` ahora preserva el nombre original del archivo
+- Antes: `shared_<timestamp>.pdf` → Ahora: `<nombre_original>_<timestamp>.pdf`
+- Impacto: documentos importados vía share intent ya no se llaman "shared_..."
+
+### **OCR Fullscreen (`ocr_fullscreen_page.dart`)**
+- `selectable: true` reemplazado por `SelectionArea` wrapper — selección nativa cross-bloque
+- URLs tappables: `onTapLink` abre en navegador externo (`url_launcher`)
+- `_autoLinkUrls()`: regex que convierte URLs planas (`https://...`, `www....`) a links markdown antes de renderizar
+- Nueva dependencia: `url_launcher: ^6.3.2`
+- `AndroidManifest.xml`: queries para `http`/`https` (necesario Android 11+)
+
+### **NoteMarker — sistema de flag sin migración DB**
+- `lib/features/notes/domain/note_marker.dart`
+- Marker: `\u200B` (zero-width space) al inicio del `note_content`
+- `NoteMarker.mark(content)` — agrega marker (usado en `ProcessOCR`)
+- `NoteMarker.strip(content)` — elimina marker (usado en `NoteEditorPage`)
+- `NoteMarker.isDefault(content)` — detecta si es nota OCR no editada
+
+### **Flujo de notas — bifurcación editor/viewer**
+
+```
+Tap card nota
+  ├─ isDefault (marker \u200B) → NoteEditorPage (editor directo)
+  │     └─ strip marker del controller al cargar
+  └─ sin marker (ya editada) → NoteViewerPage (read-only)
+        ├─ SelectionArea + RichText con URLs tappables
+        ├─ Botón COPIAR (todo el texto)
+        └─ Botón EDITAR → NoteEditorPage
+              └─ al guardar: viewer se cierra → detail recarga
+```
+
+### **NoteViewerPage (`lib/features/notes/presentation/pages/note_viewer_page.dart`)**
+- Read-only, mismo estilo visual que `OcrFullscreenPage`
+- URLs auto-detectadas con `_autoLinkUrls()` + `TapGestureRecognizer`
+- `SelectionArea` para copy/paste de fragmentos
+- Botones: Copiar (crema) + Editar (verde)
+- Al volver del editor con `result == true` → cierra viewer automáticamente
 
 
 Listo. Ahora el log solo muestra:

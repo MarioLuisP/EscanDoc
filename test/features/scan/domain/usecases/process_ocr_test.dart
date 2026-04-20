@@ -12,6 +12,7 @@ import 'package:escandoc/features/documents/data/repositories/document_repositor
 import 'package:escandoc/core/services/document_orientation_service.dart';
 import 'package:escandoc/features/image_processing/classification/domain/image_classifier.dart';
 import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
+import 'package:escandoc/features/notes/domain/note_marker.dart';
 
 // Mocks
 class MockOCRService extends Mock implements OCRService {}
@@ -183,7 +184,7 @@ void main() {
       final captured =
           verify(() => mockRepository.updateDocument(captureAny()))
               .captured.single as DocumentModel;
-      expect(captured.noteContent, text);
+      expect(captured.noteContent, NoteMarker.mark(text));
     });
 
     test('nota de impreso: texto largo → note_content truncado a 70 chars', () async {
@@ -207,7 +208,8 @@ void main() {
       final captured =
           verify(() => mockRepository.updateDocument(captureAny()))
               .captured.single as DocumentModel;
-      expect(captured.noteContent?.length, 70);
+      // +1 por el marker \u200B que agrega NoteMarker.mark()
+      expect(captured.noteContent?.length, 71);
     });
 
     test('nota de manuscrito: note_content empieza con "Nota manuscrita de"', () async {
@@ -233,7 +235,7 @@ void main() {
       final captured =
           verify(() => mockRepository.updateDocument(captureAny()))
               .captured.single as DocumentModel;
-      expect(captured.noteContent, 'Nota manuscrita de Hospital Central');
+      expect(captured.noteContent, NoteMarker.mark('Nota manuscrita de Hospital Central'));
     });
 
     test('nota de manuscrito sin palabras reconocibles: note_content = "Nota manuscrita"', () async {
@@ -259,7 +261,7 @@ void main() {
       final captured =
           verify(() => mockRepository.updateDocument(captureAny()))
               .captured.single as DocumentModel;
-      expect(captured.noteContent, 'Nota manuscrita');
+      expect(captured.noteContent, NoteMarker.mark('Nota manuscrita'));
     });
 
     test('OCR vacío → note_content es null en el documento actualizado', () async {

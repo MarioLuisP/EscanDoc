@@ -206,3 +206,11 @@ Hemos completado lo que necesitabas de App Store Connect:
 
 El siguiente paso es configurar el codemagic.yaml con el Bundle ID hardcodeado y los certificados/provisioning profiles.
 ¿Vamos directo a eso, o hay algo más que necesites en App Store Connect antes? 🤔
+
+Riesgos específicos de iOS:
+1. flutter_doc_scanner — el scanner nativo usa APIs de iOS que pueden comportarse diferente. Hay que probar el flujo completo de escaneo.
+2. Permisos — cámara, galería, archivos. Si falta algún NSCameraUsageDescription u otro key en Info.plist, la app crashea en runtime sin aviso.
+3. ML Kit — nunca se probó en iOS real. El OCR y clasificador TFLite pueden tener diferencias de comportamiento.
+4. SQLite / paths — los paths de archivos en iOS son diferentes a Android. Si hay algún path hardcodeado puede fallar.
+5. UI — el sistema de navegación y algunos widgets se ven diferente en iOS.
+

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Página fullscreen para visualizar y copiar texto OCR.
 ///
@@ -103,29 +104,31 @@ class _OcrFullscreenPageState extends State<OcrFullscreenPage> {
           ],
         ),
         child: hasText
-            ? Scrollbar(
-                controller: _scrollController,
-                thumbVisibility: true,
-                child: Markdown(
+            ? SelectionArea(
+                child: Scrollbar(
                   controller: _scrollController,
-                  data: widget.ocrText!,
-                  selectable: true,
-                  padding: const EdgeInsets.all(16),
-                  styleSheet: MarkdownStyleSheet.fromTheme(
-                    Theme.of(context).copyWith(
-                      textTheme: Theme.of(context).textTheme.apply(
-                            bodyColor: Colors.black87,
-                          ),
+                  thumbVisibility: true,
+                  child: Markdown(
+                    controller: _scrollController,
+                    data: _autoLinkUrls(widget.ocrText!),
+                    padding: const EdgeInsets.all(16),
+                    onTapLink: (text, href, title) => _openUrl(href ?? text),
+                    styleSheet: MarkdownStyleSheet.fromTheme(
+                      Theme.of(context).copyWith(
+                        textTheme: Theme.of(context).textTheme.apply(
+                              bodyColor: Colors.black87,
+                            ),
+                      ),
+                    ).copyWith(
+                      p: const TextStyle(
+                          fontSize: 17, color: Colors.black87, height: 1.65),
+                      h1: const TextStyle(
+                          fontSize: 19, fontWeight: FontWeight.bold, color: Colors.black87),
+                      h2: const TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.bold, color: Colors.black87),
+                      h3: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
                     ),
-                  ).copyWith(
-                    p: const TextStyle(
-                        fontSize: 17, color: Colors.black87, height: 1.65),
-                    h1: const TextStyle(
-                        fontSize: 19, fontWeight: FontWeight.bold, color: Colors.black87),
-                    h2: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.bold, color: Colors.black87),
-                    h3: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
                   ),
                 ),
               )
@@ -215,6 +218,33 @@ class _OcrFullscreenPageState extends State<OcrFullscreenPage> {
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 2),
       ),
+    );
+  }
+
+  Future<void> _openUrl(String raw) async {
+    final withScheme =
+        raw.startsWith('http') ? raw : 'https://$raw';
+    final uri = Uri.tryParse(withScheme);
+    if (uri == null) return;
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  // Convierte URLs planas (https://... o www....) a links markdown [url](url)
+  // para que onTapLink las reciba. Evita procesar URLs ya dentro de ()
+  // (links markdown existentes) o dentro de bloques de código.
+  static String _autoLinkUrls(String text) {
+    return text.replaceAllMapped(
+      RegExp(
+        r'(?<!\()(?<!\])\b(https?://[^\s\)\]<>]+|www\.[a-zA-Z0-9\-]+\.[^\s\)\]<>]+)',
+        caseSensitive: false,
+      ),
+      (m) {
+        final url = m.group(0)!;
+        final href = url.startsWith('http') ? url : 'https://$url';
+        return '[$url]($href)';
+      },
     );
   }
 }

@@ -79,6 +79,7 @@ dependencies:
   # ═══════════════════════════════════════════════════════════════════════════
   path: ^1.9.1                       # Manipulación de rutas
   permission_handler: ^12.0.1        # Manejo de permisos (camera, microphone)
+  url_launcher: ^6.3.2               # Abrir URLs en navegador externo
 
 dev_dependencies:
   flutter_test:

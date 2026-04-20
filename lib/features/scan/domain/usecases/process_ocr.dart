@@ -10,6 +10,7 @@ import 'package:escandoc/features/documents/data/repositories/document_repositor
 import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 import 'package:escandoc/features/image_processing/classification/domain/image_classifier.dart';
 import 'package:escandoc/features/scan/domain/usecases/refine_classification.dart';
+import 'package:escandoc/features/notes/domain/note_marker.dart';
 
 /// UseCase para procesar OCR en documento escaneado (JPG only).
 ///
@@ -204,14 +205,14 @@ class ProcessOCR {
               ocrText: ocrText,
               extractedDate: extractedDate,
               expiryDate: expiryDate,
-              noteContent: noteContent.isNotEmpty ? noteContent : null,
+              noteContent: noteContent.isNotEmpty ? NoteMarker.mark(noteContent) : null,
             )
           : document.copyWith(
               title: updatedTitle,
               documentType: refinement.refinedKind.dbKey,
               ocrText: ocrText,
               extractedDate: extractedDate,
-              noteContent: noteContent.isNotEmpty ? noteContent : null,
+              noteContent: noteContent.isNotEmpty ? NoteMarker.mark(noteContent) : null,
             );
 
       final startDBUpdate = DateTime.now();

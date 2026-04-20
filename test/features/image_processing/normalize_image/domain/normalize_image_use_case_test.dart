@@ -21,12 +21,12 @@ void main() {
     const normalizedImagePath = '/test/path/image_normalized.jpg';
 
     test(
-      'DADO una imagen <= 850 KB '
+      'DADO una imagen <= 1.2 MB '
       'CUANDO se ejecuta el use case '
       'ENTONCES retorna el mismo path sin normalizar',
       () async {
         // Arrange
-        const imageSize = 800 * 1024; // 800 KB
+        const imageSize = 800 * 1024; // 800 KB (bajo el threshold)
         when(() => mockService.getFileSize(testImagePath))
             .thenReturn(imageSize);
 
@@ -41,12 +41,12 @@ void main() {
     );
 
     test(
-      'DADO una imagen > 850 KB '
+      'DADO una imagen > 1.2 MB '
       'CUANDO se ejecuta el use case '
       'ENTONCES comprime la imagen y retorna nuevo path',
       () async {
         // Arrange
-        const imageSize = 1200 * 1024; // 1.2 MB
+        const imageSize = 1500 * 1024; // 1.5 MB (sobre el threshold)
         when(() => mockService.getFileSize(testImagePath))
             .thenReturn(imageSize);
         when(() => mockService.normalizeImage(testImagePath, any()))
@@ -66,13 +66,13 @@ void main() {
     );
 
     test(
-      'DADO una imagen > 850 KB '
+      'DADO una imagen > 1.2 MB '
       'CUANDO se normaliza '
-      'ENTONCES el resultado es <= 850 KB',
+      'ENTONCES el resultado es <= 1.2 MB',
       () async {
         // Arrange
-        const imageSize = 1500 * 1024; // 1.5 MB
-        const targetSize = 850 * 1024; // 850 KB
+        const imageSize = 2000 * 1024; // 2 MB
+        const targetSize = 1200 * 1024; // 1.2 MB
         when(() => mockService.getFileSize(testImagePath))
             .thenReturn(imageSize);
         when(() => mockService.normalizeImage(testImagePath, targetSize))
@@ -104,7 +104,7 @@ void main() {
         when(() => mockService.convertToJpg(pngImagePath))
             .thenAnswer((_) async => jpgImagePath);
         when(() => mockService.getFileSize(jpgImagePath))
-            .thenReturn(1200 * 1024); // 1.2 MB después de convertir
+            .thenReturn(1500 * 1024); // 1.5 MB después de convertir
         when(() => mockService.normalizeImage(jpgImagePath, any()))
             .thenAnswer((_) async => normalizedImagePath);
         when(() => mockService.getFileSize(normalizedImagePath))
@@ -128,7 +128,7 @@ void main() {
       () async {
         // Arrange
         const hugeImageSize = 5000 * 1024; // 5 MB
-        const targetSize = 850 * 1024;
+        const targetSize = 1200 * 1024;
 
         when(() => mockService.getFileSize(testImagePath))
             .thenReturn(hugeImageSize);

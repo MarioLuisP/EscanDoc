@@ -6,6 +6,7 @@ import 'package:escandoc/features/documents/presentation/providers/documents_pro
 import 'package:escandoc/features/notes/data/services/parchment_image_generator.dart';
 import 'package:escandoc/features/notes/domain/note_title.dart';
 import 'package:escandoc/core/services/speech_service_impl.dart';
+import 'package:escandoc/features/notes/domain/note_marker.dart';
 
 /// Página de edición/creación de notas.
 ///
@@ -52,7 +53,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _documentTitle = args?['documentTitle'] as String? ?? '';
 
     if (_isEditing) {
-      final content = args?['initialContent'] as String? ?? '';
+      final raw = args?['initialContent'] as String? ?? '';
+      final content = NoteMarker.strip(raw);
       _contentController.text = content;
       _originalContent = content;
     }
