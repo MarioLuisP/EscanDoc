@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -22,6 +23,7 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
       icon: '@drawable/ic_notification',
+      color: Color(0xFF7ED321),
     ),
     iOS: DarwinNotificationDetails(),
   );
@@ -127,8 +129,8 @@ class NotificationService {
         try {
           await _notifications.zonedSchedule(
             id: documentId * 10,
-            title: 'Vencimiento próximo',
-            body: '"$documentTitle" vence en 7 días',
+            title: 'notif_expiry_soon_title'.tr(),
+            body: 'notif_expiry_soon_body'.tr(namedArgs: {'title': documentTitle}),
             scheduledDate: _toTZDateTime(scheduled),
             notificationDetails: _notifDetails,
             payload: payload,
@@ -148,8 +150,8 @@ class NotificationService {
         try {
           await _notifications.zonedSchedule(
             id: documentId * 10 + 1,
-            title: 'Vence hoy',
-            body: '"$documentTitle" vence hoy',
+            title: 'expiry_today'.tr(),
+            body: 'notif_expiry_today_body'.tr(namedArgs: {'title': documentTitle}),
             scheduledDate: _toTZDateTime(scheduled),
             notificationDetails: _notifDetails,
             payload: payload,
@@ -188,8 +190,8 @@ class NotificationService {
     try {
       await _notifications.zonedSchedule(
         id: 99999,
-        title: 'EscanDoc — Prueba',
-        body: 'Las notificaciones de vencimientos funcionan correctamente',
+        title: 'notif_test_title'.tr(),
+        body: 'notif_test_body'.tr(),
         scheduledDate: _toTZDateTime(scheduledTime),
         notificationDetails: _notifDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

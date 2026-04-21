@@ -186,6 +186,12 @@
   "expiry_tomorrow": "Expires tomorrow",
   "expiry_in_days": "Expires in {days} days",
   "expiry_overdue": "Expired {days} days ago",
+  "notif_expiry_soon_title": "Upcoming expiry",
+  "notif_expiry_soon_body": "\"{title}\" expires in 7 days",
+  "notif_expiry_today_body": "\"{title}\" expires today",
+  "notif_test_title": "EscanDoc — Test",
+  "notif_test_body": "Expiry notifications are working correctly",
+
   "notif_prompt_title": "Get notified when something expires",
   "notif_prompt_body": "EscanDoc can remind you 7 days before and on the day each document expires.",
   "notif_prompt_activate": "Enable reminders",

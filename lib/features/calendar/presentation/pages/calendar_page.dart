@@ -556,7 +556,10 @@ class _ExpiryDocCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = DocumentTypeColors.of(document.documentType);
     final expiry = document.expiryDate!;
-    final daysLeft = expiry.difference(DateTime.now()).inDays;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final expiryDay = DateTime(expiry.year, expiry.month, expiry.day);
+    final daysLeft = expiryDay.difference(today).inDays;
     final urgencyColor = daysLeft <= 7
         ? Colors.red[700]!
         : daysLeft <= 30

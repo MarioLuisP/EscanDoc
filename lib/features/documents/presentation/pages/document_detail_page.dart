@@ -276,7 +276,10 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
       subtitle = 'expiry_none'.tr();
       subtitleColor = Colors.grey[500]!;
     } else {
-      final daysLeft = expiry.difference(DateTime.now()).inDays;
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final expiryDay = DateTime(expiry.year, expiry.month, expiry.day);
+      final daysLeft = expiryDay.difference(today).inDays;
       if (daysLeft < 0) {
         subtitle = 'expiry_overdue'.tr(namedArgs: {'days': '${-daysLeft}'});
         subtitleColor = Colors.red[700]!;
