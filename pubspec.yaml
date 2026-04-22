@@ -1,7 +1,7 @@
 name: escandoc
 description: "EscanDoc - Scanner de documentos con notas y vencimientos integrados. Diseñado para personas mayores."
 publish_to: 'none'
-version: 1.0.0+3
+version: 1.0.0+4
 
 environment:
   sdk: ^3.6.0
@@ -67,6 +67,7 @@ dependencies:
   table_calendar: ^3.1.3                # Calendario mensual con marcadores
   flutter_local_notifications: ^21.0.0  # Notificaciones locales
   timezone: ^0.11.0                     # Zonas horarias para notificaciones exactas
+  flutter_timezone: ^1.0.4             # Nombre del timezone local del dispositivo (para setLocalLocation)
 
   # ═══════════════════════════════════════════════════════════════════════════
   # MARKDOWN RENDERING

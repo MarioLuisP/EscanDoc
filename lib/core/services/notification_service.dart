@@ -72,6 +72,9 @@ class NotificationService {
             .resolvePlatformSpecificImplementation<
                 AndroidFlutterLocalNotificationsPlugin>();
         await android?.requestNotificationsPermission();
+        // Android 12+ requiere permiso explícito para alarmas exactas.
+        // Sin esto, zonedSchedule lanza SecurityException silenciosa.
+        await android?.requestExactAlarmsPermission();
       }
     } catch (e) {
       debugPrint('[NotificationService] Error al pedir permiso: $e');
@@ -164,12 +167,15 @@ class NotificationService {
     }
   }
 
-  /// Convierte un DateTime local del dispositivo a TZDateTime UTC.
-  /// Dart ya conoce el offset del OS, así que .toUtc() es exacto sin plugins extra.
   static tz.TZDateTime _toTZDateTime(DateTime localTime) {
-    final utc = localTime.toUtc();
-    return tz.TZDateTime.utc(
-        utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second);
+    return tz.TZDateTime(
+      tz.local,
+      localTime.year,
+      localTime.month,
+      localTime.day,
+      localTime.hour,
+      localTime.minute,
+    );
   }
 
   static Future<void> cancelAllNotifications() async {

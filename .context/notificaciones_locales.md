@@ -1,5 +1,324 @@
 # Sistema de Notificaciones Locales
 
+---
+
+## GUÍA DE INSTALACIÓN RÁPIDA (leer esto primero)
+
+> Manual autocontenido para implementar notificaciones locales programadas en Flutter **que funcionen en Android 12/13/14+ e iOS**. Incluye todos los errores silenciosos conocidos y cómo evitarlos.
+
+### Paso 1 — Packages (pubspec.yaml)
+
+```yaml
+dependencies:
+  flutter_local_notifications: ^21.0.0   # scheduling exacto
+  timezone: ^0.9.4                        # zonas horarias
+  flutter_timezone: ^1.0.4               # CRÍTICO: leer zona real del device
+```
+
+> `flutter_timezone` es imprescindible. Sin él, `tz.local` queda como UTC y las notificaciones se disparan a la hora equivocada (por ej. Argentina UTC-3 → 3 horas tarde).
+
+---
+
+### Paso 2 — AndroidManifest.xml
+
+Agregar **antes** de `<application>`:
+
+```xml
+<!-- Android 13+: permiso runtime para mostrar notificaciones -->
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+<!-- Android 12+: alarmas exactas (sin esto, las notificaciones no se disparan) -->
+<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+
+<!-- Restaurar alarmas después de reiniciar el device -->
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+<!-- Vibración opcional -->
+<uses-permission android:name="android.permission.VIBRATE"/>
+```
+
+Agregar **dentro de `<application>`**:
+
+```xml
+<!-- Ejecuta la notificación a la hora exacta -->
+<receiver android:exported="false"
+    android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+
+<!-- Restaura notificaciones después de reboot/actualización de app -->
+<receiver android:exported="false"
+    android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+    <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED"/>
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+        <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+        <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+    </intent-filter>
+</receiver>
+
+<!-- Maneja tap en notificación -->
+<receiver android:exported="false"
+    android:name="com.dexterous.flutterlocalnotifications.FlutterLocalNotificationsReceiver"/>
+```
+
+> **Sin los 3 receivers**, las notificaciones no se muestran, no sobreviven al reboot, y el tap no hace nada.
+
+---
+
+### Paso 3 — Ícono de notificación (Android)
+
+Crear `android/app/src/main/res/drawable/ic_notification.png`:
+- **Monocromo**: solo blanco con canal alpha. Sin colores.
+- Si tiene colores, Android 5+ muestra un rectángulo gris sólido.
+- Tamaños requeridos:
+
+| Carpeta | Tamaño |
+|---------|--------|
+| `drawable-mdpi` | 24×24 px |
+| `drawable-hdpi` | 36×36 px |
+| `drawable-xhdpi` | 48×48 px |
+| `drawable-xxhdpi` | 72×72 px |
+| `drawable-xxxhdpi` | 96×96 px |
+
+---
+
+### Paso 4 — main.dart (orden de inicialización CRÍTICO)
+
+```dart
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 1. Cargar base de datos de zonas horarias
+  tz.initializeTimeZones();
+
+  // 2. CRÍTICO: Setear la zona local del device.
+  //    Sin esto, tz.local = UTC y las notificaciones se programan
+  //    con offset equivocado (Argentina: 3 horas tarde).
+  final String timezoneName = await FlutterTimezone.getLocalTimezone();
+  tz.setLocalLocation(tz.getLocation(timezoneName));
+
+  runApp(const MyApp());
+}
+```
+
+> Estos dos pasos deben ir **antes de `runApp()`** y en este orden. `initializeTimeZones()` primero, `setLocalLocation()` segundo.
+
+---
+
+### Paso 5 — NotificationService (código completo listo para copiar)
+
+```dart
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+
+class NotificationService {
+  static final FlutterLocalNotificationsPlugin _notifications =
+      FlutterLocalNotificationsPlugin();
+  static bool _initialized = false;
+
+  // ── INICIALIZACIÓN ──────────────────────────────────────────────
+
+  static Future<bool> initialize({
+    Function(NotificationResponse)? onTap,
+  }) async {
+    if (_initialized) return true;
+    try {
+      const androidSettings = AndroidInitializationSettings('@drawable/ic_notification');
+      const iosSettings = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
+      final result = await _notifications.initialize(
+        const InitializationSettings(android: androidSettings, iOS: iosSettings),
+        onDidReceiveNotificationResponse: onTap,
+        onDidReceiveBackgroundNotificationResponse: onTap,
+      );
+      _initialized = result ?? false;
+      return _initialized;
+    } catch (e) {
+      debugPrint('[NotificationService] Error al inicializar: $e');
+      return false;
+    }
+  }
+
+  // ── PERMISOS ────────────────────────────────────────────────────
+  // Llamar DESPUÉS de initialize() y dentro del widget tree (necesita Activity activa).
+
+  static Future<void> requestPermissions() async {
+    if (!_initialized) return;
+    try {
+      if (Platform.isAndroid) {
+        final android = _notifications
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+
+        // Android 13+ (API 33): runtime dialog "¿Permitir notificaciones?"
+        await android?.requestNotificationsPermission();
+
+        // Android 12+ (API 31): lleva al usuario a Ajustes > Alarmas y recordatorios.
+        // SIN ESTO las exact alarms fallan en silencio y las notificaciones nunca llegan.
+        await android?.requestExactAlarmsPermission();
+      }
+      // iOS: los permisos los pidió DarwinInitializationSettings en initialize().
+    } catch (e) {
+      debugPrint('[NotificationService] Error al pedir permisos: $e');
+    }
+  }
+
+  // ── SCHEDULING ──────────────────────────────────────────────────
+
+  /// Programa una notificación exacta. scheduledDate debe ser en el futuro.
+  static Future<void> scheduleNotification({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime scheduledDate,
+    String? payload,
+    String channelId = 'default',
+    String channelName = 'Notificaciones',
+  }) async {
+    if (!_initialized) return;
+    try {
+      final tzDate = _toTZDateTime(scheduledDate);
+      await _notifications.zonedSchedule(
+        id,
+        title,
+        body,
+        tzDate,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            channelId,
+            channelName,
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: '@drawable/ic_notification',
+          ),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        payload: payload,
+      );
+    } catch (e) {
+      debugPrint('[NotificationService] Error al programar notificación: $e');
+    }
+  }
+
+  static Future<void> cancelNotification(int id) async {
+    await _notifications.cancel(id);
+  }
+
+  static Future<void> cancelAll() async {
+    await _notifications.cancelAll();
+  }
+
+  // ── HELPER INTERNO ───────────────────────────────────────────────
+
+  /// Convierte DateTime local a TZDateTime usando la zona del device.
+  /// Requiere que main.dart haya llamado tz.setLocalLocation() primero.
+  static tz.TZDateTime _toTZDateTime(DateTime localTime) {
+    return tz.TZDateTime.from(localTime, tz.local);
+    // ❌ NO hacer: tz.TZDateTime.utc(...localTime.toUtc()...)
+    //    Funciona solo en zonas sin DST. Frágil e innecesario.
+  }
+}
+```
+
+---
+
+### Paso 6 — Dónde llamar requestPermissions()
+
+```dart
+// En el primer widget raíz, en initState():
+@override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    await NotificationService.initialize(onTap: _handleTap);
+    await NotificationService.requestPermissions(); // después de initialize()
+  });
+}
+```
+
+> `addPostFrameCallback` es necesario en Android porque `requestPermissions()` necesita una Activity activa. Si se llama antes del primer frame, crashea.
+
+---
+
+### Paso 7 — Ejemplo de uso
+
+```dart
+// Programar notificación para mañana a las 9 AM:
+final tomorrow9am = DateTime(
+  DateTime.now().year,
+  DateTime.now().month,
+  DateTime.now().day + 1,
+  9, 0, 0,
+);
+
+await NotificationService.scheduleNotification(
+  id: 42,
+  title: 'Recordatorio',
+  body: 'Tu documento vence hoy',
+  scheduledDate: tomorrow9am,
+  payload: 'doc:123',
+);
+```
+
+---
+
+### Errores silenciosos conocidos (checklist)
+
+Estos bugs **no lanzan excepciones visibles** — simplemente las notificaciones no llegan:
+
+| # | Error | Síntoma | Solución |
+|---|-------|---------|----------|
+| 1 | `tz.setLocalLocation()` no llamado | Notificaciones a hora equivocada (offset del UTC) | Agregar en `main()` con `flutter_timezone` |
+| 2 | `requestExactAlarmsPermission()` no llamado | Alarmas exactas no se disparan en Android 12+ | Llamar junto a `requestNotificationsPermission()` |
+| 3 | `ScheduledNotificationBootReceiver` faltante | Notificaciones desaparecen al reiniciar el device | Agregar los 3 receivers al AndroidManifest |
+| 4 | Ícono de notificación con colores | Cuadrado gris en Android 5+ | Ícono monocromo blanco+alpha |
+| 5 | `requestPermissions()` antes de `initialize()` | NullPointerException en Android | Llamar siempre después de `initialize()` |
+| 6 | `initialize()` fuera de `addPostFrameCallback` | Error "no Activity" en Android | Mover dentro de `addPostFrameCallback` |
+| 7 | `scheduledDate` en el pasado | Notificación ignorada silenciosamente | Validar que sea > `DateTime.now()` antes de llamar |
+
+---
+
+### iOS — Notas específicas
+
+- No requiere ningún receiver ni permiso en `Info.plist` para notificaciones locales.
+- Los permisos (alert, badge, sound) se piden en `DarwinInitializationSettings` al `initialize()`.
+- `zonedSchedule` con `tz.local` funciona correctamente en iOS.
+- Las notificaciones **no se muestran si la app está en foreground** (comportamiento de iOS). Manejar con `onDidReceiveNotificationResponse` si hace falta.
+
+---
+
+### Android 14+ — Cambio de comportamiento en SCHEDULE_EXACT_ALARM
+
+En Android 14 (API 34), Google cambió la política:
+- `SCHEDULE_EXACT_ALARM` puede ser **revocado** por el usuario desde Ajustes en cualquier momento.
+- Si es revocado, `scheduleNotification()` lanza `SecurityException` (capturado por el try-catch → silencioso).
+- **Solución**: Antes de schedulear, verificar con:
+
+```dart
+final android = _notifications
+    .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+final canSchedule = await android?.canScheduleExactNotifications() ?? false;
+if (!canSchedule) {
+  await android?.requestExactAlarmsPermission(); // redirige a Ajustes
+  return;
+}
+```
+
+---
+
 ## Descripción General
 
 Sistema completo de notificaciones locales programadas basado en **favoritos**, con scheduling inteligente, permisos multi-plataforma (Android 13+, iOS), gestión de clock alarms exactas, y tabla SQLite dedicada. Las notificaciones se programan a las **11 AM** (por defecto) o **1 hora antes** del evento más temprano del día.

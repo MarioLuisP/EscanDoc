@@ -5,7 +5,9 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdfrx/pdfrx.dart';
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
 
 // Providers
 import 'features/scan/presentation/providers/scan_provider.dart';
@@ -64,7 +66,9 @@ void main() async {
   await EasyLocalization.ensureInitialized();
   await pdfrxFlutterInitialize();
 
-  tz.initializeTimeZones();
+  tz_data.initializeTimeZones();
+  final localTimezone = await FlutterTimezone.getLocalTimezone();
+  tz.setLocalLocation(tz.getLocation(localTimezone));
   NotificationService.navigatorKey = _navigatorKey;
 
   // Verificar estado de onboarding
