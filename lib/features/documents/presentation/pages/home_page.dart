@@ -761,21 +761,9 @@ class _ActionsSheet extends StatelessWidget {
             label: 'menu_calendar'.tr(),
             onTap: onCalendar,
           ),
-          // --- Separador visual: acciones principales / configuración ---
-          const SizedBox(height: 6),
+          const SizedBox(height: 12),
           Divider(thickness: 1, color: Colors.grey.shade300),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-            child: Text(
-              'menu_settings'.tr().toUpperCase(),
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[500],
-                letterSpacing: 1.1,
-              ),
-            ),
-          ),
+          const SizedBox(height: 10),
           _SheetItem(
             icon: Icons.settings_outlined,
             label: 'menu_settings'.tr(),
@@ -787,13 +775,74 @@ class _ActionsSheet extends StatelessWidget {
   }
 }
 
-/// Botón 3D crema para acciones principales del sheet (Importar, Nueva nota)
+/// Botón 3D verde oliva para acciones principales del sheet (Importar, Nueva nota, Calendario)
 class _SheetActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
 
   const _SheetActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFF3F5EC), Color(0xFFD8E0C0)],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFA2B882), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6A8A50).withValues(alpha: 0.40),
+            offset: const Offset(0, 4),
+            blurRadius: 7,
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          splashColor: const Color(0xFFA2B882).withValues(alpha: 0.3),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            child: Row(
+              children: [
+                Icon(icon, size: 24, color: const Color(0xFF4A6A28)),
+                const SizedBox(width: 14),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Color(0xFF4A6A28),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Botón 3D arena para Configuración
+class _SheetItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SheetItem({
     required this.icon,
     required this.label,
     required this.onTap,
@@ -842,43 +891,6 @@ class _SheetActionButton extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SheetItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _SheetItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-        child: Row(
-          children: [
-            Icon(icon, size: 26, color: const Color(0xFF5A4A30)),
-            const SizedBox(width: 16),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 18,
-                color: Color(0xFF5A4A30),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -951,13 +963,13 @@ class _GradientOutlineButton extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+          colors: [Color(0xFFF3F5EC), Color(0xFFD8E0C0)],
         ),
         borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+        border: Border.all(color: const Color(0xFFA2B882), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF9A8060).withValues(alpha: 0.45),
+            color: const Color(0xFF6A8A50).withValues(alpha: 0.40),
             offset: const Offset(0, 4),
             blurRadius: 7,
             spreadRadius: -1,
@@ -969,19 +981,19 @@ class _GradientOutlineButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(50),
-          splashColor: const Color(0xFFBBAA88).withValues(alpha: 0.3),
+          splashColor: const Color(0xFFA2B882).withValues(alpha: 0.3),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 20, color: const Color(0xFF5A4A30)),
+                Icon(icon, size: 20, color: const Color(0xFF4A6A28)),
                 const SizedBox(width: 8),
                 Text(
                   label,
                   style: const TextStyle(
                     fontSize: 20,
-                    color: Color(0xFF5A4A30),
+                    color: Color(0xFF4A6A28),
                     fontWeight: FontWeight.w500,
                   ),
                 ),

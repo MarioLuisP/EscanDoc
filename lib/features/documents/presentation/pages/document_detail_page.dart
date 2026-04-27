@@ -6,6 +6,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:escandoc/core/widgets/notification_permission_dialog.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
 import 'package:escandoc/features/documents/presentation/widgets/delete_confirmation_dialog.dart';
+import 'package:escandoc/core/widgets/home_bar.dart';
 import 'package:escandoc/features/documents/presentation/pages/photo_fullscreen_page.dart';
 import 'package:escandoc/features/documents/presentation/pages/ocr_fullscreen_page.dart';
 import 'package:escandoc/features/notes/domain/note_marker.dart';
@@ -41,7 +42,9 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
     context.locale; // Registra dependencia en EasyLocalization → rebuild al cambiar idioma
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0E8),
+      bottomNavigationBar: const HomeBar(),
       body: SafeArea(
+        bottom: false,
         child: Consumer<DocumentsProvider>(
           builder: (context, provider, _) {
             if (provider.isLoading) {

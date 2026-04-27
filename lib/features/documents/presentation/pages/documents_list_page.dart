@@ -126,62 +126,53 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
   }
 
   Future<bool?> _showDeleteConfirmation(String title) {
-    return showModalBottomSheet<bool>(
+    return showDialog<bool>(
       context: context,
-      backgroundColor: const Color(0xFFF5F0E8),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        backgroundColor: const Color(0xFFFDFAF4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[400],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 24),
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 'delete_confirm_message'.tr(),
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 15, color: Colors.grey[600]),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 28),
-              _Btn3D(
-                icon: Icons.delete_outline,
-                label: 'delete_yes_button'.tr(),
-                gradientColors: const [Color(0xFFFFEBEE), Color(0xFFFFCDD2)],
-                borderColor: const Color(0xFFE57373),
-                shadowColor: const Color(0xFFD32F2F),
-                iconColor: const Color(0xFFD32F2F),
-                onTap: () => Navigator.pop(ctx, true),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: _DeleteDialogButton(
+                      label: 'delete_no_button'.tr(),
+                      onTap: () => Navigator.pop(ctx, false),
+                      gradientColors: const [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+                      textColor: const Color(0xFF5A4A30),
+                      shadowColor: const Color(0xFF9A8060),
+                      border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _DeleteDialogButton(
+                      label: 'delete_yes_button'.tr(),
+                      onTap: () => Navigator.pop(ctx, true),
+                      gradientColors: [Colors.red[400]!, Colors.red[800]!],
+                      textColor: Colors.white,
+                      shadowColor: Colors.red[900]!,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              _Btn3D(
-                icon: Icons.close,
-                label: 'delete_no_button'.tr(),
-                gradientColors: const [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
-                borderColor: const Color(0xFFBBAA88),
-                shadowColor: const Color(0xFF9A8060),
-                iconColor: const Color(0xFF5A4A30),
-                onTap: () => Navigator.pop(ctx, false),
-              ),
-              const SizedBox(height: 4),
             ],
           ),
         ),
@@ -304,13 +295,13 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
                 gradient: const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+                  colors: [Color(0xFFF3F5EC), Color(0xFFD8E0C0)],
                 ),
                 borderRadius: BorderRadius.circular(50),
-                border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+                border: Border.all(color: const Color(0xFFA2B882), width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF9A8060).withValues(alpha: 0.40),
+                    color: const Color(0xFF6A8A50).withValues(alpha: 0.40),
                     offset: const Offset(0, 3),
                     blurRadius: 6,
                     spreadRadius: -1,
@@ -327,14 +318,14 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF5A4A30),
+                        color: Color(0xFF4A6A28),
                       ),
                     ),
                     const SizedBox(width: 6),
                     const Icon(
                       Icons.keyboard_arrow_down,
                       size: 18,
-                      color: Color(0xFF5A4A30),
+                      color: Color(0xFF4A6A28),
                     ),
                   ],
                 ),
@@ -819,7 +810,7 @@ class _Btn3D extends StatelessWidget {
   }
 }
 
-/// Botón con gradiente crema + borde + sombra 3D.
+/// Botón con gradiente verde oliva + borde + sombra 3D.
 class _GradientOutlineButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -838,13 +829,13 @@ class _GradientOutlineButton extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+          colors: [Color(0xFFF3F5EC), Color(0xFFD8E0C0)],
         ),
         borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+        border: Border.all(color: const Color(0xFFA2B882), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF9A8060).withValues(alpha: 0.45),
+            color: const Color(0xFF6A8A50).withValues(alpha: 0.40),
             offset: const Offset(0, 4),
             blurRadius: 7,
             spreadRadius: -1,
@@ -856,23 +847,87 @@ class _GradientOutlineButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(50),
-          splashColor: const Color(0xFFBBAA88).withValues(alpha: 0.3),
+          splashColor: const Color(0xFFA2B882).withValues(alpha: 0.3),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 20, color: const Color(0xFF5A4A30)),
+                Icon(icon, size: 20, color: const Color(0xFF4A6A28)),
                 const SizedBox(width: 8),
                 Text(
                   label,
                   style: const TextStyle(
                     fontSize: 20,
-                    color: Color(0xFF5A4A30),
+                    color: Color(0xFF4A6A28),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DeleteDialogButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  final List<Color> gradientColors;
+  final Color textColor;
+  final Color shadowColor;
+  final BoxBorder? border;
+
+  const _DeleteDialogButton({
+    required this.label,
+    required this.onTap,
+    required this.gradientColors,
+    required this.textColor,
+    required this.shadowColor,
+    this.border,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: gradientColors,
+        ),
+        borderRadius: BorderRadius.circular(50),
+        border: border,
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor.withValues(alpha: 0.50),
+            offset: const Offset(0, 4),
+            blurRadius: 8,
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(50),
+          splashColor: Colors.white24,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
         ),

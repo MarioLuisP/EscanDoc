@@ -5,6 +5,7 @@ import 'package:escandoc/core/widgets/notification_permission_dialog.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:escandoc/core/widgets/home_bar.dart';
 
 /// Página de configuración — accesible desde el menú ☰ del home.
 class SettingsPage extends StatefulWidget {
@@ -230,7 +231,9 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
     EasyLocalization.of(context)?.locale;
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0E8),
+      bottomNavigationBar: const HomeBar(),
       body: SafeArea(
+        bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 
-/// Diálogo de confirmación para eliminar documentos
-/// Botones grandes y claros para personas mayores (mínimo 120x60dp)
+/// Diálogo de confirmación para eliminar un documento.
+/// Estilo consistente con el modal de eliminar vencimiento.
 class DeleteConfirmationDialog extends StatelessWidget {
   final VoidCallback onConfirm;
   final VoidCallback onCancel;
@@ -15,84 +15,127 @@ class DeleteConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      // Título grande y legible
-      title: Text(
-        'delete_confirm_title'.tr(),
-        style: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
+    return Dialog(
+      backgroundColor: const Color(0xFFFDFAF4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'delete_confirm_title'.tr(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'delete_confirm_message'.tr(),
+              style: TextStyle(fontSize: 15, color: Colors.grey[600]),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: _DialogButton(
+                    label: 'delete_no_button'.tr(),
+                    onTap: onCancel,
+                    gradientColors: const [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+                    textColor: const Color(0xFF5A4A30),
+                    shadowColor: const Color(0xFF9A8060),
+                    border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _DialogButton(
+                    label: 'delete_yes_button'.tr(),
+                    onTap: onConfirm,
+                    gradientColors: [Colors.red[400]!, Colors.red[800]!],
+                    textColor: Colors.white,
+                    shadowColor: Colors.red[900]!,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
-
-      // Mensaje de confirmación
-      content: Text(
-        'delete_confirm_message'.tr(),
-        style: const TextStyle(fontSize: 18),
-      ),
-
-      // Botones grandes (sin ActionButtons pequeños)
-      contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-      actionsPadding: const EdgeInsets.all(16),
-      actions: [
-        // Botón CANCELAR (gris)
-        SizedBox(
-          width: double.infinity,
-          height: 60, // Mínimo 60dp de altura
-          child: OutlinedButton(
-            onPressed: onCancel,
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Colors.grey, width: 2),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text(
-              'delete_no_button'.tr(),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        // Botón ELIMINAR (rojo)
-        SizedBox(
-          width: double.infinity,
-          height: 60, // Mínimo 60dp de altura
-          child: ElevatedButton(
-            onPressed: onConfirm,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text(
-              'delete_yes_button'.tr(),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
-  /// Método helper para mostrar el diálogo
   static Future<bool?> show(BuildContext context) {
     return showDialog<bool>(
       context: context,
-      barrierDismissible: false, // No cerrar tocando afuera (seguridad)
+      barrierDismissible: false,
       builder: (context) => DeleteConfirmationDialog(
         onConfirm: () => Navigator.of(context).pop(true),
         onCancel: () => Navigator.of(context).pop(false),
+      ),
+    );
+  }
+}
+
+class _DialogButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  final List<Color> gradientColors;
+  final Color textColor;
+  final Color shadowColor;
+  final BoxBorder? border;
+
+  const _DialogButton({
+    required this.label,
+    required this.onTap,
+    required this.gradientColors,
+    required this.textColor,
+    required this.shadowColor,
+    this.border,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: gradientColors,
+        ),
+        borderRadius: BorderRadius.circular(50),
+        border: border,
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor.withValues(alpha: 0.50),
+            offset: const Offset(0, 4),
+            blurRadius: 8,
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(50),
+          splashColor: Colors.white24,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

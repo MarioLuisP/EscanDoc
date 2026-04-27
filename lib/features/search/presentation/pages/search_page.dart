@@ -430,7 +430,7 @@ class _ResultItem extends StatelessWidget {
   }
 }
 
-/// Botón con gradiente crema + borde + sombra 3D.
+/// Botón con gradiente verde oliva + borde + sombra 3D.
 class _GradientOutlineButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -449,13 +449,13 @@ class _GradientOutlineButton extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+          colors: [Color(0xFFF3F5EC), Color(0xFFD8E0C0)],
         ),
         borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+        border: Border.all(color: const Color(0xFFA2B882), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF9A8060).withValues(alpha: 0.45),
+            color: const Color(0xFF6A8A50).withValues(alpha: 0.40),
             offset: const Offset(0, 4),
             blurRadius: 7,
             spreadRadius: -1,
@@ -467,19 +467,19 @@ class _GradientOutlineButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(50),
-          splashColor: const Color(0xFFBBAA88).withValues(alpha: 0.3),
+          splashColor: const Color(0xFFA2B882).withValues(alpha: 0.3),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 20, color: const Color(0xFF5A4A30)),
+                Icon(icon, size: 20, color: const Color(0xFF4A6A28)),
                 const SizedBox(width: 8),
                 Text(
                   label,
                   style: const TextStyle(
                     fontSize: 20,
-                    color: Color(0xFF5A4A30),
+                    color: Color(0xFF4A6A28),
                     fontWeight: FontWeight.w500,
                   ),
                 ),

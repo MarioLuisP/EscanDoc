@@ -6,6 +6,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/core/theme/document_type_colors.dart';
+import 'package:escandoc/core/widgets/home_bar.dart';
 
 /// Calendario de vencimientos.
 ///
@@ -216,6 +217,7 @@ class _CalendarPageState extends State<CalendarPage> {
     EasyLocalization.of(context)?.locale;
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0E8),
+      bottomNavigationBar: const HomeBar(),
       appBar: AppBar(
         backgroundColor: const Color(0xFFF5F0E8),
         elevation: 0,
