@@ -189,6 +189,9 @@
   "notif_expiry_soon_title": "Vencimiento próximo",
   "notif_expiry_soon_body": "\"{title}\" vence en 7 días",
   "notif_expiry_today_body": "\"{title}\" vence hoy",
+  "notif_body_7days": "📅 Vence en 7 días",
+  "notif_body_tomorrow": "⚠️ Vence mañana",
+  "notif_body_today": "⏰ Vence hoy",
   "notif_test_title": "EscanDoc — Prueba",
   "notif_test_body": "Las notificaciones de vencimientos funcionan correctamente",
 
@@ -204,5 +207,14 @@
   "settings_notif_disabled": "Desactivados",
   "settings_test_notif_title": "Notificaciones",
   "settings_test_notif_button": "Probar (llega en 2 min)",
-  "settings_test_notif_success": "✓ Notificación programada — llegará en 2 minutos"
+  "settings_test_notif_success": "✓ 3 avisos programados — llegarán en 20, 40 y 60 segundos",
+  "notif_enabled_title": "¡Avisos activados!",
+  "notif_enabled_body": "Te avisaremos 7 días antes y el día del vencimiento de cada documento.",
+  "notif_error_init_title": "No se pudo iniciar",
+  "notif_error_init_body": "Ocurrió un error al inicializar las notificaciones. Cerrá la app y volvé a intentarlo.",
+  "notif_error_permission_title": "Sin permiso",
+  "notif_error_permission_body": "Para recibir avisos, permitís las notificaciones en Ajustes del sistema.",
+  "notif_error_exact_alarm_title": "Activación incompleta",
+  "notif_error_exact_alarm_body": "Habilitá las alarmas en Ajustes del sistema para recibir avisos a la hora exacta.",
+  "ok_button": "Entendido"
 }

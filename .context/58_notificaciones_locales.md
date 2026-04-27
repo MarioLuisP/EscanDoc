@@ -53,10 +53,54 @@ Al tocar la notificación, la app navega directamente al detalle del documento.
 
 ---
 
+## Bug corregido (Abril 2026)
+
+**`initialize()` devuelve `bool?`, no `bool`** — en algunos dispositivos Android (confirmado: Motorola G52 API 33) retorna `null` en lugar de `true`. El código original usaba `if (success == true)`, que trata `null` como fallo y deja `_initialized = false`. Consecuencia: `requestPermission()` y todo el scheduling salían silenciosamente sin hacer nada.
+
+**Fix:** cambiar `success == true` por `success != false` en `notification_service.dart`.
+
+---
+
+## Cambios Abril 2026
+
+### Flujo de activación completo (Settings toggle ON)
+`_SettingsPageState` implementa `WidgetsBindingObserver`. Al activar el switch:
+1. `NotificationService.initialize()` si no estaba inicializado
+2. `requestNotificationPermissionOnly()` → solo POST_NOTIFICATIONS (Android) / `requestPermissions` (iOS)
+3. `areNotificationsEnabled()` → si false, modal de error
+4. `canScheduleExactAlarms()` → si false, abre Ajustes y espera retorno via `didChangeAppLifecycleState`
+5. `_finalizeEnable()` → `enableNotifications()` + modal de éxito (auto-cierre 3 seg) o error
+
+Modal de éxito: Dialog igual al de desactivar, con ícono ✓ verde, se cierra solo en 3 segundos.
+Modal de error: mismo estilo, ícono ⚠️ naranja, botón "Entendido".
+
+### 3 notificaciones por documento
+- `documentId * 10` → 7 días antes, 9 AM — `"📅 Vence en 7 días"`
+- `documentId * 10 + 1` → 1 día antes, 9 AM — `"⚠️ Vence mañana"`
+- `documentId * 10 + 2` → día del vencimiento, 9 AM — `"⏰ Vence hoy"`
+
+`cancelExpiryNotifications()` cancela los 3 IDs.
+
+### Título de notificación: nombre corto
+`_extractShortName(title)` — saltea artículos/preposiciones, toma las primeras 2 palabras significativas.
+- Números al inicio → los salta y toma la primera palabra real
+- Sin palabras (todo números) → primeros 10 dígitos
+- Acrónimos ≤4 letras en mayúsculas (DNI, VISA) → se conservan
+- Ejemplo: `"Factura de Aguas Cordobesas"` → `"Factura Aguas"`
+
+### Fix _toTZDateTime — incluye segundos
+Antes truncaba a minutos → notificaciones de prueba en <60s quedaban en el pasado y se descartaban.
+
+### Botón de prueba actualizado
+Dispara 3 notificaciones reales en 20/40/60 segundos con el título del primer documento de la lista.
+Fallback si no hay documentos: `"Factura de Aguas Cordobesas"`.
+
+### iOS — cobertura de permisos
+`areNotificationsEnabled()` y `requestNotificationPermissionOnly()` implementan rama iOS via `IOSFlutterLocalNotificationsPlugin`. `canScheduleExactAlarms()` retorna `true` en iOS (no aplica).
+**Pendiente:** probar en dispositivo real / simulador iOS.
+
 ## Pendiente
 
-- **Íconos de notificación propios:** actualmente se usan los de QueHacemos. Hay que reemplazar `ic_notification.png` en todos los directorios drawable con un ícono monocromático (blanco con alpha) representativo de EscanDoc.
-- **Modal de permisos en Settings:** al activar desde el switch, si el OS aún no tiene el permiso concedido, conviene mostrar el modal explicativo antes del diálogo del sistema (actualmente llama directo a `requestPermission()`).
-- **Textos de notificación localizados:** los títulos y cuerpos de las notificaciones ("Vencimiento próximo", "Vence hoy", etc.) están hardcodeados en español dentro del `NotificationService`, que no tiene acceso a `BuildContext`. Una solución sería inyectarlos como parámetro desde el provider, que sí puede resolver la localización.
-- **Botón de prueba provisorio:** la card "Notificaciones" en Settings tiene un botón de prueba que agenda una notificación en 2 minutos. Debe eliminarse antes de la release.
-- **iOS:** la inicialización y los permisos están contemplados en el código (`DarwinInitializationSettings`), pero no fue probado en dispositivo real ni en simulador. Verificar comportamiento del diálogo de permisos iOS y el deep link desde notificación con app cerrada.
+- **Botón de prueba provisorio:** eliminar antes de la release.
+- **iOS:** probar toggle activar/desactivar en dispositivo real. Verificar deep link desde notificación con app cerrada.
+- **Desactivar y reactivar:** flujo completo no probado aún en dispositivo real Android (pendiente sesión siguiente).

@@ -189,6 +189,9 @@
   "notif_expiry_soon_title": "Upcoming expiry",
   "notif_expiry_soon_body": "\"{title}\" expires in 7 days",
   "notif_expiry_today_body": "\"{title}\" expires today",
+  "notif_body_7days": "📅 Expires in 7 days",
+  "notif_body_tomorrow": "⚠️ Expires tomorrow",
+  "notif_body_today": "⏰ Expires today",
   "notif_test_title": "EscanDoc — Test",
   "notif_test_body": "Expiry notifications are working correctly",
 
@@ -204,5 +207,14 @@
   "settings_notif_disabled": "Disabled",
   "settings_test_notif_title": "Notifications",
   "settings_test_notif_button": "Test (arrives in 2 min)",
-  "settings_test_notif_success": "✓ Notification scheduled — arrives in 2 minutes"
+  "settings_test_notif_success": "✓ 3 reminders scheduled — arriving in 20, 40 and 60 seconds",
+  "notif_enabled_title": "Reminders enabled!",
+  "notif_enabled_body": "We'll remind you 7 days before and on the expiry day of each document.",
+  "notif_error_init_title": "Could not start",
+  "notif_error_init_body": "An error occurred initializing notifications. Close the app and try again.",
+  "notif_error_permission_title": "Permission denied",
+  "notif_error_permission_body": "To receive reminders, allow notifications in your system settings.",
+  "notif_error_exact_alarm_title": "Setup incomplete",
+  "notif_error_exact_alarm_body": "Enable alarms in system settings to receive reminders at the exact time.",
+  "ok_button": "Got it"
 }

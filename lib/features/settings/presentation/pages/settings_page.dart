@@ -14,13 +14,30 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver {
   bool? _notifEnabled;
+  bool _enabling = false;
+  bool _waitingForExactAlarms = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadNotifState();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _waitingForExactAlarms) {
+      _waitingForExactAlarms = false;
+      _finalizeEnable();
+    }
   }
 
   Future<void> _loadNotifState() async {
@@ -29,23 +46,128 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _toggleNotifications(bool value) async {
-    final provider = context.read<DocumentsProvider>();
+    if (_enabling) return;
     if (value) {
-      final shouldAsk = await NotificationPromptService.shouldShow();
-      if (shouldAsk) {
-        if (!mounted) return;
-        await NotificationPermissionDialog.showIfNeeded(context);
-        final nowEnabled = await NotificationPromptService.isEnabled();
-        if (!nowEnabled) return;
-      }
-      await provider.enableNotifications();
+      await _enableWithFullFlow();
     } else {
       final confirmed = await _confirmDisable();
       if (!confirmed) return;
-      await provider.disableNotifications();
+      await context.read<DocumentsProvider>().disableNotifications();
+      final nowEnabled = await NotificationPromptService.isEnabled();
+      if (mounted) setState(() => _notifEnabled = nowEnabled);
     }
+  }
+
+  Future<void> _enableWithFullFlow() async {
+    setState(() => _enabling = true);
+
+    // 1. Inicializar si hace falta
+    if (!NotificationService.isInitialized) {
+      final ok = await NotificationService.initialize();
+      if (!ok) {
+        if (mounted) {
+          setState(() => _enabling = false);
+          _showResultModal(success: false, titleKey: 'notif_error_init_title', bodyKey: 'notif_error_init_body');
+        }
+        return;
+      }
+    }
+
+    // 2. Pedir POST_NOTIFICATIONS
+    await NotificationService.requestNotificationPermissionOnly();
+
+    // 3. Verificar si fue concedido
+    final notifGranted = await NotificationService.areNotificationsEnabled();
+    if (!notifGranted) {
+      if (mounted) {
+        setState(() => _enabling = false);
+        _showResultModal(success: false, titleKey: 'notif_error_permission_title', bodyKey: 'notif_error_permission_body');
+      }
+      return;
+    }
+
+    // 4. Verificar alarmas exactas
+    final canSchedule = await NotificationService.canScheduleExactAlarms();
+    if (!canSchedule) {
+      _waitingForExactAlarms = true;
+      if (mounted) setState(() => _enabling = false);
+      await NotificationService.requestExactAlarmPermission(); // abre Ajustes del sistema
+      // continúa en didChangeAppLifecycleState cuando el usuario vuelve
+      return;
+    }
+
+    if (mounted) setState(() => _enabling = false);
+    await _finalizeEnable();
+  }
+
+  Future<void> _finalizeEnable() async {
+    if (!mounted) return;
+    setState(() => _enabling = true);
+    await context.read<DocumentsProvider>().enableNotifications();
+    final canSchedule = await NotificationService.canScheduleExactAlarms();
     final nowEnabled = await NotificationPromptService.isEnabled();
-    if (mounted) setState(() => _notifEnabled = nowEnabled);
+    if (!mounted) return;
+    setState(() {
+      _notifEnabled = nowEnabled;
+      _enabling = false;
+    });
+    if (canSchedule) {
+      _showResultModal(success: true, titleKey: 'notif_enabled_title', bodyKey: 'notif_enabled_body');
+    } else {
+      _showResultModal(success: false, titleKey: 'notif_error_exact_alarm_title', bodyKey: 'notif_error_exact_alarm_body');
+    }
+  }
+
+  void _showResultModal({required bool success, required String titleKey, required String bodyKey}) {
+    showDialog(
+      context: context,
+      barrierDismissible: !success,
+      builder: (ctx) => Dialog(
+        backgroundColor: const Color(0xFFFDFAF4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                success ? Icons.check_circle_outline : Icons.warning_amber_rounded,
+                size: 48,
+                color: success ? const Color(0xFF388E3C) : Colors.orange[700],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                titleKey.tr(),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                bodyKey.tr(),
+                style: const TextStyle(fontSize: 15, color: Colors.black54),
+                textAlign: TextAlign.center,
+              ),
+              if (!success) ...[
+                const SizedBox(height: 24),
+                _StyledButton(
+                  label: 'ok_button'.tr(),
+                  onTap: () => Navigator.pop(ctx),
+                  gradientColors: const [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+                  textColor: const Color(0xFF5A4A30),
+                  shadowColor: const Color(0xFF9A8060),
+                  border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+    if (success) {
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) Navigator.of(context, rootNavigator: true).pop();
+      });
+    }
   }
 
   Future<bool> _confirmDisable() async {
@@ -213,7 +335,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ],
                   ),
                 ),
-                if (_notifEnabled == null)
+                if (_notifEnabled == null || _enabling)
                   const SizedBox(
                       width: 24,
                       height: 24,
@@ -248,7 +370,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 TextButton(
                   onPressed: () async {
-                    await NotificationService.scheduleTestNotification();
+                    final docs = context.read<DocumentsProvider>().documents;
+                    final title = docs.isNotEmpty ? docs.first.title : null;
+                    await NotificationService.scheduleTestNotification(documentTitle: title);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

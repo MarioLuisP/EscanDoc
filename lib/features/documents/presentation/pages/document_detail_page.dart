@@ -504,50 +504,14 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
     final document = provider.selectedDocument;
     if (document == null) return;
 
-    final controller = TextEditingController(text: document.title);
-    final formKey = GlobalKey<FormState>();
-
-    final confirmed = await showDialog<bool>(
+    final newName = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('rename_dialog_title'.tr(),
-            style: const TextStyle(fontSize: 20)),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: controller,
-            autofocus: true,
-            style: const TextStyle(fontSize: 18),
-            decoration: InputDecoration(hintText: 'rename_hint'.tr()),
-            validator: (v) => (v == null || v.trim().isEmpty)
-                ? 'rename_empty_error'.tr()
-                : null,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('cancel_button'.tr(),
-                style: const TextStyle(fontSize: 16)),
-          ),
-          TextButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(ctx, true);
-              }
-            },
-            child: Text('rename_button'.tr(),
-                style: const TextStyle(fontSize: 16)),
-          ),
-        ],
-      ),
+      builder: (_) => _RenameDialog(initialTitle: document.title),
     );
 
-    if (confirmed == true) {
-      if (!mounted) return;
-      await provider.renameDocument(document.id!, controller.text);
+    if (newName != null && mounted) {
+      await provider.renameDocument(document.id!, newName);
     }
-    controller.dispose();
   }
 
   void _showDeleteDialog(
@@ -569,6 +533,147 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
       duration: const Duration(seconds: 3),
     ));
     navigator.pop();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Diálogo de renombrar — StatefulWidget para ciclo de vida correcto
+// ---------------------------------------------------------------------------
+
+/// Diálogo para renombrar un documento.
+///
+/// Retorna el nuevo nombre via [Navigator.pop] o `null` si se cancela.
+/// Se implementa como [StatefulWidget] para que [TextEditingController] y las
+/// dependencias de [InheritedWidget] (ej. TextField → Theme, Directionality)
+/// se limpien correctamente cuando el diálogo se cierra — evita la assertion
+/// `_dependents.isEmpty` que ocurre con el patrón `builder: (ctx) => Form(...)`.
+class _RenameDialog extends StatefulWidget {
+  final String initialTitle;
+  const _RenameDialog({required this.initialTitle});
+
+  @override
+  State<_RenameDialog> createState() => _RenameDialogState();
+}
+
+class _RenameDialogState extends State<_RenameDialog> {
+  late final TextEditingController _controller;
+  String? _errorText;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialTitle);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final text = _controller.text.trim();
+    if (text.isEmpty) {
+      setState(() => _errorText = 'rename_empty_error'.tr());
+      return;
+    }
+    Navigator.pop(context, text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: const Color(0xFFFDFAF4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'rename_dialog_title'.tr(),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              style: const TextStyle(fontSize: 17, color: Colors.black87),
+              onSubmitted: (_) => _submit(),
+              decoration: InputDecoration(
+                hintText: 'rename_hint'.tr(),
+                errorText: _errorText,
+                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 16),
+                filled: true,
+                fillColor: const Color(0xFFF5F0E8),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      const BorderSide(color: Color(0xFFD4C8A8), width: 1.5),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      const BorderSide(color: Color(0xFF388E3C), width: 2),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      const BorderSide(color: Colors.red, width: 1.5),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: _StyledButton(
+                    label: 'cancel_button'.tr(),
+                    onTap: () => Navigator.pop(context, null),
+                    gradientColors: const [
+                      Color(0xFFFDFAF4),
+                      Color(0xFFE0D4BC),
+                    ],
+                    textColor: const Color(0xFF5A4A30),
+                    shadowColor: const Color(0xFF9A8060),
+                    border:
+                        Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _StyledButton(
+                    label: 'rename_button'.tr(),
+                    onTap: _submit,
+                    gradientColors: const [
+                      Color(0xFF66BB6A),
+                      Color(0xFF2E7D32),
+                    ],
+                    textColor: Colors.white,
+                    shadowColor: const Color(0xFF1A5C1A),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

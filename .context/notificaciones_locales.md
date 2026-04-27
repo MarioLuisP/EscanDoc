@@ -288,6 +288,7 @@ Estos bugs **no lanzan excepciones visibles** — simplemente las notificaciones
 | 5 | `requestPermissions()` antes de `initialize()` | NullPointerException en Android | Llamar siempre después de `initialize()` |
 | 6 | `initialize()` fuera de `addPostFrameCallback` | Error "no Activity" en Android | Mover dentro de `addPostFrameCallback` |
 | 7 | `scheduledDate` en el pasado | Notificación ignorada silenciosamente | Validar que sea > `DateTime.now()` antes de llamar |
+| 8 | `initialize()` retorna `null` en algunos devices | `_initialized` queda `false`, todo el sistema falla silenciosamente — no se piden permisos, no se programa nada | Usar `success != false` en lugar de `success == true` (confirmado: Motorola G52 API 33) |
 
 ---
 

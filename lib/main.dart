@@ -67,8 +67,8 @@ void main() async {
   await pdfrxFlutterInitialize();
 
   tz_data.initializeTimeZones();
-  final localTimezone = await FlutterTimezone.getLocalTimezone();
-  tz.setLocalLocation(tz.getLocation(localTimezone));
+  final timezoneInfo = await FlutterTimezone.getLocalTimezone();
+  tz.setLocalLocation(tz.getLocation(timezoneInfo.identifier));
   NotificationService.navigatorKey = _navigatorKey;
 
   // Verificar estado de onboarding
