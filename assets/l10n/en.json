@@ -208,6 +208,8 @@
   "settings_test_notif_title": "Notifications",
   "settings_test_notif_button": "Test (arrives in 2 min)",
   "settings_test_notif_success": "✓ 3 reminders scheduled — arriving in 20, 40 and 60 seconds",
+  "settings_test_notif_10min_button": "Test at 10 min (real)",
+  "settings_test_notif_10min_success": "✓ Reminder scheduled for {time}. Lock the screen.",
   "notif_enabled_title": "Reminders enabled!",
   "notif_enabled_body": "We'll remind you 7 days before and on the expiry day of each document.",
   "notif_error_init_title": "Could not start",
@@ -216,5 +218,9 @@
   "notif_error_permission_body": "To receive reminders, allow notifications in your system settings.",
   "notif_error_exact_alarm_title": "Setup incomplete",
   "notif_error_exact_alarm_body": "Enable alarms in system settings to receive reminders at the exact time.",
+  "notif_battery_optim_title": "One more step for reliability",
+  "notif_battery_optim_body": "Some phones (Motorola, Xiaomi and others) may cancel reminders when the device is idle. Allow EscanDoc to run without restrictions so you never miss an expiry.",
+  "notif_battery_optim_later": "Later",
+  "notif_battery_optim_configure": "Allow",
   "ok_button": "Got it"
 }

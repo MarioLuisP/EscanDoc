@@ -10,3 +10,9 @@
 # Keep flutter_local_notifications receivers (R8 puede eliminarlos en release)
 -keep class com.dexterous.** { *; }
 -keepclassmembers class com.dexterous.** { *; }
+
+# Atributos requeridos por Gson (serialización interna del plugin)
+-keepattributes Signature
+-keepattributes *Annotation*
+-keepattributes InnerClasses
+-keepattributes EnclosingMethod

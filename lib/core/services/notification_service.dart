@@ -22,7 +22,7 @@ class NotificationService {
       channelDescription: 'Avisos de documentos próximos a vencer',
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@drawable/ic_notification',
+      icon: 'ic_notification',
       color: Color(0xFF7ED321),
     ),
     iOS: DarwinNotificationDetails(),
@@ -35,7 +35,7 @@ class NotificationService {
 
     try {
       const androidSettings =
-          AndroidInitializationSettings('@drawable/ic_notification');
+          AndroidInitializationSettings('ic_notification');
       const iosSettings = DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
@@ -269,6 +269,39 @@ class NotificationService {
     await _notifications.cancel(id: documentId * 10);
     await _notifications.cancel(id: documentId * 10 + 1);
     await _notifications.cancel(id: documentId * 10 + 2);
+  }
+
+  /// 1 notificación programada para "ahora + 10 min" usando construcción
+  /// por componentes (año/mes/día/hora/min) — mismo code path que
+  /// `scheduleExpiryNotifications`. Sirve para validar entrega con pantalla
+  /// bloqueada y entrar en Doze ligero.
+  static Future<DateTime?> scheduleTestNotificationIn10Min({String? documentTitle}) async {
+    debugPrint('[Notif] scheduleTestNotificationIn10Min() — _initialized: $_initialized');
+    if (!_initialized) return null;
+    final enabled = await NotificationPromptService.isEnabled();
+    if (!enabled) return null;
+
+    final shortName = _extractShortName(documentTitle ?? 'Factura de Aguas Cordobesas');
+    final target = DateTime.now().add(const Duration(minutes: 10));
+    final scheduled = DateTime(
+      target.year, target.month, target.day,
+      target.hour, target.minute, target.second,
+    );
+
+    try {
+      await _notifications.zonedSchedule(
+        id: 99996,
+        title: shortName,
+        body: 'notif_body_today'.tr(),
+        scheduledDate: _toTZDateTime(scheduled),
+        notificationDetails: _notifDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+      return scheduled;
+    } catch (e) {
+      debugPrint('[Notif] Error prueba 10min: $e');
+      return null;
+    }
   }
 
   /// 3 notificaciones de prueba en 20/40/60 segundos con el formato real.

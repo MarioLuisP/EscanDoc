@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:escandoc/core/services/notification_prompt_service.dart';
 import 'package:escandoc/core/services/notification_service.dart';
@@ -141,6 +143,8 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
 
   Future<void> _finalizeEnable() async {
     if (!mounted) return;
+    await _promptBatteryOptimization();
+    if (!mounted) return;
     setState(() => _enabling = true);
     await context.read<DocumentsProvider>().enableNotifications();
     final canSchedule = await NotificationService.canScheduleExactAlarms();
@@ -154,6 +158,76 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
       _showResultModal(success: true, titleKey: 'notif_enabled_title', bodyKey: 'notif_enabled_body');
     } else {
       _showResultModal(success: false, titleKey: 'notif_error_exact_alarm_title', bodyKey: 'notif_error_exact_alarm_body');
+    }
+  }
+
+  /// Pide al usuario excluir la app de la optimización de batería del SO.
+  /// No bloquea el flujo: si rechaza o no responde, las notificaciones igual
+  /// se activan (solo pierde robustez en standby largo).
+  Future<void> _promptBatteryOptimization() async {
+    if (!Platform.isAndroid) return;
+    final status = await Permission.ignoreBatteryOptimizations.status;
+    if (status.isGranted) return;
+    if (!mounted) return;
+
+    final proceed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        backgroundColor: const Color(0xFFFDFAF4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.battery_saver_outlined,
+                  size: 48, color: Colors.orange[700]),
+              const SizedBox(height: 16),
+              Text(
+                'notif_battery_optim_title'.tr(),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'notif_battery_optim_body'.tr(),
+                style: const TextStyle(fontSize: 15, color: Colors.black54),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: _StyledButton(
+                      label: 'notif_battery_optim_later'.tr(),
+                      onTap: () => Navigator.pop(ctx, false),
+                      gradientColors: const [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+                      textColor: const Color(0xFF5A4A30),
+                      shadowColor: const Color(0xFF9A8060),
+                      border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _StyledButton(
+                      label: 'notif_battery_optim_configure'.tr(),
+                      onTap: () => Navigator.pop(ctx, true),
+                      gradientColors: [Colors.orange[400]!, Colors.orange[800]!],
+                      textColor: Colors.white,
+                      shadowColor: Colors.orange[900]!,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (proceed == true) {
+      await Permission.ignoreBatteryOptimizations.request();
     }
   }
 
@@ -425,6 +499,54 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
                   },
                   child: Text(
                     'settings_test_notif_button'.tr(),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF388E3C),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Botón de prueba a 10 minutos (simulación realista)
+          _buildCard(
+            child: Row(
+              children: [
+                const Icon(Icons.alarm_outlined,
+                    size: 22, color: Color(0xFF388E3C)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'settings_test_notif_title'.tr(),
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    final docs = context.read<DocumentsProvider>().documents;
+                    final title = docs.isNotEmpty ? docs.first.title : null;
+                    final scheduled = await NotificationService
+                        .scheduleTestNotificationIn10Min(documentTitle: title);
+                    if (context.mounted && scheduled != null) {
+                      final hh = scheduled.hour.toString().padLeft(2, '0');
+                      final mm = scheduled.minute.toString().padLeft(2, '0');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('settings_test_notif_10min_success'
+                              .tr(namedArgs: {'time': '$hh:$mm'})),
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                    }
+                  },
+                  child: Text(
+                    'settings_test_notif_10min_button'.tr(),
                     style: const TextStyle(
                       fontSize: 14,
                       color: Color(0xFF388E3C),
