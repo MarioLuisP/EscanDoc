@@ -123,7 +123,6 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await NotificationService.initialize();
-      await NotificationService.requestPermission();
 
       final docId = await NotificationService.getNotificationLaunchDocumentId();
       if (docId != null) {

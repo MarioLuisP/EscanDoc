@@ -239,7 +239,6 @@ class DocumentsProvider extends ChangeNotifier {
   /// Habilita notificaciones y reprograma todos los documentos con vencimiento.
   Future<void> enableNotifications() async {
     await NotificationPromptService.setEnabled(true);
-    await NotificationService.requestPermission();
     for (final doc in _documents) {
       if (doc.id != null && doc.expiryDate != null) {
         NotificationService.scheduleExpiryNotifications(

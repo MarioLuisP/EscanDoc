@@ -25,8 +25,8 @@ Al tocar la notificación, la app navega directamente al detalle del documento.
 
 - `pubspec.yaml` — agregado `timezone: ^0.11.0`
 - `android/app/src/main/AndroidManifest.xml` — permisos `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`, `RECEIVE_BOOT_COMPLETED`, `VIBRATE` + 3 receivers del plugin (`ScheduledNotificationReceiver`, `ScheduledNotificationBootReceiver`, `FlutterLocalNotificationsReceiver`)
-- `lib/main.dart` — `tz.initializeTimeZones()`, `GlobalKey<NavigatorState>` asignado al `MaterialApp` y al `NotificationService`, `initialize()` y `requestPermission()` en PostFrameCallback (requieren Activity activa), manejo de cold-start desde tap en notificación
-- `lib/features/documents/presentation/providers/documents_provider.dart` — hook `_syncNotification()` en `updateExpiryDate()`, métodos `enableNotifications()` y `disableNotifications()` (con `cancelAll` + reschedule de todos los documentos)
+- `lib/main.dart` — `tz.initializeTimeZones()` + `FlutterTimezone.getLocalTimezone()` + `tz.setLocalLocation()` antes de `runApp()`. `GlobalKey<NavigatorState>` asignado al `MaterialApp` y al `NotificationService`. En PostFrameCallback: solo `initialize()` (NO `requestPermission()`) + manejo de cold-start desde tap en notificación.
+- `lib/features/documents/presentation/providers/documents_provider.dart` — hook `_syncNotification()` en `updateExpiryDate()`, métodos `enableNotifications()` (setEnabled(true) + reschedule de todos los documentos) y `disableNotifications()` (setEnabled(false) + cancelAll). `enableNotifications()` NO llama `requestPermission()` — los permisos son responsabilidad exclusiva de la capa UI.
 - `lib/features/onboarding/presentation/pages/onboarding_page.dart` — muestra el modal al terminar el onboarding (intento 1 de 3)
 - `lib/features/documents/presentation/pages/document_detail_page.dart` — muestra el modal al asignar un vencimiento si quedan intentos disponibles (intentos 2 y 3)
 - `lib/features/settings/presentation/pages/settings_page.dart` — convertida a StatefulWidget; agrega switch de activar/desactivar con diálogo de confirmación al desactivar; botón de prueba provisorio que agenda una notificación en 2 minutos
@@ -41,13 +41,13 @@ Al tocar la notificación, la app navega directamente al detalle del documento.
 
 ## Decisiones de diseño
 
-**Timezone sin plugin extra:** `flutter_timezone` fue descartado por incompatibilidad con el embedding API de Flutter 3.x. Se usa `DateTime.toUtc()` directamente — Dart conoce el offset del OS, la conversión es exacta sin dependencias extra.
+**Timezone:** se usa `flutter_timezone` + `tz.setLocalLocation()` en `main()` antes de `runApp()`. `_toTZDateTime()` usa `tz.local` directamente.
 
 **`initialize()` en PostFrameCallback, no en `main()`:** el diálogo de permisos del sistema requiere una Activity activa. Llamarlo antes de `runApp()` hace que el request falle silenciosamente en Android.
 
 **Sin tabla SQLite adicional:** a diferencia de QueHacemos (que agrupa favoritos por fecha), cada documento tiene su propio par de notificaciones identificadas por `docId * 10` y `docId * 10 + 1`. El plugin persiste internamente lo necesario para restaurar post-reboot.
 
-**`notif_enabled` por defecto `true`:** usuarios que nunca tocaron el toggle tienen notificaciones activas por defecto, que es el comportamiento esperado en Android < 13 donde el permiso es automático.
+**`notif_enabled` por defecto `true`:** el default aplica a Android < 13 donde el permiso es automático. En API 33+, `_loadNotifState()` en `SettingsPage` verifica siempre el estado real del sistema y sincroniza SharedPreferences si hay discrepancia. No confiar en el default de SharedPreferences sin verificar.
 
 **Modal de permisos en 3 momentos:** al terminar onboarding, al asignar el primer vencimiento y al asignar el segundo. Después de 3 intentos (o si el usuario activa), nunca más se muestra.
 
@@ -67,9 +67,11 @@ Al tocar la notificación, la app navega directamente al detalle del documento.
 `_SettingsPageState` implementa `WidgetsBindingObserver`. Al activar el switch:
 1. `NotificationService.initialize()` si no estaba inicializado
 2. `requestNotificationPermissionOnly()` → solo POST_NOTIFICATIONS (Android) / `requestPermissions` (iOS)
-3. `areNotificationsEnabled()` → si false, modal de error
-4. `canScheduleExactAlarms()` → si false, abre Ajustes y espera retorno via `didChangeAppLifecycleState`
+3. `areNotificationsEnabled()` → si false: abre Ajustes de la app via `openAppSettings()` (permission_handler), setea `_waitingForNotifPermission = true` y espera retorno via `didChangeAppLifecycleState` → `_resumeAfterNotifSettings()`
+4. `canScheduleExactAlarms()` → si false, abre Ajustes de alarmas exactas y espera retorno via `didChangeAppLifecycleState` → `_finalizeEnable()`
 5. `_finalizeEnable()` → `enableNotifications()` + modal de éxito (auto-cierre 3 seg) o error
+
+`_loadNotifState()`: si SharedPreferences dice true pero `areNotificationsEnabled()` = false, sincroniza a false (fix API 33 — el default true no garantiza permiso del sistema).
 
 Modal de éxito: Dialog igual al de desactivar, con ícono ✓ verde, se cierra solo en 3 segundos.
 Modal de error: mismo estilo, ícono ⚠️ naranja, botón "Entendido".
@@ -98,6 +100,20 @@ Fallback si no hay documentos: `"Factura de Aguas Cordobesas"`.
 ### iOS — cobertura de permisos
 `areNotificationsEnabled()` y `requestNotificationPermissionOnly()` implementan rama iOS via `IOSFlutterLocalNotificationsPlugin`. `canScheduleExactAlarms()` retorna `true` en iOS (no aplica).
 **Pendiente:** probar en dispositivo real / simulador iOS.
+
+## Bugs corregidos (Abril 2026 — sesión 2)
+
+**Toggle arrancaba ON pero notificaciones no llegaban en API 33**
+`_loadNotifState()` leía solo SharedPreferences (default `true`) sin verificar el permiso real del sistema. En API 33+, el permiso `POST_NOTIFICATIONS` no se otorga automáticamente. Fix: verificar `areNotificationsEnabled()` al cargar el estado; si discrepa, sincronizar SharedPreferences.
+
+**Toggle OFF → nunca volvía a ON**
+Cuando `POST_NOTIFICATIONS` fue denegado permanentemente (Android no muestra el dialog después de 2 rechazos), el flujo solo mostraba un modal de error sin salida. Fix: usar el mismo patrón que ya existía para alarmas exactas — abrir Ajustes de la app via `openAppSettings()` y esperar retorno.
+
+**`requestPermission()` llamado en cada arranque (main.dart) y al habilitar (documents_provider.dart)**
+Esto abría el dialog de notificaciones sin contexto y la pantalla de ajustes de alarmas exactas en cada inicio. Quemaba los intentos de Android antes de que el usuario tomara una decisión consciente. Fix: remover ambas llamadas. Los permisos se piden únicamente cuando el usuario activa el toggle explícitamente.
+
+**ProGuard (release) sin reglas para flutter_local_notifications**
+`isMinifyEnabled = true` con R8 podía eliminar los receivers del plugin en builds de release. Fix: agregar `-keep class com.dexterous.** { *; }` en `proguard-rules.pro`.
 
 ## Pendiente
 

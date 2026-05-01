@@ -4,6 +4,7 @@ import 'package:escandoc/core/services/notification_service.dart';
 import 'package:escandoc/core/widgets/notification_permission_dialog.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:escandoc/core/widgets/home_bar.dart';
 
@@ -19,6 +20,7 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
   bool? _notifEnabled;
   bool _enabling = false;
   bool _waitingForExactAlarms = false;
+  bool _waitingForNotifPermission = false;
 
   @override
   void initState() {
@@ -35,15 +37,29 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && _waitingForExactAlarms) {
+    if (state != AppLifecycleState.resumed) return;
+    if (_waitingForExactAlarms) {
       _waitingForExactAlarms = false;
       _finalizeEnable();
+    } else if (_waitingForNotifPermission) {
+      _waitingForNotifPermission = false;
+      _resumeAfterNotifSettings();
     }
   }
 
   Future<void> _loadNotifState() async {
-    final enabled = await NotificationPromptService.isEnabled();
-    if (mounted) setState(() => _notifEnabled = enabled);
+    final savedEnabled = await NotificationPromptService.isEnabled();
+    if (savedEnabled) {
+      // Verificar que el sistema realmente tiene el permiso concedido.
+      // En API 33+ el default "true" de SharedPreferences no garantiza nada.
+      final systemEnabled = await NotificationService.areNotificationsEnabled();
+      if (!systemEnabled) {
+        await NotificationPromptService.setEnabled(false);
+        if (mounted) setState(() => _notifEnabled = false);
+        return;
+      }
+    }
+    if (mounted) setState(() => _notifEnabled = savedEnabled);
   }
 
   Future<void> _toggleNotifications(bool value) async {
@@ -80,10 +96,11 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
     // 3. Verificar si fue concedido
     final notifGranted = await NotificationService.areNotificationsEnabled();
     if (!notifGranted) {
-      if (mounted) {
-        setState(() => _enabling = false);
-        _showResultModal(success: false, titleKey: 'notif_error_permission_title', bodyKey: 'notif_error_permission_body');
-      }
+      // El dialog del sistema no se muestra si ya fue denegado 2 veces.
+      // Abrir Ajustes de la app para que el usuario lo habilite manualmente.
+      _waitingForNotifPermission = true;
+      if (mounted) setState(() => _enabling = false);
+      await openAppSettings();
       return;
     }
 
@@ -98,6 +115,27 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
     }
 
     if (mounted) setState(() => _enabling = false);
+    await _finalizeEnable();
+  }
+
+  Future<void> _resumeAfterNotifSettings() async {
+    final notifGranted = await NotificationService.areNotificationsEnabled();
+    if (!notifGranted) {
+      if (mounted) {
+        _showResultModal(
+          success: false,
+          titleKey: 'notif_error_permission_title',
+          bodyKey: 'notif_error_permission_body',
+        );
+      }
+      return;
+    }
+    final canSchedule = await NotificationService.canScheduleExactAlarms();
+    if (!canSchedule) {
+      _waitingForExactAlarms = true;
+      await NotificationService.requestExactAlarmPermission();
+      return;
+    }
     await _finalizeEnable();
   }
 

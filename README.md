@@ -167,7 +167,7 @@ fvm flutter build apk
 fvm flutter test
 fvm flutter analyze
 
-fvm flutter build apk --release --split-per-abi
+fvm 
 ---
 El comando para capturar los logs en el archivo era:
 
