@@ -4,10 +4,14 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:escandoc/core/services/notification_prompt_service.dart';
 import 'package:escandoc/core/services/notification_service.dart';
 import 'package:escandoc/core/widgets/notification_permission_dialog.dart';
+import 'package:escandoc/features/backup/presentation/providers/backup_provider.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:escandoc/core/widgets/home_bar.dart';
 
 /// Página de configuración — accesible desde el menú ☰ del home.
@@ -338,6 +342,72 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
     return result == true;
   }
 
+  Future<void> _handleBackupExport() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final zipFile = await context.read<BackupProvider>().export();
+    if (!mounted) return;
+    if (zipFile == null) {
+      messenger.showSnackBar(SnackBar(
+        content: Text('backup_export_error'.tr(), style: const TextStyle(fontSize: 16)),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ));
+      return;
+    }
+    await SharePlus.instance.share(
+      ShareParams(files: [XFile(zipFile.path, mimeType: 'application/x-escdc')]),
+    );
+  }
+
+  Future<void> _handleBackupImport() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['escdc', 'zip'],
+      allowMultiple: false,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final filePath = result.files.first.path;
+    if (filePath == null) return;
+    await _runBackupImport(filePath);
+  }
+
+  Future<void> _runBackupImport(String filePath) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final backupProvider = context.read<BackupProvider>();
+    final documentsProvider = context.read<DocumentsProvider>();
+
+    messenger.showSnackBar(SnackBar(
+      content: Text('backup_importing'.tr(), style: const TextStyle(fontSize: 16)),
+      duration: const Duration(seconds: 60),
+    ));
+
+    final docsDir = await getApplicationDocumentsDirectory();
+    final count = await backupProvider.importBackup(File(filePath), docsDir.path);
+    if (!mounted) return;
+
+    messenger.hideCurrentSnackBar();
+
+    if (backupProvider.error != null) {
+      messenger.showSnackBar(SnackBar(
+        content: Text('backup_import_error'.tr(), style: const TextStyle(fontSize: 16)),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ));
+      return;
+    }
+
+    messenger.showSnackBar(SnackBar(
+      content: Text(
+        'backup_import_success'.tr(namedArgs: {'count': '$count'}),
+        style: const TextStyle(fontSize: 16),
+      ),
+      backgroundColor: const Color(0xFF2D5016),
+      duration: const Duration(seconds: 3),
+    ));
+
+    await documentsProvider.loadDocuments();
+  }
+
   @override
   Widget build(BuildContext context) {
     EasyLocalization.of(context)?.locale;
@@ -462,6 +532,68 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
                     activeTrackColor: const Color(0xFF388E3C).withValues(alpha: 0.4),
                     onChanged: _toggleNotifications,
                   ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Copia de seguridad — Guardar
+          _buildCard(
+            child: Row(
+              children: [
+                const Icon(Icons.upload_outlined, size: 22, color: Color(0xFF388E3C)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'backup_export_button'.tr(),
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: _handleBackupExport,
+                  child: Text(
+                    'save_button'.tr(),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF388E3C),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Copia de seguridad — Restaurar
+          _buildCard(
+            child: Row(
+              children: [
+                const Icon(Icons.download_outlined, size: 22, color: Color(0xFF388E3C)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'backup_import_button'.tr(),
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: _handleBackupImport,
+                  child: Text(
+                    'restore_button'.tr(),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF388E3C),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

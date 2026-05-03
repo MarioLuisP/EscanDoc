@@ -115,8 +115,42 @@ Esto abría el dialog de notificaciones sin contexto y la pantalla de ajustes de
 **ProGuard (release) sin reglas para flutter_local_notifications**
 `isMinifyEnabled = true` con R8 podía eliminar los receivers del plugin en builds de release. Fix: agregar `-keep class com.dexterous.** { *; }` en `proguard-rules.pro`.
 
+## Bugs corregidos (Mayo 2026)
+
+**`ic_notification` no se encontraba en release (PlatformException invalid_icon)**
+En API 33 (Motorola G52) builds release fallaban con `The resource ic_notification could not be found`. En debug funcionaba. Causa: con `isMinifyEnabled = true`, R8 + AAPT2 podían dropear el drawable (referenciado solo por string desde Dart) y romper la deserialización Gson interna del plugin.
+Fix:
+1. `android/app/src/main/res/raw/keep.xml` con `tools:keep="@drawable/ic_notification"`.
+2. `proguard-rules.pro`: agregar `-keepattributes Signature, *Annotation*, InnerClasses, EnclosingMethod`.
+
+## Cambios Mayo 2026
+
+### Botón de prueba a 10 minutos (real)
+Segunda card en Settings al lado del botón de 60s. Llama a `NotificationService.scheduleTestNotificationIn10Min()`, que construye el `DateTime` desde componentes (year/month/day/hour/min/sec) — **mismo code path** que `scheduleExpiryNotifications`. Diferencia útil con la prueba de 60s: a 10 min se puede bloquear pantalla y entrar en Doze ligero.
+- ID reservado: `99996` (los otros 3 tests usan 99997/99998/99999).
+- Snackbar muestra la hora exacta a la que va a llegar (formato HH:mm).
+- Claves: `settings_test_notif_10min_button`, `settings_test_notif_10min_success`.
+
+### Battery optimization opt-in en flujo del toggle
+Paso 5 nuevo en `_enableWithFullFlow` (después de exact alarms, antes de `_finalizeEnable()`):
+- Solo Android. Si `Permission.ignoreBatteryOptimizations.isGranted` → skip.
+- Si no: modal naranja con ícono de batería + "Más tarde" / "Permitir". "Permitir" dispara el dialog del sistema vía `Permission.ignoreBatteryOptimizations.request()`.
+- **No bloquea**: si el usuario rechaza o pospone, las notificaciones igual se activan.
+- Permiso agregado al manifest: `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`.
+- Claves: `notif_battery_optim_title/body/later/configure`.
+
+## Techo aceptado de fiabilidad
+
+Si en Doze profundo (>1h pantalla apagada en Motorola/Xiaomi) los avisos no llegan, **no se escala más**. Alternativas descartadas:
+- **FCM**: requiere backend + login, fuera de scope.
+- **Workmanager**: histórico de fracasos en otra app del usuario (semanas peleando, nunca funcionó).
+- **`AndroidScheduleMode.alarmClock`**: muestra ícono persistente en status bar (ruidoso para 30 documentos) y riesgo de rechazo en Play Store por uso fuera de scope.
+
+EscanDoc no es app de alarmas críticas. Si un OEM agresivo retrasa un aviso, asumimos el costo. Documentar como limitación conocida si aparece en QA.
+
 ## Pendiente
 
-- **Botón de prueba provisorio:** eliminar antes de la release.
+- **Botones de prueba provisorios (60s y 10min):** eliminar antes de la release.
 - **iOS:** probar toggle activar/desactivar en dispositivo real. Verificar deep link desde notificación con app cerrada.
-- **Desactivar y reactivar:** flujo completo no probado aún en dispositivo real Android (pendiente sesión siguiente).
+- **Doze profundo en Motorola G52:** validar entrega con pantalla apagada toda la noche (con battery optim concedido).
+- **Reboot:** validar que los avisos se reprograman correctamente tras reiniciar el celu.

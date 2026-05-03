@@ -57,5 +57,44 @@
 	<string>EscanDoc usa reconocimiento de voz para buscar documentos por dictado</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+
+	<!-- EscanDoc Backup (.escdc) — tipo de archivo propio -->
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.passalia.escandoc.backup</string>
+			<key>UTTypeDescription</key>
+			<string>EscanDoc Backup</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.zip-archive</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>escdc</string>
+				</array>
+				<key>public.mime-type</key>
+				<string>application/x-escdc</string>
+			</dict>
+		</dict>
+	</array>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>EscanDoc Backup</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.passalia.escandoc.backup</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

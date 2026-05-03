@@ -95,3 +95,8 @@ Icon?
 
 # FVM Version Cache
 .fvm/
+
+# ------------------------------
+# Material de referencia (repos clonados externos)
+# ------------------------------
+.context/repos_qh/

@@ -15,6 +15,7 @@ import 'package:escandoc/features/scan/presentation/widgets/photo_detected_dialo
 import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 import 'package:escandoc/core/user/user_preferences.dart';
 import 'package:escandoc/core/theme/document_type_colors.dart';
+import 'package:escandoc/features/backup/presentation/providers/backup_provider.dart';
 
 /// Dashboard principal de EscanDocs
 class HomePage extends StatefulWidget {
@@ -95,7 +96,7 @@ class _HomePageState extends State<HomePage> {
       final rawExt = dotIndex >= 0
           ? filename.substring(dotIndex + 1).split('?').first.toLowerCase()
           : '';
-      const validExts = {'jpg', 'jpeg', 'png', 'pdf', 'webp', 'heic', 'heif'};
+      const validExts = {'jpg', 'jpeg', 'png', 'pdf', 'webp', 'heic', 'heif', 'escdc'};
 
       // Si la extensión no es reconocida, detectar por magic bytes.
       final String ext;
@@ -112,7 +113,9 @@ class _HomePageState extends State<HomePage> {
         '${tempDir.path}/${baseName}_${DateTime.now().millisecondsSinceEpoch}.$ext',
       );
 
-      if (ext == 'pdf') {
+      if (ext == 'escdc') {
+        await _runBackupImport(stableFile.path);
+      } else if (ext == 'pdf') {
         await _handlePdfImport(stableFile.path);
       } else {
         await _processImportedFile(stableFile);
@@ -290,6 +293,43 @@ class _HomePageState extends State<HomePage> {
         },
       ),
     );
+  }
+
+  Future<void> _runBackupImport(String filePath) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final backupProvider = context.read<BackupProvider>();
+    final documentsProvider = context.read<DocumentsProvider>();
+
+    messenger.showSnackBar(SnackBar(
+      content: Text('backup_importing'.tr(), style: const TextStyle(fontSize: 16)),
+      duration: const Duration(seconds: 60),
+    ));
+
+    final docsDir = await getApplicationDocumentsDirectory();
+    final count = await backupProvider.importBackup(File(filePath), docsDir.path);
+    if (!mounted) return;
+
+    messenger.hideCurrentSnackBar();
+
+    if (backupProvider.error != null) {
+      messenger.showSnackBar(SnackBar(
+        content: Text('backup_import_error'.tr(), style: const TextStyle(fontSize: 16)),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ));
+      return;
+    }
+
+    messenger.showSnackBar(SnackBar(
+      content: Text(
+        'backup_import_success'.tr(namedArgs: {'count': '$count'}),
+        style: const TextStyle(fontSize: 16),
+      ),
+      backgroundColor: const Color(0xFF2D5016),
+      duration: const Duration(seconds: 3),
+    ));
+
+    await documentsProvider.loadDocuments();
   }
 
   // --- Botón ESCANEAR ---
@@ -934,7 +974,7 @@ class _CenterAddButton extends StatelessWidget {
           onTap: onTap,
           customBorder: const CircleBorder(),
           splashColor: const Color(0xFF7AAB7A).withValues(alpha: 0.3),
-          child: const Icon(Icons.more_horiz, color: Color(0xFF2E7D32), size: 25),
+          child: Image.asset('assets/images/logo.png', width: 26, height: 26),
         ),
       ),
     );

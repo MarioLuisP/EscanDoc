@@ -27,57 +27,44 @@ con app similares siempre tuve problemas para migrar| si quiero usar la nube es 
 
   En resumen: tu idea original es la mejor. Es lo que hace Obsidian, Signal, WhatsApp con sus backups.
 
-❯ y dentro de la app hasta donde podemos seguir con ese zip? preguntarle si quiere compartirlo o subirlo? que es lo mas lejos que podemos llegar?
-● Bastante lejos, sin login. Acá el mapa completo:
+---
+## IMPLEMENTADO (Mayo 2026)
 
-  Sin login (todo posible):
-  Crear ZIP
-      ↓
-  Dialog: ¿Qué hacés con él?
-      ├── "Guardar en carpeta"  → file_picker.saveFile()
-      │                            Android: abre SAF* → Drive aparece como destino nativo
-      │                            iOS: abre Files → iCloud Drive disponible
-      │
-      └── "Compartir"          → share_plus share sheet
-                                   Android/iOS: todas las apps instaladas
-                                   (Drive, Dropbox, Telegram, Gmail, WhatsApp...)
+### Extensión y nombre
+- Formato: escandoc_DD-MM-YYYY.escdc  (ej: escandoc_03-05-2026.escdc)
+- Extensión propia .escdc — sigue siendo ZIP internamente
+- MIME type: application/x-escdc
 
-  * SAF (Storage Access Framework) es el file picker del sistema Android — Drive está integrado como ubicación nativa sin ningún OAuth. El usuario simplemente navega a "Mi unidad" y guarda. En iOS pasa lo mismo con
-  Files/iCloud.
+### Estructura del ZIP
+- meta.json       → schema_version (3), export_date, count
+- documents.json  → todos los campos de DocumentModel excepto id; file_path relativo (solo nombre de archivo)
+- images/         → una entrada por imagen existente en disco
 
-  Con login (fuera de scope):
-  - Subir a una carpeta específica de Drive programáticamente
-  - Backup automático sin intervención del usuario
-  - Listar/comparar versiones en Drive
+### Decisiones de diseño
+- IMPORT es merge, no reemplazo: los documentos existentes no se tocan
+- Colisiones de nombre de archivo: sufijo _bk, _bk2, _bk3... (no _imported)
+- Duplicados reales (usuario re-escaneó antes de restaurar): se aceptan como comportamiento conocido, el usuario borra manualmente
+- id no se incluye en documents.json → SQLite asigna auto-increment al importar → sin colisiones de PK
+- export_date en meta.json en formato ISO (para parsing); el nombre del archivo usa DD-MM-YYYY (legible para el usuario)
 
-  ---
-  La frontera práctica sin login:
+### Capas
+- BackupRepository (abstract)                                     → lib/features/backup/domain/repositories/backup_repository.dart
+- BackupRepositoryImpl (archive + dart:io)                        → lib/features/backup/data/repositories/backup_repository_impl.dart
+- BackupProvider (ChangeNotifier, export + importBackup)          → lib/features/backup/presentation/providers/backup_provider.dart
+- Tests (14 en total, repository + provider)                      → test/features/backup/
 
-  El usuario toca "Backup", la app crea el ZIP, muestra el dialog, y el usuario elige guardar directo en Drive (vía SAF/Files) o compartirlo por cualquier app. No hay diferencia visible respecto a tener integración nativa — el
-  OS hace el trabajo.
+### UI
+- Acceso: Configuración → debajo de "Avisos de vencimiento" → dos cards: "Guardar backup" / "Restaurar backup"
+- Export: share_plus con ShareParams(mimeType: application/x-escdc) → share sheet del OS
+- Import: file_picker acepta .escdc y .zip (fallback para backups viejos) → _runBackupImport()
+- Sharing intent: home_page._processSharedFile detecta extensión escdc → _runBackupImport() (mismo path que file_picker)
+- _runBackupImport existe en home_page (para intents) y en settings_page (para file_picker)
 
-  Lo único que no podés hacer sin login es disparar la subida desde la app sin que el usuario toque algo. Para todo lo demás, el OS te cubre.
- y para recuperarlo?  cual seria el flujo mas facil para el usuario?
-● El flujo más fácil para el usuario es que no tenga que entrar a la app primero:
+### Registro de tipo de archivo
+- Android: intent-filters en AndroidManifest para ACTION_SEND y ACTION_VIEW con mimeType application/x-escdc
+- iOS: UTExportedTypeDeclarations + CFBundleDocumentTypes en Info.plist (UTI: com.passalia.escandoc.backup, conforma a public.zip-archive)
 
-  Usuario abre Drive/Files/WhatsApp                                                                                                                                                                                                      → busca "escandoc_backup_2026-03-01.zip"
-      → toca "Abrir con" / "Compartir"
-      → elige EscanDoc
-      → la app recibe el ZIP (receive_sharing_intent, igual que las imágenes)
-      → detecta que es un backup (por nombre o contenido)
-      → dialog: "¿Restaurar backup del 1/3/2026?
-                 Esto reemplazará todos tus documentos actuales."
-      → confirma → restaura → recarga
-
-  ¿Por qué este flujo?
-  - El usuario ya está donde están sus archivos
-  - "Abrir con" es más intuitivo que entrar a la app y navegar a Settings
-  - Ya tenemos receive_sharing_intent configurado — solo habría que agregar ZIP a los tipos aceptados
-
-  Como fallback (usuarios que no saben el "Abrir con"):
-  - Settings → Restaurar backup → file_picker → elige el ZIP
-
-  Un detalle importante para el ZIP:
-  Ponerle fecha en el nombre: escandoc_backup_2026-03-01.zip → el usuario sabe exactamente qué está restaurando sin abrir nada.
-
-  Lo único delicado: avisar bien que se reemplazan los documentos actuales. Para personas mayores, ese dialog tiene que ser muy claro — quizás con dos pasos de confirmación.
+### Fuera de scope (v1)
+- "Abrir con" desde iOS (receive_sharing_intent en iOS postergado, igual que el resto del plugin)
+- Deduplicación automática de duplicados reales
+- Backup automático / backup incremental

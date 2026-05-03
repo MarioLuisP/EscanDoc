@@ -46,6 +46,10 @@ import 'core/services/speech_service_impl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'features/onboarding/domain/usecases/check_onboarding_status.dart';
 
+// Backup
+import 'features/backup/data/repositories/backup_repository_impl.dart';
+import 'features/backup/presentation/providers/backup_provider.dart';
+
 // Notifications
 import 'core/services/notification_service.dart';
 
@@ -180,6 +184,12 @@ class _MyAppState extends State<MyApp> {
           ),
         ),
         ChangeNotifierProvider(create: (_) => DocumentsProvider()),
+        ChangeNotifierProvider(
+          create: (_) => BackupProvider(
+            backupRepository: BackupRepositoryImpl(),
+            documentRepository: DocumentRepository(),
+          ),
+        ),
         ChangeNotifierProvider(
           create: (_) {
             // Crear dependencias para Search

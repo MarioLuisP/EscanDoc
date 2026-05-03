@@ -177,6 +177,17 @@
   "language_en": "Inglés",
 
   "menu_calendar": "Vencimientos",
+  "calendar_pick_date": "Elegí una fecha",
+  "calendar_tap_to_assign": "Tocá un día para asignar el vencimiento",
+  "calendar_no_expiry_day": "Sin vencimientos para este día",
+  "calendar_collapsed_header": "Calendario",
+  "calendar_format_month": "Mes",
+  "calendar_format_2weeks": "2 sem",
+  "calendar_format_week": "Sem",
+  "calendar_expiry_on": "Vence el {date}",
+  "calendar_expired_on": "Venció el {date}",
+  "calendar_assign_title": "Asignar vencimiento",
+  "calendar_change_date": "Cambiar fecha",
   "expiry_section_title": "Vencimiento",
   "expiry_none": "Sin fecha de vencimiento",
   "expiry_set": "Asignar vencimiento",
@@ -222,5 +233,18 @@
   "notif_battery_optim_body": "Algunos celulares (Motorola, Xiaomi y otros) pueden cancelar los avisos cuando el teléfono está quieto. Permití que EscanDoc se ejecute sin restricciones para no perder ningún vencimiento.",
   "notif_battery_optim_later": "Más tarde",
   "notif_battery_optim_configure": "Permitir",
-  "ok_button": "Entendido"
+  "ok_button": "Entendido",
+
+  "menu_backup": "Copia de seguridad",
+  "backup_sheet_title": "Copia de seguridad",
+  "backup_export_button": "Guardar backup",
+  "backup_import_button": "Restaurar backup",
+  "backup_exporting": "Creando backup...",
+  "backup_importing": "Importando backup...",
+  "backup_export_success": "✓ Backup creado",
+  "backup_import_success": "✓ {count} documentos importados",
+  "backup_export_error": "Error al crear el backup",
+  "backup_import_error": "Error al restaurar el backup",
+  "backup_invalid": "El archivo no es un backup válido de EscanDoc",
+  "restore_button": "RESTAURAR"
 }

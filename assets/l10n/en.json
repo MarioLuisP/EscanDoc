@@ -177,6 +177,17 @@
   "language_en": "English",
 
   "menu_calendar": "Expiry Dates",
+  "calendar_pick_date": "Pick a date",
+  "calendar_tap_to_assign": "Tap a day to set the expiry date",
+  "calendar_no_expiry_day": "No expiry dates for this day",
+  "calendar_collapsed_header": "Calendar",
+  "calendar_format_month": "Month",
+  "calendar_format_2weeks": "2 wks",
+  "calendar_format_week": "Wk",
+  "calendar_expiry_on": "Expires on {date}",
+  "calendar_expired_on": "Expired on {date}",
+  "calendar_assign_title": "Set expiry date",
+  "calendar_change_date": "Change date",
   "expiry_section_title": "Expiry Date",
   "expiry_none": "No expiry date set",
   "expiry_set": "Set expiry date",
@@ -222,5 +233,18 @@
   "notif_battery_optim_body": "Some phones (Motorola, Xiaomi and others) may cancel reminders when the device is idle. Allow EscanDoc to run without restrictions so you never miss an expiry.",
   "notif_battery_optim_later": "Later",
   "notif_battery_optim_configure": "Allow",
-  "ok_button": "Got it"
+  "ok_button": "Got it",
+
+  "menu_backup": "Backup",
+  "backup_sheet_title": "Backup",
+  "backup_export_button": "Save backup",
+  "backup_import_button": "Restore backup",
+  "backup_exporting": "Creating backup...",
+  "backup_importing": "Importing backup...",
+  "backup_export_success": "✓ Backup created",
+  "backup_import_success": "✓ {count} documents imported",
+  "backup_export_error": "Error creating backup",
+  "backup_import_error": "Error restoring backup",
+  "backup_invalid": "The file is not a valid EscanDoc backup",
+  "restore_button": "RESTORE"
 }

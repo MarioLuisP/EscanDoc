@@ -160,7 +160,7 @@ class _CalendarPageState extends State<CalendarPage> {
               const Icon(Icons.calendar_month, color: Color(0xFF388E3C), size: 32),
               const SizedBox(height: 12),
               Text(
-                'Asignar vencimiento',
+                'calendar_assign_title'.tr(),
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
@@ -181,7 +181,7 @@ class _CalendarPageState extends State<CalendarPage> {
               Row(
                 children: [
                   Expanded(child: _AssignButton(
-                    label: 'Cancelar',
+                    label: 'cancel_button'.tr(),
                     onTap: () => Navigator.pop(ctx, false),
                     gradientColors: const [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
                     textColor: const Color(0xFF5A4A30),
@@ -190,7 +190,7 @@ class _CalendarPageState extends State<CalendarPage> {
                   )),
                   const SizedBox(width: 12),
                   Expanded(child: _AssignButton(
-                    label: 'Guardar',
+                    label: 'save_button'.tr(),
                     onTap: () => Navigator.pop(ctx, true),
                     gradientColors: const [Color(0xFF6FBF6F), Color(0xFF2E7D32)],
                     textColor: Colors.white,
@@ -226,7 +226,7 @@ class _CalendarPageState extends State<CalendarPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          _isPickingMode ? 'Elegí una fecha' : 'Vencimientos',
+          _isPickingMode ? 'calendar_pick_date'.tr() : 'menu_calendar'.tr(),
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -269,8 +269,8 @@ class _CalendarPageState extends State<CalendarPage> {
                 padding: const EdgeInsets.all(24),
                 child: Text(
                   _isPickingMode
-                      ? 'Tocá un día para asignar el vencimiento'
-                      : 'Sin vencimientos para este día',
+                      ? 'calendar_tap_to_assign'.tr()
+                      : 'calendar_no_expiry_day'.tr(),
                   style: TextStyle(fontSize: 16, color: Colors.grey[500]),
                   textAlign: TextAlign.center,
                 ),
@@ -350,9 +350,9 @@ class _CalendarPageState extends State<CalendarPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Calendario',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black54),
+            Text(
+              'calendar_collapsed_header'.tr(),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black54),
             ),
             Text(
               '${_selectedDay.day}/${_selectedDay.month}/${_selectedDay.year}',
@@ -370,7 +370,7 @@ class _CalendarPageState extends State<CalendarPage> {
       padding: const EdgeInsets.all(12),
       child: TableCalendar(
         key: _calendarKey,
-        locale: 'es_ES',
+        locale: context.locale.languageCode,
         firstDay: DateTime(2020, 1, 1),
         lastDay: DateTime(2035, 12, 31),
         focusedDay: _focusedDay,
@@ -396,10 +396,10 @@ class _CalendarPageState extends State<CalendarPage> {
         daysOfWeekHeight: 20,
         rowHeight: 34,
         sixWeekMonthsEnforced: false,
-        availableCalendarFormats: const {
-          CalendarFormat.month: 'Mes',
-          CalendarFormat.twoWeeks: '2 sem',
-          CalendarFormat.week: 'Sem',
+        availableCalendarFormats: {
+          CalendarFormat.month: 'calendar_format_month'.tr(),
+          CalendarFormat.twoWeeks: 'calendar_format_2weeks'.tr(),
+          CalendarFormat.week: 'calendar_format_week'.tr(),
         },
         headerStyle: HeaderStyle(
           formatButtonVisible: true,
@@ -625,7 +625,7 @@ class _ExpiryDocCard extends StatelessWidget {
                           Icon(Icons.calendar_today, size: 14, color: urgencyColor),
                           const SizedBox(width: 4),
                           Text(
-                            _formatExpiry(expiry, daysLeft),
+                            _formatExpiry(context, expiry, daysLeft),
                             style: TextStyle(fontSize: 14, color: urgencyColor, fontWeight: FontWeight.w600),
                           ),
                         ],
@@ -652,9 +652,9 @@ class _ExpiryDocCard extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            child: const Text(
-                              'Cambiar fecha',
-                              style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                            child: Text(
+                              'calendar_change_date'.tr(),
+                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
                             ),
                           ),
                         ),
@@ -671,14 +671,15 @@ class _ExpiryDocCard extends StatelessWidget {
     );
   }
 
-  String _formatExpiry(DateTime date, int daysLeft) {
-    if (daysLeft == 0) return 'Vence hoy';
-    if (daysLeft == 1) return 'Vence mañana';
+  String _formatExpiry(BuildContext context, DateTime date, int daysLeft) {
+    if (daysLeft == 0) return 'expiry_today'.tr();
+    if (daysLeft == 1) return 'expiry_tomorrow'.tr();
     final d = date.day.toString().padLeft(2, '0');
     final m = date.month.toString().padLeft(2, '0');
     final y = (date.year % 100).toString().padLeft(2, '0');
-    if (daysLeft < 0) return 'Venció el $d/$m/$y';
-    return 'Vence el $d/$m/$y';
+    final dateStr = '$d/$m/$y';
+    if (daysLeft < 0) return 'calendar_expired_on'.tr(namedArgs: {'date': dateStr});
+    return 'calendar_expiry_on'.tr(namedArgs: {'date': dateStr});
   }
 }
 
