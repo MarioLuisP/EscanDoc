@@ -64,16 +64,63 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="application/x-escdc"/>
             </intent-filter>
-            <!-- Backup EscanDoc (.escdc) — abrir desde Drive/Files ("Abrir con") -->
-            <intent-filter>
+            <!-- Backup EscanDoc (.escdc) — MIME conocido -->
+            <intent-filter android:icon="@mipmap/ic_launcher">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.OPENABLE"/>
                 <data android:scheme="content" android:mimeType="application/x-escdc"/>
             </intent-filter>
-            <intent-filter>
+            <intent-filter android:icon="@mipmap/ic_launcher">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:scheme="file" android:mimeType="application/x-escdc"/>
+            </intent-filter>
+            <!-- Backup EscanDoc (.escdc) — MIME desconocido, match por extensión (API 31+) -->
+            <intent-filter android:icon="@mipmap/ic_launcher">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.OPENABLE"/>
+                <data android:scheme="content" android:mimeType="*/*" android:pathSuffix=".escdc"/>
+            </intent-filter>
+            <intent-filter android:icon="@mipmap/ic_launcher">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="file" android:mimeType="*/*" android:pathSuffix=".escdc"/>
+            </intent-filter>
+            <!-- Backup EscanDoc (.escdc) — MIME desconocido, fallback pathPattern (API 23-30) -->
+            <intent-filter android:icon="@mipmap/ic_launcher">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.OPENABLE"/>
+                <data android:scheme="content" android:mimeType="*/*" android:pathPattern=".*\\.escdc"/>
+            </intent-filter>
+            <intent-filter android:icon="@mipmap/ic_launcher">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.OPENABLE"/>
+                <data android:scheme="content" android:mimeType="*/*" android:pathPattern=".*\\..*\\.escdc"/>
+            </intent-filter>
+            <intent-filter android:icon="@mipmap/ic_launcher">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.OPENABLE"/>
+                <data android:scheme="content" android:mimeType="*/*" android:pathPattern=".*\\..*\\..*\\.escdc"/>
+            </intent-filter>
+            <intent-filter android:icon="@mipmap/ic_launcher">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="file" android:mimeType="*/*" android:pathPattern=".*\\.escdc"/>
+            </intent-filter>
+            <intent-filter android:icon="@mipmap/ic_launcher">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="file" android:mimeType="*/*" android:pathPattern=".*\\..*\\.escdc"/>
+            </intent-filter>
+            <intent-filter android:icon="@mipmap/ic_launcher">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="file" android:mimeType="*/*" android:pathPattern=".*\\..*\\..*\\.escdc"/>
             </intent-filter>
         </activity>
         <!-- Receivers para flutter_local_notifications -->

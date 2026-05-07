@@ -347,9 +347,9 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                     ),
                   ],
                 ),
-                child: const Text(
-                  'Borrar',
-                  style: TextStyle(
+                child: Text(
+                  'expiry_delete_button'.tr(),
+                  style: const TextStyle(
                     color: Color(0xFFC62828),
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -374,9 +374,9 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '¿Eliminar vencimiento?',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                'expiry_delete_confirm_title'.tr(),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -395,7 +395,7 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _StyledButton(
-                      label: 'Eliminar',
+                      label: 'expiry_delete_confirm_button'.tr(),
                       onTap: () => Navigator.pop(ctx, true),
                       gradientColors: [Colors.red[400]!, Colors.red[800]!],
                       textColor: Colors.white,
