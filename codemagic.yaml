@@ -11,6 +11,8 @@ workflows:
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
+      - name: Install pods
+        script: cd ios && pod install --repo-update && cd ..
       - name: Build iOS for simulator
         script: flutter build ios --debug --simulator --no-codesign
     artifacts:
