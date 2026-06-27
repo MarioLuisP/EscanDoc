@@ -71,8 +71,16 @@ void main() async {
   await pdfrxFlutterInitialize();
 
   tz_data.initializeTimeZones();
-  final timezoneInfo = await FlutterTimezone.getLocalTimezone();
-  tz.setLocalLocation(tz.getLocation(timezoneInfo.identifier));
+  // Algunos entornos (emuladores) reportan "GMT" u otro id que no existe en la
+  // base de datos de timezone. Si falla, caer a UTC para no romper el arranque.
+  try {
+    final timezoneInfo = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(timezoneInfo.identifier));
+  } catch (_) {
+    // tz.UTC es una constante integrada que no depende de la base de datos,
+    // a diferencia de getLocation('UTC') que también lanzaría excepción.
+    tz.setLocalLocation(tz.UTC);
+  }
   NotificationService.navigatorKey = _navigatorKey;
 
   // Verificar estado de onboarding

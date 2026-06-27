@@ -26,7 +26,9 @@
       "Read(**/*.tsx)",
       "Read(**/*.py)",
       "Bash(flutter pub get:*)",
-      "Bash(flutter analyze:*)"
+      "Bash(flutter analyze:*)",
+      "Bash(git -C .context/repos_qh/**:*)",
+      "Bash(git -C *:*)"
     ],
     "deny": [
       "Read(.env*)",
@@ -39,6 +41,6 @@
     ],
     "defaultMode": "default"
   },
-  "model": "claude-sonnet-4-6",
+  "model": "claude-opus-4-8",
   "outputStyle": "Concise"
 }
