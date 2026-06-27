@@ -3,13 +3,14 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  flutter_doc_scanner
   flutter_timezone
   printing
   url_launcher_linux
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
-  pdfium_flutter
+  jni
   tflite_flutter
 )
 

@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  flutter_doc_scanner
   flutter_timezone
   gal
   permission_handler_windows
@@ -14,7 +15,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
   flutter_local_notifications_windows
-  pdfium_flutter
+  jni
   tflite_flutter
 )
 

@@ -31,7 +31,7 @@ dependencies:
   path_provider: ^2.1.5              # Rutas de storage
   shared_preferences: ^2.3.2         # Preferencias (onboarding, settings)
   file_picker: ^10.3.10              # Seleccionar archivos/imágenes de galería (importar)
-  receive_sharing_intent: ^1.8.1    # Recibir archivos compartidos desde otras apps (intent)
+  receive_sharing_intent: 1.8.1    # Pin: 1.9.0 rompe build Android (kotlin() en build.gradle, pide SDK 37) — ver .context/65
 
   # ═══════════════════════════════════════════════════════════════════════════
   # DOCUMENT SCANNING (UI Nativa - ML Kit Android / VisionKit iOS)
@@ -59,7 +59,7 @@ dependencies:
   # ═══════════════════════════════════════════════════════════════════════════
   # VOICE SEARCH
   # ═══════════════════════════════════════════════════════════════════════════
-  speech_to_text: ^7.3.0             # Búsqueda por voz (HU-007)
+  speech_to_text: 7.3.0             # Pin: 7.4.0 no compila (declaración duplicada pluginChannelName en su Kotlin) — ver .context/65
 
   # ═══════════════════════════════════════════════════════════════════════════
   # CALENDAR & NOTIFICATIONS (Vencimientos)

@@ -139,10 +139,10 @@ void main() {
     });
 
     test('debe reconocer diferentes keywords de vencimiento', () {
-      expect(classifier.extractDueDate('vencimiento: 15/06/2026'), DateTime(2026, 6, 15));
-      expect(classifier.extractDueDate('vence: 20/06/2026'), DateTime(2026, 6, 20));
-      expect(classifier.extractDueDate('pagar antes de: 25/06/2026'), DateTime(2026, 6, 25));
-      expect(classifier.extractDueDate('due date: 30/06/2026'), DateTime(2026, 6, 30));
+      expect(classifier.extractDueDate('vencimiento: 15/06/2099'), DateTime(2099, 6, 15));
+      expect(classifier.extractDueDate('vence: 20/06/2099'), DateTime(2099, 6, 20));
+      expect(classifier.extractDueDate('pagar antes de: 25/06/2099'), DateTime(2099, 6, 25));
+      expect(classifier.extractDueDate('due date: 30/06/2099'), DateTime(2099, 6, 30));
     });
   });
 }
