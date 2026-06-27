@@ -78,6 +78,14 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
     });
   }
 
+  /// Entra en modo selección sin preseleccionar nada (botón "Seleccionar").
+  /// El usuario luego toca documentos para elegir uno o varios.
+  void _startSelection() {
+    setState(() {
+      _selectionMode = true;
+    });
+  }
+
   void _toggleSelection(int docId) {
     setState(() {
       if (_selectedIds.contains(docId)) {
@@ -97,21 +105,41 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
   }
 
   Future<void> _deleteSelected() async {
-    final count = _selectedIds.length;
-    final title = count == 1
-        ? 'delete_confirm_title'.tr()
-        : 'delete_confirm_many'.tr(args: [count.toString()]);
+    final allDocs = context.read<DocumentsProvider>().documents;
 
-    final confirmed = await _showDeleteConfirmation(title);
-    if (confirmed != true || !mounted) return;
+    // Expandir la selección a sus grupos (páginas de un mismo PDF multipágina).
+    final groupExpanded = _expandToGroups(allDocs, _selectedIds);
+    final hasUnselectedSiblings = groupExpanded.length > _selectedIds.length;
 
-    final ids = List<int>.from(_selectedIds);
+    final List<int> idsToDelete;
+    if (hasUnselectedSiblings) {
+      // La selección toca un grupo con páginas no seleccionadas → preguntar.
+      final scope = await _showGroupDeleteDialog(
+        selectedCount: _selectedIds.length,
+        groupCount: groupExpanded.length,
+      );
+      if (scope == null || !mounted) return; // Canceló
+      idsToDelete = scope == _DeleteScope.group
+          ? groupExpanded.toList()
+          : List<int>.from(_selectedIds);
+    } else {
+      // Sin grupo de por medio → confirmación normal.
+      final count = _selectedIds.length;
+      final title = count == 1
+          ? 'delete_confirm_title'.tr()
+          : 'delete_confirm_many'.tr(args: [count.toString()]);
+      final confirmed = await _showDeleteConfirmation(title);
+      if (confirmed != true || !mounted) return;
+      idsToDelete = List<int>.from(_selectedIds);
+    }
+
     final provider = context.read<DocumentsProvider>();
     final messenger = ScaffoldMessenger.of(context);
+    final count = idsToDelete.length;
 
     _exitSelectionMode();
 
-    for (final id in ids) {
+    for (final id in idsToDelete) {
       await provider.deleteDocument(id);
     }
 
@@ -123,6 +151,110 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
       content: Text(msg, style: const TextStyle(fontSize: 16)),
       duration: const Duration(seconds: 3),
     ));
+  }
+
+  // --- Agrupación de páginas de PDF multipágina ---
+  //
+  // No hay un "grupo" en la BD: las páginas de un PDF importado se guardan como
+  // documentos sueltos. Se infiere el grupo por dos señales combinadas:
+  //   1. Título con patrón `base_N` (ej. "tutorial_1", "tutorial_2"…).
+  //   2. createdAt dentro de la misma ráfaga de import (ventana de tolerancia).
+  // Combinarlas evita falsos positivos (un doc suelto "cosa_3" de otro día no se
+  // agrupa con un "cosa_1" importado hoy).
+
+  static final RegExp _groupPattern = RegExp(r'^(.+)_(\d+)$');
+  static const Duration _groupWindow = Duration(minutes: 2);
+
+  /// Prefijo de grupo de un título `base_N`, o null si no matchea el patrón.
+  String? _groupBase(String title) => _groupPattern.firstMatch(title)?.group(1);
+
+  /// Expande [selectedIds] incluyendo las páginas hermanas del mismo grupo.
+  /// Si ningún seleccionado pertenece a un grupo, devuelve la misma selección.
+  Set<int> _expandToGroups(List<DocumentModel> all, Set<int> selectedIds) {
+    final result = Set<int>.from(selectedIds);
+    final selectedDocs = all.where((d) => selectedIds.contains(d.id));
+    for (final doc in selectedDocs) {
+      final base = _groupBase(doc.title);
+      if (base == null) continue;
+      for (final other in all) {
+        if (other.id == null) continue;
+        if (_groupBase(other.title) == base &&
+            other.createdAt.difference(doc.createdAt).abs() <= _groupWindow) {
+          result.add(other.id!);
+        }
+      }
+    }
+    return result;
+  }
+
+  /// Diálogo de elección cuando la selección toca un grupo de PDF.
+  /// Devuelve el alcance elegido, o null si cancela.
+  Future<_DeleteScope?> _showGroupDeleteDialog({
+    required int selectedCount,
+    required int groupCount,
+  }) {
+    return showDialog<_DeleteScope>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        backgroundColor: const Color(0xFFFDFAF4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'delete_group_title'.tr(),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'delete_group_message'.tr(),
+                style: TextStyle(fontSize: 15, color: Colors.grey[600]),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: _DeleteDialogButton(
+                  label: 'delete_only_selected'.tr(args: [selectedCount.toString()]),
+                  onTap: () => Navigator.pop(ctx, _DeleteScope.selected),
+                  gradientColors: const [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+                  textColor: const Color(0xFF5A4A30),
+                  shadowColor: const Color(0xFF9A8060),
+                  border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: _DeleteDialogButton(
+                  label: 'delete_whole_group'.tr(args: [groupCount.toString()]),
+                  onTap: () => Navigator.pop(ctx, _DeleteScope.group),
+                  gradientColors: [Colors.red[400]!, Colors.red[800]!],
+                  textColor: Colors.white,
+                  shadowColor: Colors.red[900]!,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: _DeleteDialogButton(
+                  label: 'cancel_button'.tr(),
+                  onTap: () => Navigator.pop(ctx, null),
+                  gradientColors: const [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+                  textColor: const Color(0xFF5A4A30),
+                  shadowColor: const Color(0xFF9A8060),
+                  border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<bool?> _showDeleteConfirmation(String title) {
@@ -332,7 +464,57 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
               ),
             ),
           ),
+          const Spacer(),
+          _buildSelectButton(),
         ],
+      ),
+    );
+  }
+
+  /// Botón celeste para entrar al modo selección de forma explícita.
+  Widget _buildSelectButton() {
+    return GestureDetector(
+      onTap: _startSelection,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFEAF4FB), Color(0xFFB8D8EC)],
+          ),
+          borderRadius: BorderRadius.circular(50),
+          border: Border.all(color: const Color(0xFF7AAFC8), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF3A7A9A).withValues(alpha: 0.40),
+              offset: const Offset(0, 3),
+              blurRadius: 6,
+              spreadRadius: -1,
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.checklist_rounded,
+                size: 18,
+                color: Color(0xFF1565C0),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'select_button'.tr(),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1565C0),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -498,6 +680,7 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
   }
 
   Widget _buildSelectionBar(BuildContext context) {
+    final hasSelection = _selectedIds.isNotEmpty;
     final canExport = _selectedIds.length >= 2;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -508,6 +691,19 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (!hasSelection)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Text(
+                'selection_hint'.tr(),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[700],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
           if (canExport) ...[
             _Btn3D(
               icon: Icons.picture_as_pdf_outlined,
@@ -520,15 +716,16 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
             ),
             const SizedBox(height: 10),
           ],
-          _Btn3D(
-            icon: Icons.delete_outline,
-            label: 'delete_button'.tr(),
-            gradientColors: const [Color(0xFFFFEBEE), Color(0xFFFFCDD2)],
-            borderColor: const Color(0xFFE57373),
-            shadowColor: const Color(0xFFD32F2F),
-            iconColor: const Color(0xFFD32F2F),
-            onTap: _deleteSelected,
-          ),
+          if (hasSelection)
+            _Btn3D(
+              icon: Icons.delete_outline,
+              label: 'delete_button'.tr(),
+              gradientColors: const [Color(0xFFFFEBEE), Color(0xFFFFCDD2)],
+              borderColor: const Color(0xFFE57373),
+              shadowColor: const Color(0xFFD32F2F),
+              iconColor: const Color(0xFFD32F2F),
+              onTap: _deleteSelected,
+            ),
         ],
       ),
     );
@@ -560,6 +757,9 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
 // ---------------------------------------------------------------------------
 // Widgets privados
 // ---------------------------------------------------------------------------
+
+/// Alcance del borrado cuando la selección toca un grupo de PDF multipágina.
+enum _DeleteScope { selected, group }
 
 class _DocItem extends StatelessWidget {
   final DocumentModel document;

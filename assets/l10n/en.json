@@ -79,6 +79,10 @@
   "delete_confirm_title": "Delete this document?",
   "delete_confirm_many": "Delete {} documents?",
   "delete_confirm_message": "This action cannot be undone",
+  "delete_group_title": "What do you want to delete?",
+  "delete_group_message": "Some pages belong to an imported PDF.",
+  "delete_only_selected": "Delete only selected ({})",
+  "delete_whole_group": "Delete whole group ({})",
   "delete_yes_button": "YES, DELETE",
   "delete_no_button": "NO, CANCEL",
 
@@ -141,6 +145,8 @@
   "scan_subtitle": "Scan and save your documents.",
 
   "all_documents_title": "Documents",
+  "select_button": "Select",
+  "selection_hint": "Tap documents to select them",
   "selection_count": "{} selected",
   "documents_deleted": "{} documents deleted",
   "go_home": "Home",

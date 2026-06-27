@@ -1,7 +1,7 @@
 name: escandoc
 description: "EscanDoc - Scanner de documentos con notas y vencimientos integrados. Diseñado para personas mayores."
 publish_to: 'none'
-version: 1.0.0+5
+version: 1.0.0+6
 
 environment:
   sdk: ^3.6.0
@@ -54,7 +54,7 @@ dependencies:
   printing: ^5.14.2                  # Vista previa e impresión de PDFs
   pdfrx: ^2.2.24                     # Visualización de PDFs con zoom
   gal: ^2.3.0                        # Guardar imágenes en galería (feature: escanear fotos)
-  share_plus: ^12.0.0               # Compartir archivos via share sheet del SO
+  share_plus: ^12.0.0               # Compartir archivos via share sheet del SO. NO subir a 13: pide win32 ^6 y choca con file_picker 11 (win32 ^5). API Dart idéntica, sin beneficio — ver .context/65
 
   # ═══════════════════════════════════════════════════════════════════════════
   # VOICE SEARCH

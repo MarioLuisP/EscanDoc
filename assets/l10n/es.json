@@ -79,6 +79,10 @@
   "delete_confirm_title": "¿Eliminar este documento?",
   "delete_confirm_many": "¿Eliminar {} documentos?",
   "delete_confirm_message": "Esta acción no se puede deshacer",
+  "delete_group_title": "¿Qué querés borrar?",
+  "delete_group_message": "Algunas páginas pertenecen a un PDF importado.",
+  "delete_only_selected": "Borrar solo seleccionadas ({})",
+  "delete_whole_group": "Borrar grupo completo ({})",
   "delete_yes_button": "SÍ, ELIMINAR",
   "delete_no_button": "NO, CANCELAR",
 
@@ -141,6 +145,8 @@
   "scan_subtitle": "Escaneá y guardá tus documentos.",
 
   "all_documents_title": "Documentos",
+  "select_button": "Seleccionar",
+  "selection_hint": "Tocá los documentos para elegirlos",
   "selection_count": "{} seleccionados",
   "documents_deleted": "{} documentos eliminados",
   "go_home": "Inicio",
