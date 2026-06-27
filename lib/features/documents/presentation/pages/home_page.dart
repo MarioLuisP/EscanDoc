@@ -586,7 +586,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _handleImport() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'webp', 'heic', 'heif'],
       allowMultiple: false,

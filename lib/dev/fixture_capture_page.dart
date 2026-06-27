@@ -35,7 +35,7 @@ class _FixtureCapturePageState extends State<FixtureCapturePage> {
       return;
     }
 
-    final result = await FilePicker.platform.pickFiles(type: FileType.any);
+    final result = await FilePicker.pickFiles(type: FileType.any);
     if (result == null || result.files.single.path == null) return;
 
     setState(() {

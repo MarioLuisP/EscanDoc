@@ -1,7 +1,8 @@
 import 'dart:io';
+import 'dart:ui' show Color;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:pdf_to_image_converter/pdf_to_image_converter.dart';
+import 'package:pdf_image_renderer/pdf_image_renderer.dart';
 import 'package:path/path.dart' as path;
 import 'package:escandoc/features/image_processing/format_converter/domain/image_format_converter.dart';
 
@@ -110,8 +111,14 @@ class ImageFormatConverterImpl implements ImageFormatConverter {
     }
   }
 
-  /// Convierte PDF (primera página) a JPG usando pdf_to_image_converter.
+  /// Convierte PDF (primera página) a JPG usando pdf_image_renderer.
+  ///
+  /// Escala de renderizado: 2x sobre el tamaño nativo de la página (~144 DPI),
+  /// suficiente para OCR. La normalización/compresión final ocurre después.
+  static const double _pdfRenderScale = 2;
+
   Future<String> _convertPdfToJpg(String pdfPath) async {
+    final pdf = PdfImageRenderer(path: pdfPath);
     try {
       final directory = path.dirname(pdfPath);
       final filename = path.basenameWithoutExtension(pdfPath);
@@ -119,20 +126,27 @@ class ImageFormatConverterImpl implements ImageFormatConverter {
 
       debugPrint('[FormatConverter] Opening PDF: $pdfPath');
 
-      // Crear conversor y abrir PDF
-      final converter = PdfImageConverter();
-      await converter.openPdf(pdfPath);
+      // Abrir documento y primera página (0-indexed)
+      await pdf.open();
+      await pdf.openPage(pageIndex: 0);
+      final size = await pdf.getPageSize(pageIndex: 0);
 
       debugPrint('[FormatConverter] Rendering PDF page 1');
 
-      // Renderizar primera página como PNG
-      final pngBytes = await converter.renderPage(
-        0, // Primera página (0-indexed)
-        quality: RenderQuality.medium,
+      // Renderizar primera página completa como PNG
+      final pngBytes = await pdf.renderPage(
+        pageIndex: 0,
+        x: 0,
+        y: 0,
+        width: size.width,
+        height: size.height,
+        scale: _pdfRenderScale,
+        background: const Color(0xFFFFFFFF),
       );
 
-      // Cerrar PDF
-      await converter.closePdf();
+      // Cerrar página y documento
+      await pdf.closePage(pageIndex: 0);
+      pdf.close();
 
       if (pngBytes == null) {
         throw ImageConversionException(
