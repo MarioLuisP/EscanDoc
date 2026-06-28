@@ -26,6 +26,7 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
   bool _enabling = false;
   bool _waitingForExactAlarms = false;
   bool _waitingForNotifPermission = false;
+  bool _backupSaveMode = true; // true = Guardar copia, false = Traer copia
 
   @override
   void initState() {
@@ -537,67 +538,8 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
             ),
           ),
           const SizedBox(height: 12),
-          // Copia de seguridad — Guardar
-          _buildCard(
-            child: Row(
-              children: [
-                const Icon(Icons.upload_outlined, size: 22, color: Color(0xFF388E3C)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'backup_export_button'.tr(),
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: _handleBackupExport,
-                  child: Text(
-                    'save_button'.tr(),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF388E3C),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Copia de seguridad — Restaurar
-          _buildCard(
-            child: Row(
-              children: [
-                const Icon(Icons.download_outlined, size: 22, color: Color(0xFF388E3C)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'backup_import_button'.tr(),
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: _handleBackupImport,
-                  child: Text(
-                    'restore_button'.tr(),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF388E3C),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // Copia de seguridad — una sola tarjeta con toggle Guardar / Traer
+          _buildBackupCard(),
           const SizedBox(height: 12),
           // Botón de prueba provisorio
           _buildCard(
@@ -695,6 +637,151 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
     );
   }
 
+  /// Tarjeta única de copia de seguridad: un toggle elige Guardar o Traer,
+  /// y debajo aparece la explicación y el único botón de acción correspondiente.
+  Widget _buildBackupCard() {
+    return _buildCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Título de la sección
+          Row(
+            children: [
+              const Icon(Icons.save_outlined, size: 22, color: Color(0xFF388E3C)),
+              const SizedBox(width: 12),
+              Text(
+                'backup_section_title'.tr(),
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Toggle Guardar / Traer
+          _buildBackupToggle(),
+          const SizedBox(height: 14),
+          // Explicación que cambia según el modo
+          Text(
+            _backupSaveMode
+                ? 'backup_save_desc'.tr()
+                : 'backup_restore_desc'.tr(),
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black54,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Único botón de acción — pill compacto centrado
+          Align(
+            alignment: Alignment.center,
+            child: _buildBackupActionButton(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBackupActionButton() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF6FBF6F), Color(0xFF2E7D32)],
+        ),
+        borderRadius: BorderRadius.circular(50),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1A5C1A).withValues(alpha: 0.50),
+            offset: const Offset(0, 4),
+            blurRadius: 8,
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _backupSaveMode ? _handleBackupExport : _handleBackupImport,
+          borderRadius: BorderRadius.circular(50),
+          splashColor: Colors.white24,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
+            child: Text(
+              _backupSaveMode
+                  ? 'backup_save_action'.tr()
+                  : 'backup_restore_action'.tr(),
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBackupToggle() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F0E8),
+        borderRadius: BorderRadius.circular(50),
+        border: Border.all(color: const Color(0xFFD4C8A8), width: 1.5),
+      ),
+      child: Row(
+        children: [
+          _buildToggleSegment(
+            label: 'backup_toggle_save'.tr(),
+            selected: _backupSaveMode,
+            onTap: () => setState(() => _backupSaveMode = true),
+          ),
+          _buildToggleSegment(
+            label: 'backup_toggle_restore'.tr(),
+            selected: !_backupSaveMode,
+            onTap: () => setState(() => _backupSaveMode = false),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleSegment({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFF388E3C) : Colors.transparent,
+            borderRadius: BorderRadius.circular(50),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: selected ? Colors.white : const Color(0xFF5A6A3A),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCard({required Widget child}) {
     return Container(
       decoration: BoxDecoration(
@@ -723,13 +810,13 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+          colors: [Color(0xFFE8F5E8), Color(0xFFC0D8C0)],
         ),
         borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+        border: Border.all(color: const Color(0xFF7AAB7A), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF9A8060).withValues(alpha: 0.35),
+            color: const Color(0xFF4A7A4A).withValues(alpha: 0.35),
             offset: const Offset(0, 3),
             blurRadius: 6,
             spreadRadius: -1,
@@ -740,16 +827,18 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
         child: DropdownButton<String>(
           value: currentLocale,
           isDense: true,
+          iconEnabledColor: const Color(0xFF2E7D32),
           style: const TextStyle(
             fontSize: 15,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF5A4A30),
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF2E7D32),
           ),
-          dropdownColor: const Color(0xFFFDFAF4),
+          dropdownColor: const Color(0xFFEFF6EF),
           borderRadius: BorderRadius.circular(12),
           items: [
             DropdownMenuItem(value: 'es', child: Text('language_es'.tr())),
             DropdownMenuItem(value: 'en', child: Text('language_en'.tr())),
+            DropdownMenuItem(value: 'pt', child: Text('language_pt'.tr())),
           ],
           onChanged: (code) {
             if (code != null) context.setLocale(Locale(code));

@@ -25,6 +25,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(doc1);
+    registerFallbackValue(<int>[]);
   });
 
   setUp(() {
@@ -110,6 +111,67 @@ void main() {
       final result = await provider.deleteDocument(1);
 
       expect(result, false);
+      expect(provider.documents.length, 1);
+    });
+  });
+
+  group('deleteDocuments (lote)', () {
+    final doc3 = DocumentModel(
+      id: 3,
+      title: 'Nota',
+      filePath: '/docs/nota.jpg',
+      createdAt: DateTime(2026, 1, 3),
+    );
+
+    test('removes all deleted docs from list and returns count', () async {
+      when(() => repository.getAllDocuments())
+          .thenAnswer((_) async => [doc1, doc2, doc3]);
+      when(() => repository.deleteDocuments(any()))
+          .thenAnswer((_) async => [1, 3]);
+
+      await provider.loadDocuments();
+      final count = await provider.deleteDocuments([1, 3]);
+
+      expect(count, 2);
+      expect(provider.documents.map((d) => d.id).toList(), [2]);
+    });
+
+    test('notifies listeners only once for the whole batch', () async {
+      when(() => repository.getAllDocuments())
+          .thenAnswer((_) async => [doc1, doc2, doc3]);
+      when(() => repository.deleteDocuments(any()))
+          .thenAnswer((_) async => [1, 2, 3]);
+      await provider.loadDocuments();
+
+      var notifications = 0;
+      provider.addListener(() => notifications++);
+      await provider.deleteDocuments([1, 2, 3]);
+
+      expect(notifications, 1);
+    });
+
+    test('clears selectedDocument if it was in the batch', () async {
+      when(() => repository.getAllDocuments()).thenAnswer((_) async => [doc1, doc2]);
+      when(() => repository.getDocumentById(1)).thenAnswer((_) async => doc1);
+      when(() => repository.deleteDocuments(any())).thenAnswer((_) async => [1]);
+
+      await provider.loadDocuments();
+      await provider.selectDocument(1);
+      expect(provider.selectedDocument?.id, 1);
+
+      await provider.deleteDocuments([1]);
+
+      expect(provider.selectedDocument, isNull);
+    });
+
+    test('nothing deleted: returns 0 and keeps list unchanged', () async {
+      when(() => repository.getAllDocuments()).thenAnswer((_) async => [doc1]);
+      when(() => repository.deleteDocuments(any())).thenAnswer((_) async => <int>[]);
+
+      await provider.loadDocuments();
+      final count = await provider.deleteDocuments([99]);
+
+      expect(count, 0);
       expect(provider.documents.length, 1);
     });
   });

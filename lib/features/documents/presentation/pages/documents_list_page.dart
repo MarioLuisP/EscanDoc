@@ -135,18 +135,16 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
 
     final provider = context.read<DocumentsProvider>();
     final messenger = ScaffoldMessenger.of(context);
-    final count = idsToDelete.length;
 
     _exitSelectionMode();
 
-    for (final id in idsToDelete) {
-      await provider.deleteDocument(id);
-    }
+    // Borrado por lote: una sola transacción + un único notifyListeners.
+    final deletedCount = await provider.deleteDocuments(idsToDelete);
 
     if (!mounted) return;
-    final msg = count == 1
+    final msg = deletedCount == 1
         ? 'document_deleted'.tr()
-        : 'documents_deleted'.tr(args: [count.toString()]);
+        : 'documents_deleted'.tr(args: [deletedCount.toString()]);
     messenger.showSnackBar(SnackBar(
       content: Text(msg, style: const TextStyle(fontSize: 16)),
       duration: const Duration(seconds: 3),
@@ -163,7 +161,12 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
   // agrupa con un "cosa_1" importado hoy).
 
   static final RegExp _groupPattern = RegExp(r'^(.+)_(\d+)$');
-  static const Duration _groupWindow = Duration(minutes: 2);
+  // Las páginas de un mismo import comparten `baseTime` (ImportProvider lo captura
+  // una sola vez) y reciben createdAt = baseTime + offset de milisegundos, NO el
+  // tiempo de procesamiento real. Verificado en device: 10 páginas abarcaron 9ms.
+  // Por eso una ventana chica no parte un PDF real (necesitarías ~30.000 páginas)
+  // y a la vez achica el riesgo de fusionar dos imports distintos.
+  static const Duration _groupWindow = Duration(seconds: 30);
 
   /// Prefijo de grupo de un título `base_N`, o null si no matchea el patrón.
   String? _groupBase(String title) => _groupPattern.firstMatch(title)?.group(1);

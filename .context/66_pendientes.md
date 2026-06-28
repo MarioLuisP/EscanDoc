@@ -31,16 +31,25 @@ similares en otras pages de import/scan.
 
 </details>
 
-## 2. 🟠 Borrado secuencial — posible jank al borrar grupos grandes
+## 2. ✅ HECHO (2026-06-27) — Borrado secuencial → borrado por lote
 
-En `documents_list_page.dart`, `_deleteSelected` hace
-`for (id in ids) await provider.deleteDocument(id)` uno por uno. Si
-`DocumentsProvider.deleteDocument` recarga la lista en cada iteración, borrar un grupo
-de 10+ páginas dispara N recargas seguidas.
+**Diagnóstico corregido:** `DocumentsProvider.deleteDocument` NO recargaba de la DB
+(actualizaba en memoria). El jank real venía de: (1) N transacciones DB + N borrados de
+archivo serializados con `await`, (2) **N× `notifyListeners()`** → N rebuilds de la lista
+en cascada, (3) N× filtro O(n) → O(n²).
 
-**Acción:** revisar `deleteDocument` en el provider; considerar un borrado por lote
-(deleteMany) + una sola recarga/notifyListeners. Posible relación con
-`scroll_jank_investigation.md` (perf de listas).
+**Solución (TDD, Domain→Tests→Data→UI):** `deleteDocuments(List<int>)` end-to-end:
+- `DeleteDocuments` UseCase (`domain/usecases/delete_documents.dart`) → devuelve ids
+  borrados; lista vacía no toca repo; fail-safe `[]`.
+- `DocumentRepository.deleteDocuments`: **una transacción** (SELECT paths + DELETE con
+  `id IN (...)`) + borrado de archivos en paralelo (`Future.wait`). Devuelve ids borrados.
+- `DocumentsProvider.deleteDocuments`: un filtro en memoria + **un solo `notifyListeners`**.
+- UI `documents_list_page.dart`: el `for` reemplazado por una llamada; snackbar usa el
+  conteo real devuelto.
+
+`deleteDocument` (singular) se mantiene intacto (lo usa la pantalla de detalle).
+12 tests nuevos (4 UseCase + 4 repo ffi + 4 provider, incl. aserción de notify único).
+Suite GREEN (355). `analyze` limpio.
 
 ## 3. 🟡 Posible fuga del handle nativo del PDF
 
@@ -88,11 +97,30 @@ migrar a fechas relativas a `DateTime.now()` o lejanas (2099).
 
 ---
 
-## Mejora futura ya identificada (no urgente)
+## 6. ⏸️ EVALUADO Y POSPUESTO (2026-06-27) — `pdf_group_id` (migración v4)
 
-- **`pdf_group_id` en la tabla `documents`** (migración v4): hoy el "grupo" de páginas de
-  un PDF se infiere por heurística (prefijo `base_N` + ventana de tiempo, ver `65`).
-  Una columna real de grupo eliminaría la ambigüedad y la limitación del renombrado.
+Hoy el "grupo" de páginas de un PDF se infiere por heurística: prefijo `base_N` +
+ventana de tiempo sobre `createdAt`. Un `group_id` real sería lo correcto en abstracto,
+pero **no vale la pena ahora**: costo alto (migración v4 + backfill + path de inserción +
+formato backup `.escdc` + tests en todas las capas) vs. riesgo bajo (peor caso = scope de
+borrado equivocado, recuperable con "borrar solo seleccionadas"; no hay pérdida de datos).
+
+**Hallazgos de la evaluación:**
+- `createdAt` NO refleja el tiempo de procesamiento. `ImportProvider` captura `baseTime`
+  una sola vez y asigna `createdAt = baseTime + offset_ms`. **Verificado en device:** 10
+  páginas de un PDF abarcaron **9 milisegundos** (no ~1s/página como sugería la cadencia
+  visual de renderizado).
+- El flanco real es el *false-positive* (fusionar 2 imports), acotado por el **prefijo de
+  nombre**, no por el tiempo. Para imports vía *compartir*, el `pdfBaseName` ya incluye un
+  epoch único (`..._1782601091474_N`) → imposible fusionar. El hueco solo existe para
+  imports vía *selector de archivos* con nombre idéntico en poco tiempo.
+
+**Mitigación barata aplicada (sin migración):** `_groupWindow` bajado de **2 min → 30 s**
+en `documents_list_page.dart`. Imposible partir un PDF real (necesitaría ~30.000 páginas)
+y achica 4× la ventana de fusión accidental.
+
+Si el hueco del selector de archivos llegara a molestar: meter un epoch/hash en el
+`pdfBaseName` del título también lo cerraría sin tocar schema.
 
 
 

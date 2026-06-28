@@ -126,6 +126,55 @@ class DocumentRepository {
     }
   }
 
+  /// Elimina varios documentos en un solo lote.
+  ///
+  /// Mismo criterio que [deleteDocument] pero en una sola pasada:
+  /// - Lee las rutas y borra los registros dentro de una transacción (BD primero).
+  /// - Borra los archivos del filesystem después, best-effort y en paralelo.
+  ///
+  /// Devuelve los ids efectivamente borrados (los que existían en la BD).
+  Future<List<int>> deleteDocuments(List<int> ids) async {
+    if (ids.isEmpty) return [];
+    try {
+      final db = await _dbHelper.database;
+      final placeholders = List.filled(ids.length, '?').join(',');
+
+      final List<int> deletedIds = [];
+      final List<String> filePaths = [];
+
+      await db.transaction((txn) async {
+        // 1. Rutas + ids de los docs a borrar (una sola query).
+        final rows = await txn.query(
+          'documents',
+          columns: ['id', 'file_path'],
+          where: 'id IN ($placeholders)',
+          whereArgs: ids,
+        );
+        if (rows.isEmpty) return;
+
+        for (final row in rows) {
+          deletedIds.add(row['id'] as int);
+          filePaths.add(row['file_path'] as String);
+        }
+
+        // 2. Borrar todos los registros en una sola sentencia.
+        await txn.delete(
+          'documents',
+          where: 'id IN ($placeholders)',
+          whereArgs: ids,
+        );
+      });
+
+      // 3. Borrar archivos del filesystem (best-effort, en paralelo).
+      await Future.wait(filePaths.map(_deleteFile));
+
+      return deletedIds;
+    } catch (e) {
+      debugPrint('[DocumentRepository] ERROR deleteDocuments($ids): $e');
+      return [];
+    }
+  }
+
   /// Actualiza la fecha de vencimiento de un documento.
   /// Pasar null para quitar el vencimiento.
   Future<void> updateExpiryDate(int documentId, DateTime? expiryDate) async {

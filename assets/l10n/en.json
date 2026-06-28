@@ -187,8 +187,8 @@
   "note_voice_unavailable": "Microphone unavailable",
 
   "sheet_title": "What else would you like to do?",
-  "import_tool_label": "Bring a photo or paper",
-  "import_document_desc": "A prescription, a bill, a photo you already have",
+  "import_tool_label": "Bring in a photo or document",
+  "import_document_desc": "A prescription, a bill, a photo or a PDF you already have",
   "note_tool_label": "Write a note",
   "note_new_desc": "Reminders and quick notes",
   "menu_calendar_desc": "So you don't miss an important date",
@@ -198,6 +198,7 @@
   "settings_language": "Language",
   "language_es": "Spanish",
   "language_en": "English",
+  "language_pt": "Portuguese",
 
   "menu_calendar": "Expiry Dates",
   "calendar_pick_date": "Pick a date",
@@ -263,6 +264,13 @@
 
   "menu_backup": "Backup",
   "backup_sheet_title": "Backup",
+  "backup_section_title": "Backup",
+  "backup_toggle_save": "Save",
+  "backup_toggle_restore": "Restore",
+  "backup_save_desc": "Save a copy of all your documents. In case you change phones or lose this one.",
+  "backup_restore_desc": "Bring back a copy you saved before.",
+  "backup_save_action": "Save a copy",
+  "backup_restore_action": "Restore",
   "backup_export_button": "Save backup",
   "backup_import_button": "Restore backup",
   "backup_exporting": "Creating backup...",

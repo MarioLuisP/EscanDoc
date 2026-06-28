@@ -161,5 +161,53 @@ void main() {
       // Assert
       expect(result, isNull);
     });
+
+    group('deleteDocuments (lote)', () {
+      DocumentModel docN(int n) => DocumentModel(
+            title: 'pagina_$n',
+            filePath: '/test/documents/pagina_$n.jpg',
+            createdAt: DateTime(2026, 1, 20, 10, 15),
+          );
+
+      test('borra varios y devuelve sus ids; los no incluidos permanecen', () async {
+        // Arrange
+        final id1 = await repository.insertDocument(docN(1));
+        final id2 = await repository.insertDocument(docN(2));
+        final id3 = await repository.insertDocument(docN(3));
+
+        // Act — borrar 1 y 3, dejar 2
+        final deleted = await repository.deleteDocuments([id1, id3]);
+
+        // Assert
+        expect(deleted..sort(), [id1, id3]..sort());
+        expect(await repository.getDocumentById(id1), isNull);
+        expect(await repository.getDocumentById(id3), isNull);
+        expect(await repository.getDocumentById(id2), isNotNull);
+      });
+
+      test('lista vacía: devuelve [] y no borra nada', () async {
+        final id1 = await repository.insertDocument(docN(1));
+
+        final deleted = await repository.deleteDocuments([]);
+
+        expect(deleted, isEmpty);
+        expect(await repository.getDocumentById(id1), isNotNull);
+      });
+
+      test('ids inexistentes: devuelve []', () async {
+        final deleted = await repository.deleteDocuments([998, 999]);
+
+        expect(deleted, isEmpty);
+      });
+
+      test('mezcla existente + inexistente: devuelve solo el existente', () async {
+        final id1 = await repository.insertDocument(docN(1));
+
+        final deleted = await repository.deleteDocuments([id1, 999]);
+
+        expect(deleted, [id1]);
+        expect(await repository.getDocumentById(id1), isNull);
+      });
+    });
   });
 }

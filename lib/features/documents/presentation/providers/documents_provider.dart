@@ -6,6 +6,7 @@ import 'package:escandoc/features/documents/data/repositories/document_repositor
 import 'package:escandoc/features/documents/domain/usecases/get_documents.dart';
 import 'package:escandoc/features/documents/domain/usecases/get_document_by_id.dart';
 import 'package:escandoc/features/documents/domain/usecases/delete_document.dart';
+import 'package:escandoc/features/documents/domain/usecases/delete_documents.dart';
 import 'package:escandoc/features/documents/domain/usecases/rename_document.dart';
 import 'package:escandoc/features/documents/domain/usecases/update_expiry_date.dart';
 
@@ -17,6 +18,7 @@ class DocumentsProvider extends ChangeNotifier {
   late final GetDocuments _getDocuments;
   late final GetDocumentById _getDocumentById;
   late final DeleteDocument _deleteDocument;
+  late final DeleteDocuments _deleteDocuments;
   late final RenameDocument _renameDocument;
   late final UpdateExpiryDate _updateExpiryDate;
 
@@ -40,6 +42,7 @@ class DocumentsProvider extends ChangeNotifier {
     _getDocuments = GetDocuments(repository: repo);
     _getDocumentById = GetDocumentById(repository: repo);
     _deleteDocument = DeleteDocument(repository: repo);
+    _deleteDocuments = DeleteDocuments(repository: repo);
     _renameDocument = RenameDocument(repository: repo);
     _updateExpiryDate = UpdateExpiryDate(repository: repo);
   }
@@ -104,6 +107,31 @@ class DocumentsProvider extends ChangeNotifier {
       _errorMessage = 'Error al eliminar documento';
       notifyListeners();
       return false;
+    }
+  }
+
+  /// Elimina varios documentos en un solo lote.
+  ///
+  /// Una sola operación de borrado en BD + un único [notifyListeners], en vez
+  /// de N. Devuelve la cantidad de documentos efectivamente eliminados.
+  Future<int> deleteDocuments(List<int> ids) async {
+    try {
+      final deletedIds = await _deleteDocuments(ids);
+      if (deletedIds.isEmpty) return 0;
+
+      final deletedSet = deletedIds.toSet();
+      _documents =
+          _documents.where((doc) => !deletedSet.contains(doc.id)).toList();
+      if (deletedSet.contains(_selectedDocument?.id)) {
+        _selectedDocument = null;
+      }
+
+      notifyListeners();
+      return deletedIds.length;
+    } catch (e) {
+      _errorMessage = 'Error al eliminar documentos';
+      notifyListeners();
+      return 0;
     }
   }
 

@@ -188,7 +188,7 @@
 
   "sheet_title": "¿Qué más querés hacer?",
   "import_tool_label": "Traer una foto o un papel",
-  "import_document_desc": "Una receta, un impuesto, una foto que ya tengas",
+  "import_document_desc": "Una receta, un impuesto, una foto o un PDF que ya tengas",
   "note_tool_label": "Escribir una nota",
   "note_new_desc": "Recordatorios y apuntes",
   "menu_calendar_desc": "Para que no se te pase una fecha",
@@ -198,6 +198,7 @@
   "settings_language": "Idioma",
   "language_es": "Español",
   "language_en": "Inglés",
+  "language_pt": "Portugués",
 
   "menu_calendar": "Vencimientos",
   "calendar_pick_date": "Elegí una fecha",
@@ -263,6 +264,13 @@
 
   "menu_backup": "Copia de seguridad",
   "backup_sheet_title": "Copia de seguridad",
+  "backup_section_title": "Copia de seguridad",
+  "backup_toggle_save": "Guardar",
+  "backup_toggle_restore": "Traer",
+  "backup_save_desc": "Guardá una copia de todos tus documentos. Por si cambiás de teléfono o lo perdés.",
+  "backup_restore_desc": "Traé una copia que guardaste antes.",
+  "backup_save_action": "Guardar copia",
+  "backup_restore_action": "Traer copia",
   "backup_export_button": "Guardar backup",
   "backup_import_button": "Restaurar backup",
   "backup_exporting": "Creando backup...",
