@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:escandoc/core/services/notification_prompt_service.dart';
 import 'package:escandoc/core/services/notification_service.dart';
-import 'package:escandoc/core/widgets/notification_permission_dialog.dart';
 import 'package:escandoc/features/backup/presentation/providers/backup_provider.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -73,9 +72,11 @@ class _SettingsPageState extends State<SettingsPage> with WidgetsBindingObserver
     if (value) {
       await _enableWithFullFlow();
     } else {
+      // Capturar el provider antes del async gap del diálogo de confirmación.
+      final documentsProvider = context.read<DocumentsProvider>();
       final confirmed = await _confirmDisable();
       if (!confirmed) return;
-      await context.read<DocumentsProvider>().disableNotifications();
+      await documentsProvider.disableNotifications();
       final nowEnabled = await NotificationPromptService.isEnabled();
       if (mounted) setState(() => _notifEnabled = nowEnabled);
     }

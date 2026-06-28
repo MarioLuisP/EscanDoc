@@ -20,17 +20,17 @@ void main() {
       expect(appBar.backgroundColor, Colors.black);
     });
 
-    testWidgets('debe mostrar botón cerrar en AppBar', (tester) async {
+    testWidgets('debe mostrar botón volver en AppBar', (tester) async {
       await tester.pumpWidget(buildWidget(filePath: 'test.pdf'));
 
-      // Debe mostrar botón cerrar
-      expect(find.byIcon(Icons.close), findsOneWidget);
+      // El header usa flecha atrás (no la X de cerrar)
+      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     });
 
-    testWidgets('debe mostrar botón compartir en AppBar', (tester) async {
+    testWidgets('debe mostrar botón compartir en la barra inferior', (tester) async {
       await tester.pumpWidget(buildWidget(filePath: 'test.pdf'));
 
-      // Debe mostrar botón compartir
+      // El botón compartir vive ahora en la barra inferior
       expect(find.byIcon(Icons.share), findsOneWidget);
     });
 

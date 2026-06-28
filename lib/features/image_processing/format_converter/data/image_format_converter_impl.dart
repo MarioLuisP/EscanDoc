@@ -119,6 +119,8 @@ class ImageFormatConverterImpl implements ImageFormatConverter {
 
   Future<String> _convertPdfToJpg(String pdfPath) async {
     final pdf = PdfImageRenderer(path: pdfPath);
+    var docOpened = false;
+    var pageOpened = false;
     try {
       final directory = path.dirname(pdfPath);
       final filename = path.basenameWithoutExtension(pdfPath);
@@ -128,7 +130,9 @@ class ImageFormatConverterImpl implements ImageFormatConverter {
 
       // Abrir documento y primera página (0-indexed)
       await pdf.open();
+      docOpened = true;
       await pdf.openPage(pageIndex: 0);
+      pageOpened = true;
       final size = await pdf.getPageSize(pageIndex: 0);
 
       debugPrint('[FormatConverter] Rendering PDF page 1');
@@ -143,10 +147,6 @@ class ImageFormatConverterImpl implements ImageFormatConverter {
         scale: _pdfRenderScale,
         background: const Color(0xFFFFFFFF),
       );
-
-      // Cerrar página y documento
-      await pdf.closePage(pageIndex: 0);
-      pdf.close();
 
       if (pngBytes == null) {
         throw ImageConversionException(
@@ -192,6 +192,19 @@ class ImageFormatConverterImpl implements ImageFormatConverter {
         pdfPath,
         e,
       );
+    } finally {
+      // Garantizar el cierre del handle nativo aunque haya saltado una excepción
+      // entre open() y el render. Cerrar solo lo que realmente se abrió.
+      if (pageOpened) {
+        try {
+          await pdf.closePage(pageIndex: 0);
+        } catch (_) {/* handle ya inválido — ignorar */}
+      }
+      if (docOpened) {
+        try {
+          pdf.close();
+        } catch (_) {/* handle ya inválido — ignorar */}
+      }
     }
   }
 }

@@ -9,7 +9,7 @@ import 'package:escandoc/core/services/pdf_converter_service.dart';
 
 /// Página fullscreen para visualizar documento (JPG o PDF) con zoom.
 ///
-/// Botones: compartir, cerrar.
+/// Header: flecha atrás. Barra inferior: botón grande [Compartir].
 /// Al compartir JPG: pregunta "Como foto" o "Como documento (PDF A4)".
 /// Al compartir PDF: comparte directamente.
 class PhotoFullscreenPage extends StatefulWidget {
@@ -37,37 +37,80 @@ class _PhotoFullscreenPageState extends State<PhotoFullscreenPage> {
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
         leading: IconButton(
-          icon: const Icon(Icons.close, size: 28),
+          icon: const Icon(Icons.arrow_back, size: 28),
           onPressed: () => Navigator.pop(context),
           tooltip: 'back_button'.tr(),
         ),
-        actions: [
-          if (_sharing)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2.5,
-                  ),
-                ),
-              ),
-            )
-          else
-            TextButton.icon(
-              icon: const Icon(Icons.share, size: 20, color: Colors.white),
-              label: Text(
-                'share_button'.tr(),
-                style: const TextStyle(color: Colors.white, fontSize: 15),
-              ),
-              onPressed: () => _onShareTap(context),
-            ),
-        ],
       ),
       body: _isPDF ? _buildPdfViewer() : _buildImageViewer(),
+      bottomNavigationBar: _buildShareBar(context),
+    );
+  }
+
+  // --- Barra inferior: [COMPARTIR] ---
+
+  Widget _buildShareBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+      color: Colors.black,
+      child: SafeArea(
+        top: false,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF6FBF6F), Color(0xFF2E7D32)],
+            ),
+            borderRadius: BorderRadius.circular(50),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1A5C1A).withValues(alpha: 0.50),
+                offset: const Offset(0, 4),
+                blurRadius: 8,
+                spreadRadius: -1,
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _sharing ? null : () => _onShareTap(context),
+              borderRadius: BorderRadius.circular(50),
+              splashColor: Colors.white24,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: _sharing
+                      ? const [
+                          SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                        ]
+                      : [
+                          const Icon(Icons.share, size: 20, color: Colors.white),
+                          const SizedBox(width: 10),
+                          Text(
+                            'share_button'.tr(),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 

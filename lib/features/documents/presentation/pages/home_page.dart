@@ -143,7 +143,9 @@ class _HomePageState extends State<HomePage> {
         // WebP: RIFF....WE
         if (bytes.length >= 8 &&
             bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46 &&
-            bytes[6] == 0x57 && bytes[7] == 0x45) return 'webp';
+            bytes[6] == 0x57 && bytes[7] == 0x45) {
+          return 'webp';
+        }
       }
       return null;
     } catch (_) {
@@ -269,6 +271,7 @@ class _HomePageState extends State<HomePage> {
   void _showActionsMenu(BuildContext ctx) {
     showModalBottomSheet(
       context: ctx,
+      isScrollControlled: true,
       backgroundColor: const Color(0xFFFDFAF4),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -554,22 +557,22 @@ class _HomePageState extends State<HomePage> {
     try {
       await Gal.putImage(photoFile.path);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Row(children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 12),
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 12),
             Expanded(
-                child: Text('Foto guardada en tu galería ✅',
-                    style: TextStyle(fontSize: 16))),
+                child: Text('photo_saved_gallery'.tr(),
+                    style: const TextStyle(fontSize: 16))),
           ]),
-          backgroundColor: Color(0xFF2D5016),
-          duration: Duration(seconds: 3),
+          backgroundColor: const Color(0xFF2D5016),
+          duration: const Duration(seconds: 3),
         ));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error al guardar en galería: $e',
+          content: Text('photo_save_gallery_error'.tr(namedArgs: {'error': '$e'}),
               style: const TextStyle(fontSize: 16)),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 4),
@@ -614,7 +617,7 @@ class _HomePageState extends State<HomePage> {
     final pageCount = await importProvider.checkPdfPageCount(pdfPath);
     if (pageCount == 0) {
       messenger.showSnackBar(SnackBar(
-        content: Text('No se pudo leer el PDF',
+        content: Text('pdf_read_error'.tr(),
             style: const TextStyle(fontSize: 16)),
         backgroundColor: Colors.red,
         duration: const Duration(seconds: 3),
@@ -636,7 +639,7 @@ class _HomePageState extends State<HomePage> {
 
     if (documents.isEmpty) {
       messenger.showSnackBar(SnackBar(
-        content: Text('No se pudo importar el PDF',
+        content: Text('pdf_import_error'.tr(),
             style: const TextStyle(fontSize: 16)),
         backgroundColor: Colors.red,
         duration: const Duration(seconds: 3),
@@ -653,23 +656,26 @@ class _HomePageState extends State<HomePage> {
     return showDialog<int>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('PDF largo', style: TextStyle(fontSize: 20)),
+        title: Text('pdf_pages_dialog_title'.tr(),
+            style: const TextStyle(fontSize: 20)),
         content: Text(
-          'Este PDF tiene $totalPages páginas.\n¿Cuántas querés importar?',
+          'pdf_pages_dialog_message'.tr(namedArgs: {'total': '$totalPages'}),
           style: const TextStyle(fontSize: 17),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, null),
-            child: const Text('Cancelar', style: TextStyle(fontSize: 16)),
+            child: Text('pdf_pages_cancel'.tr(),
+                style: const TextStyle(fontSize: 16)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, 10),
-            child: const Text('Primeras 10', style: TextStyle(fontSize: 16)),
+            child: Text('pdf_pages_first_10'.tr(),
+                style: const TextStyle(fontSize: 16)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, totalPages),
-            child: Text('Todas ($totalPages)',
+            child: Text('pdf_pages_all'.tr(namedArgs: {'total': '$totalPages'}),
                 style: const TextStyle(fontSize: 16)),
           ),
         ],
@@ -692,7 +698,8 @@ class _HomePageState extends State<HomePage> {
         if (importProvider.error != null) {
           messenger.showSnackBar(SnackBar(
             content: Text(
-                'Error al preparar documento: ${importProvider.error}',
+                'import_prepare_error'.tr(
+                    namedArgs: {'error': '${importProvider.error}'}),
                 style: const TextStyle(fontSize: 16)),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
@@ -769,41 +776,67 @@ class _ActionsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     EasyLocalization.of(context)?.locale;
-    return Padding(
+    return SafeArea(
+      top: false,
+      child: Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Handle bar
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(bottom: 20),
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
           ),
-          _SheetActionButton(
-            icon: Icons.upload_file,
-            label: 'import_document_tooltip'.tr(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: Text(
+                'sheet_title'.tr(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ),
+          _ToolCard(
+            icon: Icons.image,
+            iconColor: const Color(0xFF4A6A28),
+            title: 'import_tool_label'.tr(),
+            subtitle: 'import_document_desc'.tr(),
             onTap: onImport,
           ),
-          const SizedBox(height: 10),
-          _SheetActionButton(
-            icon: Icons.edit_note,
-            label: 'note_new_label'.tr(),
+          const SizedBox(height: 12),
+          _ToolCard(
+            icon: Icons.sticky_note_2,
+            iconColor: const Color(0xFFF9A825),
+            title: 'note_tool_label'.tr(),
+            subtitle: 'note_new_desc'.tr(),
             onTap: onNewNote,
           ),
-          const SizedBox(height: 10),
-          _SheetActionButton(
-            icon: Icons.calendar_month_outlined,
-            label: 'menu_calendar'.tr(),
+          const SizedBox(height: 12),
+          _ToolCard(
+            icon: Icons.notifications,
+            iconColor: const Color(0xFF1976D2),
+            title: 'menu_calendar'.tr(),
+            subtitle: 'menu_calendar_desc'.tr(),
             onTap: onCalendar,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Divider(thickness: 1, color: Colors.grey.shade300),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           _SheetItem(
             icon: Icons.settings_outlined,
             label: 'menu_settings'.tr(),
@@ -811,19 +844,27 @@ class _ActionsSheet extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
 
-/// Botón 3D verde oliva para acciones principales del sheet (Importar, Nueva nota, Calendario)
-class _SheetActionButton extends StatelessWidget {
+/// Tarjeta de herramienta para el estuche (Importar, Nota, Vencimientos).
+///
+/// Ícono concreto en círculo blanco con color propio + nombre + frase que
+/// explica qué hace — da la sensación de "varias mini-apps", no una lista plana.
+class _ToolCard extends StatelessWidget {
   final IconData icon;
-  final String label;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
   final VoidCallback onTap;
 
-  const _SheetActionButton({
+  const _ToolCard({
     required this.icon,
-    required this.label,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
     required this.onTap,
   });
 
@@ -836,7 +877,7 @@ class _SheetActionButton extends StatelessWidget {
           end: Alignment.bottomCenter,
           colors: [Color(0xFFF3F5EC), Color(0xFFD8E0C0)],
         ),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFA2B882), width: 1.5),
         boxShadow: [
           BoxShadow(
@@ -851,22 +892,52 @@ class _SheetActionButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           splashColor: const Color(0xFFA2B882).withValues(alpha: 0.3),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
             child: Row(
               children: [
-                Icon(icon, size: 24, color: const Color(0xFF4A6A28)),
-                const SizedBox(width: 14),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    color: Color(0xFF4A6A28),
-                    fontWeight: FontWeight.w600,
+                // Ícono concreto en círculo blanco con color propio
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    border: Border.all(
+                        color: iconColor.withValues(alpha: 0.35), width: 1.5),
+                  ),
+                  child: Icon(icon, size: 30, color: iconColor),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Color(0xFF3A4A22),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF6A7A4A),
+                          height: 1.25,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                const SizedBox(width: 8),
+                Icon(Icons.chevron_right,
+                    size: 24, color: const Color(0xFF4A6A28).withValues(alpha: 0.55)),
               ],
             ),
           ),
@@ -938,7 +1009,7 @@ class _SheetItem extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Botón "+" central — verde degradé, sombra 3D, sin Flutter FAB
+// Botón central (caja de herramientas) — verde degradé, sombra 3D, sin Flutter FAB
 // ---------------------------------------------------------------------------
 
 class _CenterAddButton extends StatelessWidget {
@@ -974,7 +1045,8 @@ class _CenterAddButton extends StatelessWidget {
           onTap: onTap,
           customBorder: const CircleBorder(),
           splashColor: const Color(0xFF7AAB7A).withValues(alpha: 0.3),
-          child: Image.asset('assets/images/logo.png', width: 26, height: 26),
+          child: const Icon(Icons.home_repair_service,
+              size: 26, color: Color(0xFF2E7D32)),
         ),
       ),
     );
