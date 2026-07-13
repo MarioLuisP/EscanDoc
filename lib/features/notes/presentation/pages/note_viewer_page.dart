@@ -99,7 +99,9 @@ class NoteViewerPage extends StatelessWidget {
   Widget _buildText(BuildContext context) {
     final linked = _autoLinkUrls(content);
     final spans = _buildSpans(context, linked);
-    return RichText(text: TextSpan(children: spans));
+    // Text.rich (no RichText) para que participe del SelectionArea de arriba y
+    // se pueda seleccionar/copiar una parte del texto — igual que el OCR.
+    return Text.rich(TextSpan(children: spans));
   }
 
   Widget _buildActionBar(BuildContext context) {

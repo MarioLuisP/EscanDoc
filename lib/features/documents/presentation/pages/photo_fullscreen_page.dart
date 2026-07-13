@@ -7,6 +7,7 @@ import 'package:pdf_image_renderer/pdf_image_renderer.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:escandoc/core/services/pdf_converter_service.dart';
+import 'package:escandoc/features/notes/domain/note_export_format.dart';
 
 /// Página fullscreen para visualizar documento (JPG o PDF) con zoom.
 ///
@@ -16,9 +17,15 @@ import 'package:escandoc/core/services/pdf_converter_service.dart';
 class PhotoFullscreenPage extends StatefulWidget {
   final String filePath;
 
+  /// Texto completo de la nota, si el documento es una nota. Cuando supera
+  /// [kNoteParchmentMaxChars], compartir genera un PDF paginado del texto en
+  /// vez de la imagen pergamino (que estaría cortada).
+  final String? noteContent;
+
   const PhotoFullscreenPage({
     super.key,
     required this.filePath,
+    this.noteContent,
   });
 
   @override
@@ -155,7 +162,15 @@ class _PhotoFullscreenPageState extends State<PhotoFullscreenPage> {
       _shareFile(widget.filePath, mimeType: 'application/pdf');
       return;
     }
-    // JPG: preguntar formato
+    // Nota larga (>1500): la imagen pergamino estaría cortada. Compartir el PDF
+    // paginado del texto completo, sin ofrecer "como foto" (mandaría un recorte).
+    final note = widget.noteContent;
+    if (note != null &&
+        noteShareFormatFor(note) == NoteShareFormat.paginatedPdf) {
+      _shareNoteAsPdf(context, note);
+      return;
+    }
+    // JPG (o nota corta que entra completa en la imagen): preguntar formato
     _showShareSheet(context);
   }
 
@@ -238,17 +253,7 @@ class _PhotoFullscreenPageState extends State<PhotoFullscreenPage> {
     File? tempPdf;
     try {
       final imageBytes = await File(widget.filePath).readAsBytes();
-
-      final tempDir = await getTemporaryDirectory();
-      final now = DateTime.now();
-      const monthKeys = [
-        'month_jan','month_feb','month_mar','month_apr',
-        'month_may','month_jun','month_jul','month_aug',
-        'month_sep','month_oct','month_nov','month_dec',
-      ];
-      final dateSuffix = '${now.day}${monthKeys[now.month - 1].tr()}';
-      final tempPath = '${tempDir.path}/EscanDoc_$dateSuffix.pdf';
-
+      final tempPath = await _tempPdfPath();
       final converter = PdfConverterServiceImpl();
       tempPdf = await converter.convertImageBytesToPdfA4(imageBytes, tempPath);
 
@@ -272,6 +277,49 @@ class _PhotoFullscreenPageState extends State<PhotoFullscreenPage> {
     }
     // No borramos el archivo temporal: el OS limpia getTemporaryDirectory()
     // automáticamente. Borrarlo manualmente puede romper el share a la misma app.
+  }
+
+  /// Comparte una nota larga como PDF paginado del texto completo (sin recorte).
+  Future<void> _shareNoteAsPdf(BuildContext context, String noteContent) async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _sharing = true);
+
+    try {
+      final tempPath = await _tempPdfPath();
+      final converter = PdfConverterServiceImpl();
+      final pdf = await converter.convertTextToPdfA4(noteContent, tempPath);
+
+      if (!mounted) return;
+      setState(() => _sharing = false);
+
+      await SharePlus.instance.share(
+        ShareParams(files: [XFile(pdf.path, mimeType: 'application/pdf')]),
+      );
+    } catch (e) {
+      debugPrint('[Export] Error al exportar nota PDF: $e');
+      if (!mounted) return;
+      setState(() => _sharing = false);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('share_error'.tr(),
+              style: const TextStyle(fontSize: 16)),
+          backgroundColor: Colors.red[700],
+        ),
+      );
+    }
+  }
+
+  /// Path temporal para el PDF a compartir, con sufijo de fecha legible.
+  Future<String> _tempPdfPath() async {
+    final tempDir = await getTemporaryDirectory();
+    final now = DateTime.now();
+    const monthKeys = [
+      'month_jan','month_feb','month_mar','month_apr',
+      'month_may','month_jun','month_jul','month_aug',
+      'month_sep','month_oct','month_nov','month_dec',
+    ];
+    final dateSuffix = '${now.day}${monthKeys[now.month - 1].tr()}';
+    return '${tempDir.path}/EscanDoc_$dateSuffix.pdf';
   }
 }
 

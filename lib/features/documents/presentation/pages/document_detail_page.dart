@@ -77,8 +77,15 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Imagen del documento
-                        _buildImageCard(document.filePath),
+                        // Imagen del documento. Solo las notas pasan noteContent
+                        // (un escaneo guarda su OCR en note_content y NO debe
+                        // compartirse como texto).
+                        _buildImageCard(
+                          document.filePath,
+                          document.documentType == 'nota'
+                              ? document.noteContent
+                              : null,
+                        ),
                         const SizedBox(height: 14),
 
                         // Card Notas
@@ -161,12 +168,15 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
 
   // --- Imagen completa del documento ---
 
-  Widget _buildImageCard(String filePath) {
+  Widget _buildImageCard(String filePath, String? noteContent) {
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => PhotoFullscreenPage(filePath: filePath),
+          builder: (_) => PhotoFullscreenPage(
+            filePath: filePath,
+            noteContent: noteContent,
+          ),
         ),
       ),
       child: Container(

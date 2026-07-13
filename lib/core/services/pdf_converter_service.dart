@@ -20,6 +20,10 @@ abstract class PdfConverterService {
   Future<File> convertImageBytesToPdfA4(
       Uint8List imageBytes, String outputPdfPath);
 
+  /// Convierte texto libre a un PDF A4 **paginado** (el texto se reparte en
+  /// tantas páginas como haga falta). Para compartir notas largas sin cortar.
+  Future<File> convertTextToPdfA4(String text, String outputPdfPath);
+
   /// Convierte múltiples JPGs a un PDF multipágina.
   /// Cada JPG ocupa una página con sus dimensiones originales.
   Future<File> convertJpgsToPdf(
@@ -169,6 +173,40 @@ class PdfConverterServiceImpl implements PdfConverterService {
     await file.writeAsBytes(await pdf.save());
     debugPrint(
         '[PdfConverter] PDF A4 generado: ${(file.lengthSync() / 1024).toStringAsFixed(2)} KB');
+    return file;
+  }
+
+  @override
+  Future<File> convertTextToPdfA4(String text, String outputPdfPath) async {
+    debugPrint('[PdfConverter] convertTextToPdfA4 → $outputPdfPath (${text.length} chars)');
+
+    final pdf = pw.Document();
+    // MultiPage reparte el contenido en varias páginas automáticamente. Cada
+    // renglón del texto es un Paragraph → se preservan los saltos de línea y
+    // cada uno puede fluir a la página siguiente. Línea vacía → espacio.
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        build: (pw.Context context) {
+          return text.split('\n').map<pw.Widget>((line) {
+            if (line.trim().isEmpty) {
+              return pw.SizedBox(height: 10);
+            }
+            return pw.Paragraph(
+              text: line,
+              style: const pw.TextStyle(fontSize: 14, lineSpacing: 3),
+              margin: const pw.EdgeInsets.only(bottom: 4),
+            );
+          }).toList();
+        },
+      ),
+    );
+
+    final file = File(outputPdfPath);
+    await file.writeAsBytes(await pdf.save());
+    debugPrint(
+        '[PdfConverter] PDF texto paginado: ${(file.lengthSync() / 1024).toStringAsFixed(2)} KB');
     return file;
   }
 }

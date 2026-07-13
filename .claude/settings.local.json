@@ -41,6 +41,6 @@
     ],
     "defaultMode": "default"
   },
-  "model": "claude-fable-5",
+  "model": "claude-opus-4-8",
   "outputStyle": "Concise"
 }
