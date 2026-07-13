@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:escandoc/features/documents/domain/services/pdf_import_service.dart';
+import 'package:escandoc/features/documents/domain/pdf_page_range.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 import 'package:escandoc/core/services/document_pipeline.dart';
@@ -190,16 +191,17 @@ class ImportProvider with ChangeNotifier {
     }
   }
 
-  /// Importa N páginas de un PDF, cada una como documento independiente.
+  /// Importa el rango de páginas [range] de un PDF, cada una como documento
+  /// independiente. Cada página conserva su número REAL de PDF en el título.
   ///
   /// Flujo por página:
   ///   renderizar JPG → prepareImport (classify) → completeImport (guardar + OCR)
   ///
-  /// Retorna lista de documentos guardados (puede ser menor a [pagesToImport]
+  /// Retorna lista de documentos guardados (puede ser menor al tamaño del rango
   /// si alguna página falla — las demás se procesan igual).
   Future<List<DocumentModel>> importPdfPages(
     String pdfPath,
-    int pagesToImport,
+    PdfPageRange range,
     String locale,
   ) async {
     if (_pdfImportService == null) return [];
@@ -207,10 +209,12 @@ class ImportProvider with ChangeNotifier {
     final tempDir = await getTemporaryDirectory();
     final docsDir = await getApplicationDocumentsDirectory();
 
-    int actualPages;
+    List<int> pageIndices;
     try {
       final pageCount = await _pdfImportService!.getPageCount(pdfPath);
-      actualPages = pageCount < pagesToImport ? pageCount : pagesToImport;
+      // Re-clampar contra el total real por si el conteo cambió entre el diálogo
+      // y el import — nunca pedir una página inexistente.
+      pageIndices = PdfPageRange.clamp(range.from, range.to, pageCount).pageIndices;
     } catch (e) {
       _error = e.toString();
       _statusMessage = null;
@@ -219,35 +223,39 @@ class ImportProvider with ChangeNotifier {
       return [];
     }
 
+    final count = pageIndices.length;
+
     _pdfCurrentPage = 0;
-    _pdfTotalPages = actualPages;
+    _pdfTotalPages = count;
     _statusMessage = 'status_reading_pdf';
     notifyListeners();
 
     final savedDocuments = <DocumentModel>[];
 
-    // Timestamps decrecientes → p1 queda arriba (más reciente) en la UI.
+    // Timestamps decrecientes → la primera página del rango queda arriba
+    // (más reciente) en la UI.
     final baseTime = DateTime.now();
 
-    // Para PDFs multipágina: nombre base del archivo (sin extensión).
-    // Cada página hereda ese nombre + número: "tutorial_1", "tutorial_2"…
-    final isMultiPage = actualPages > 1;
+    // Para rangos multipágina: nombre base del archivo (sin extensión). Cada
+    // página conserva su número REAL de PDF: "tutorial_2", "tutorial_5"…
+    final isMultiPage = count > 1;
     final pdfBaseName = isMultiPage ? p.basenameWithoutExtension(pdfPath) : '';
 
     // Detectar si el PDF tiene texto nativo (PDF editable).
     final isEditable = await _pdfImportService!.isEditablePdf(pdfPath);
 
-    for (var i = 0; i < actualPages; i++) {
-      _pdfCurrentPage = i + 1;
+    for (var pos = 0; pos < count; pos++) {
+      final pageIndex = pageIndices[pos];
+      _pdfCurrentPage = pos + 1;
       _statusMessage = isMultiPage ? null : 'status_processing_pdf';
       notifyListeners();
 
       // 1. Renderizar solo esta página
       File tempPageFile;
       try {
-        tempPageFile = await _pdfImportService!.renderPageToJpg(pdfPath, i, tempDir.path);
+        tempPageFile = await _pdfImportService!.renderPageToJpg(pdfPath, pageIndex, tempDir.path);
       } catch (e) {
-        debugPrint('[ImportProvider] Error renderizando página ${i + 1}: $e');
+        debugPrint('[ImportProvider] Error renderizando página ${pageIndex + 1}: $e');
         continue;
       }
 
@@ -259,7 +267,7 @@ class ImportProvider with ChangeNotifier {
       try {
         permFile = await tempPageFile.copy(permPath);
       } catch (e) {
-        debugPrint('[ImportProvider] Error copiando página ${i + 1} a docs: $e');
+        debugPrint('[ImportProvider] Error copiando página ${pageIndex + 1} a docs: $e');
         await tempPageFile.delete().catchError((_) {});
         continue;
       }
@@ -268,12 +276,12 @@ class ImportProvider with ChangeNotifier {
       await tempPageFile.delete().catchError((_) {});
 
       // 4. Procesar
-      final pageDate = baseTime.add(Duration(milliseconds: actualPages - 1 - i));
+      final pageDate = baseTime.add(Duration(milliseconds: count - 1 - pos));
       try {
         if (isEditable) {
           // PDF editable: texto nativo, sin TFLite ni ML Kit.
-          final title = isMultiPage ? '${pdfBaseName}_${i + 1}' : null;
-          final extractedText = await _pdfImportService!.extractPageText(pdfPath, i);
+          final title = isMultiPage ? '${pdfBaseName}_${pageIndex + 1}' : null;
+          final extractedText = await _pdfImportService!.extractPageText(pdfPath, pageIndex);
           final document = await _pipeline.completePdfPage(
             permFile, title ?? p.basenameWithoutExtension(pdfPath), locale, pageDate,
           );
@@ -287,7 +295,7 @@ class ImportProvider with ChangeNotifier {
           );
         } else if (isMultiPage) {
           // PDF multipágina imagen: sin TFLite, sin refinador.
-          final title = '${pdfBaseName}_${i + 1}';
+          final title = '${pdfBaseName}_${pageIndex + 1}';
           final document = await _pipeline.completePdfPage(permFile, title, locale, pageDate);
           savedDocuments.add(document);
           _processOCRInBackground(
@@ -307,7 +315,7 @@ class ImportProvider with ChangeNotifier {
           if (document != null) savedDocuments.add(document);
         }
       } catch (e) {
-        debugPrint('[ImportProvider] Error importando página ${i + 1}: $e');
+        debugPrint('[ImportProvider] Error importando página ${pageIndex + 1}: $e');
         await permFile.delete().catchError((_) {});
       }
     }
@@ -317,7 +325,7 @@ class ImportProvider with ChangeNotifier {
     _statusMessage = null;
     notifyListeners();
 
-    debugPrint('[ImportProvider] PDF importado: ${savedDocuments.length}/$actualPages páginas guardadas');
+    debugPrint('[ImportProvider] PDF importado: ${savedDocuments.length}/$count páginas guardadas');
     return savedDocuments;
   }
 

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -10,6 +11,7 @@ import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
 import 'package:escandoc/features/documents/presentation/providers/import_provider.dart';
+import 'package:escandoc/features/documents/domain/pdf_page_range.dart';
 import 'package:escandoc/features/scan/presentation/providers/scan_provider.dart';
 import 'package:escandoc/features/scan/presentation/widgets/photo_detected_dialog.dart';
 import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
@@ -625,16 +627,17 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    // Si tiene más de 10 páginas, preguntar cuántas importar
-    int pagesToImport = pageCount;
-    if (pageCount > 10) {
+    // Multipágina (≥2 páginas): preguntar SIEMPRE qué rango traer.
+    var range = PdfPageRange.all(pageCount);
+    if (pageCount >= 2) {
       if (!mounted) return;
-      pagesToImport = await _showPdfPagesDialog(pageCount) ?? 0;
-      if (pagesToImport == 0) return; // Canceló
+      final chosen = await _showPdfRangeDialog(pageCount);
+      if (chosen == null) return; // Canceló
+      range = chosen;
     }
 
     // Importar páginas
-    final documents = await importProvider.importPdfPages(pdfPath, pagesToImport, locale);
+    final documents = await importProvider.importPdfPages(pdfPath, range, locale);
     if (!mounted) return;
 
     if (documents.isEmpty) {
@@ -650,36 +653,12 @@ class _HomePageState extends State<HomePage> {
     await documentsProvider.loadDocuments();
   }
 
-  /// Dialog para PDFs con más de 10 páginas.
-  /// Retorna cuántas páginas importar, o null si cancela.
-  Future<int?> _showPdfPagesDialog(int totalPages) {
-    return showDialog<int>(
+  /// Dialog para PDFs multipágina: "Traer todas" o un rango a medida.
+  /// Retorna el [PdfPageRange] elegido, o null si cancela.
+  Future<PdfPageRange?> _showPdfRangeDialog(int totalPages) {
+    return showDialog<PdfPageRange>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('pdf_pages_dialog_title'.tr(),
-            style: const TextStyle(fontSize: 20)),
-        content: Text(
-          'pdf_pages_dialog_message'.tr(namedArgs: {'total': '$totalPages'}),
-          style: const TextStyle(fontSize: 17),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, null),
-            child: Text('pdf_pages_cancel'.tr(),
-                style: const TextStyle(fontSize: 16)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, 10),
-            child: Text('pdf_pages_first_10'.tr(),
-                style: const TextStyle(fontSize: 16)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, totalPages),
-            child: Text('pdf_pages_all'.tr(namedArgs: {'total': '$totalPages'}),
-                style: const TextStyle(fontSize: 16)),
-          ),
-        ],
-      ),
+      builder: (ctx) => _PdfRangeDialog(totalPages: totalPages),
     );
   }
 
@@ -1250,5 +1229,225 @@ class _RecentDocItem extends StatelessWidget {
     ];
     final month = months[date.month - 1].tr();
     return '${date.day} $month ${date.year}';
+  }
+}
+
+/// Diálogo para elegir qué páginas traer de un PDF multipágina.
+///
+/// Jerarquía pensada para el público mayor:
+/// - **Traer todas**: acción grande y obvia, un solo toque (el 90% de los casos).
+/// - **Rango a medida**: campos "Desde/Hasta" para el que sabe qué página quiere.
+///   El botón "Traer estas" se habilita solo con un rango válido.
+/// - Cualquier número fuera de `[1, total]` se corrige solo (ver [PdfPageRange.clamp])
+///   con un cartelito suave, nunca un error rojo.
+class _PdfRangeDialog extends StatefulWidget {
+  final int totalPages;
+
+  const _PdfRangeDialog({required this.totalPages});
+
+  @override
+  State<_PdfRangeDialog> createState() => _PdfRangeDialogState();
+}
+
+class _PdfRangeDialogState extends State<_PdfRangeDialog> {
+  final _fromController = TextEditingController();
+  final _toController = TextEditingController();
+
+  @override
+  void dispose() {
+    _fromController.dispose();
+    _toController.dispose();
+    super.dispose();
+  }
+
+  int? get _fromValue => int.tryParse(_fromController.text.trim());
+  int? get _toValue => int.tryParse(_toController.text.trim());
+
+  bool get _partialValid =>
+      _fromValue != null &&
+      _toValue != null &&
+      _fromValue! >= 1 &&
+      _toValue! >= 1;
+
+  /// Algún valor escrito se sale de [1, total] → mostrar cartelito de corrección.
+  bool get _outOfRange {
+    final f = _fromValue;
+    final t = _toValue;
+    return (f != null && (f < 1 || f > widget.totalPages)) ||
+        (t != null && (t < 1 || t > widget.totalPages));
+  }
+
+  void _bringAll() =>
+      Navigator.pop(context, PdfPageRange.all(widget.totalPages));
+
+  void _bringRange() {
+    if (!_partialValid) return;
+    Navigator.pop(
+      context,
+      PdfPageRange.clamp(_fromValue!, _toValue!, widget.totalPages),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = widget.totalPages;
+    return AlertDialog(
+      title: Text(
+        'pdf_range_title'.tr(namedArgs: {'total': '$total'}),
+        style: const TextStyle(fontSize: 20),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Primario: traer todas (verde 3D, lo obvio)
+          _button3d(
+            label: 'pdf_range_bring_all'.tr(namedArgs: {'total': '$total'}),
+            icon: Icons.check,
+            colors: const [Color(0xFF6FBF6F), Color(0xFF2E7D32)],
+            shadowColor: const Color(0xFF1A5C1A),
+            onTap: _bringAll,
+          ),
+          const SizedBox(height: 20),
+          // Separador
+          Row(
+            children: [
+              const Expanded(child: Divider()),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Text(
+                  'pdf_range_or_some'.tr(),
+                  style: const TextStyle(fontSize: 14, color: Colors.black54),
+                ),
+              ),
+              const Expanded(child: Divider()),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Campos Desde / Hasta
+          Row(
+            children: [
+              Expanded(
+                child: _numberField(_fromController, 'pdf_range_from'.tr()),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _numberField(_toController, 'pdf_range_to'.tr()),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Cartelito suave (nunca error rojo)
+          Text(
+            _outOfRange
+                ? 'pdf_range_hint'.tr(namedArgs: {'total': '$total'})
+                : 'pdf_range_between'.tr(namedArgs: {'total': '$total'}),
+            style: TextStyle(
+              fontSize: 13,
+              color: _outOfRange
+                  ? const Color(0xFFB26A00)
+                  : Colors.black45,
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Traer el rango (celeste 3D; se habilita solo con rango válido)
+          _button3d(
+            label: 'pdf_range_bring_these'.tr(),
+            colors: const [Color(0xFF6FB7DF), Color(0xFF1E88E5)],
+            shadowColor: const Color(0xFF0D47A1),
+            onTap: _partialValid ? _bringRange : null,
+          ),
+          const SizedBox(height: 20),
+          // Cancelar (cremita 3D, texto oscuro)
+          _button3d(
+            label: 'pdf_pages_cancel'.tr(),
+            colors: const [Color(0xFFF3ECDC), Color(0xFFE2D5BC)],
+            shadowColor: const Color(0xFFBFAE92),
+            textColor: const Color(0xFF6B5B4A),
+            onTap: () => Navigator.pop(context, null),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Botón "3D": gradiente vertical + sombra con offset (mismo lenguaje que el
+  /// resto de la app). Deshabilitado → gris plano, sin sombra.
+  Widget _button3d({
+    required String label,
+    IconData? icon,
+    required List<Color> colors,
+    required Color shadowColor,
+    required VoidCallback? onTap,
+    Color textColor = Colors.white,
+  }) {
+    final enabled = onTap != null;
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: enabled
+              ? colors
+              : const [Color(0xFFCFCFCF), Color(0xFFB3B3B3)],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: enabled
+            ? [
+                BoxShadow(
+                  color: shadowColor.withValues(alpha: 0.50),
+                  offset: const Offset(0, 4),
+                  blurRadius: 8,
+                  spreadRadius: -1,
+                ),
+              ]
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          splashColor: Colors.white24,
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 24, color: textColor),
+                  const SizedBox(width: 10),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _numberField(TextEditingController controller, String label) {
+    return TextField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      textAlign: TextAlign.center,
+      style: const TextStyle(fontSize: 20),
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      onChanged: (_) => setState(() {}),
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      ),
+    );
   }
 }

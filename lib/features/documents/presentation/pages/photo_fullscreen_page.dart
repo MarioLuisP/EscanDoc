@@ -1,8 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:pdfrx/pdfrx.dart';
+import 'package:pdf_image_renderer/pdf_image_renderer.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:escandoc/core/services/pdf_converter_service.dart';
@@ -115,7 +116,7 @@ class _PhotoFullscreenPageState extends State<PhotoFullscreenPage> {
   }
 
   Widget _buildPdfViewer() {
-    return PdfViewer.file(widget.filePath);
+    return _PdfImageViewer(filePath: widget.filePath);
   }
 
   Widget _buildImageViewer() {
@@ -331,6 +332,175 @@ class _ShareButton extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Visor de PDF que renderiza páginas con pdf_image_renderer (render nativo del
+/// SO) y las muestra como imagen con zoom. Reemplaza a pdfrx (ver .context/67).
+///
+/// Render lazy por página (cacheado), swipe horizontal entre páginas. Cualquier
+/// fallo de apertura/render degrada a un cartel de error, nunca rompe la página.
+class _PdfImageViewer extends StatefulWidget {
+  final String filePath;
+
+  const _PdfImageViewer({required this.filePath});
+
+  @override
+  State<_PdfImageViewer> createState() => _PdfImageViewerState();
+}
+
+class _PdfImageViewerState extends State<_PdfImageViewer> {
+  /// Escala de render para visualización (~144 DPI: suficiente para pantalla,
+  /// más liviano que el 2.5 de import que apunta a OCR).
+  static const double _renderScale = 2;
+
+  PdfImageRenderer? _pdf;
+  int _pageCount = 0;
+  int _currentPage = 0;
+  bool _loading = true;
+  bool _error = false;
+  final Map<int, Uint8List> _cache = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    try {
+      final pdf = PdfImageRenderer(path: widget.filePath);
+      await pdf.open();
+      final count = await pdf.getPageCount();
+      if (!mounted) {
+        pdf.close();
+        return;
+      }
+      setState(() {
+        _pdf = pdf;
+        _pageCount = count;
+        _loading = false;
+      });
+    } catch (e) {
+      debugPrint('[PdfViewer] Error abriendo PDF: $e');
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = true;
+      });
+    }
+  }
+
+  Future<Uint8List?> _renderPage(int index) async {
+    final cached = _cache[index];
+    if (cached != null) return cached;
+    final pdf = _pdf;
+    if (pdf == null) return null;
+    try {
+      await pdf.openPage(pageIndex: index);
+      final size = await pdf.getPageSize(pageIndex: index);
+      final bytes = await pdf.renderPage(
+        pageIndex: index,
+        x: 0,
+        y: 0,
+        width: size.width,
+        height: size.height,
+        scale: _renderScale,
+        background: const Color(0xFFFFFFFF),
+      );
+      await pdf.closePage(pageIndex: index);
+      if (bytes != null) _cache[index] = bytes;
+      return bytes;
+    } catch (e) {
+      debugPrint('[PdfViewer] Error render página $index: $e');
+      return null;
+    }
+  }
+
+  @override
+  void dispose() {
+    try {
+      _pdf?.close();
+    } catch (_) {/* handle ya inválido — ignorar */}
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      );
+    }
+    if (_error || _pdf == null || _pageCount == 0) {
+      return _buildError();
+    }
+    return Stack(
+      children: [
+        PageView.builder(
+          itemCount: _pageCount,
+          onPageChanged: (i) => setState(() => _currentPage = i),
+          itemBuilder: (context, index) => FutureBuilder<Uint8List?>(
+            future: _renderPage(index),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                );
+              }
+              final bytes = snapshot.data;
+              if (bytes == null) return _buildError();
+              return InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 5.0,
+                child: Center(
+                  child: Image.memory(bytes, fit: BoxFit.contain),
+                ),
+              );
+            },
+          ),
+        ),
+        if (_pageCount > 1)
+          Positioned(
+            top: 12,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${_currentPage + 1} / $_pageCount',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildError() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 64, color: Colors.white),
+          const SizedBox(height: 16),
+          Text(
+            'error_loading'.tr(),
+            style: const TextStyle(fontSize: 18, color: Colors.white),
+          ),
+        ],
       ),
     );
   }

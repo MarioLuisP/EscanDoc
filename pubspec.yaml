@@ -50,9 +50,9 @@ dependencies:
   image: ^4.5.4                     # Procesamiento de imagen (normalización)
   flutter_image_compress: ^2.4.0    # Compresión nativa (thumbnails optimizados)
   pdf: ^3.11.3                       # Generación de PDFs
-  pdf_image_renderer: ^2.0.0        # Conversión PDF→imagen (importar). Reemplaza pdf_to_image_converter (abandonado, pineaba file_picker 10) — ver .context/65
+  pdf_image_renderer: ^2.0.0        # Conversión PDF→imagen (render nativo del SO: PdfRenderer Android / PDFKit iOS). Reemplaza pdf_to_image_converter y pdfrx — ver .context/65 y 67
+  read_pdf_text: ^0.3.1             # Extracción de texto de PDF digital (PdfBox Android / PDFKit iOS). Solo texto, sin renderizado. Aislado tras try/catch en PdfImportServiceImpl — ver .context/67
   printing: ^5.14.2                  # Vista previa e impresión de PDFs
-  pdfrx: ^2.2.24                     # Visualización de PDFs con zoom
   gal: ^2.3.0                        # Guardar imágenes en galería (feature: escanear fotos)
   share_plus: ^12.0.0               # Compartir archivos via share sheet del SO. NO subir a 13: pide win32 ^6 y choca con file_picker 11 (win32 ^5). API Dart idéntica, sin beneficio — ver .context/65
 
