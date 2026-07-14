@@ -83,6 +83,14 @@ workflows:
         script: xcode-project use-profiles
       - name: Disable Swift Package Manager (el proyecto usa CocoaPods)
         script: flutter config --no-enable-swift-package-manager
+      - name: Install CocoaPods (genera el workspace antes del build)
+        # `flutter build ipa` chequea la integración SPM ANTES de crear el
+        # workspace con pods, y Runner.xcworkspace no está commiteado → falla con
+        # "Xcode workspace not found". Correr pod install acá lo genera a tiempo.
+        script: |
+          cd ios
+          pod install --repo-update
+          cd ..
       - name: Build IPA
         script: |
           flutter build ipa --release \
