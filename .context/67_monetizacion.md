@@ -187,7 +187,7 @@ El único límite de cantidad es **15 documentos**.
 Orden obligatorio del proyecto: **Domain → Tests → Data → UI**, con TDD
 (RED → GREEN → REFACTOR) en todo lo que no dependa de plugins nativos.
 
-### Fase 0 — Stores y RevenueCat (sin código)
+### **Fase 0 — Stores y RevenueCat (sin código)
 
 1. **Play Console:** crear productos — `pro_mensual` (sub mensual), `pro_anual`
    (sub anual), `pro_lifetime` (in-app no consumible). Precios base USD con
@@ -197,7 +197,7 @@ Orden obligatorio del proyecto: **Domain → Tests → Data → UI**, con TDD
 3. **RevenueCat:** proyecto con app Android + iOS, entitlement `pro`, offering
    `default` con 3 packages (monthly/annual/lifetime), API keys por plataforma.
 4. **Promo codes:** se generan desde cada store cuando haga falta — no requieren
-   código en la app (el flujo de canje es de la store).
+   código en la app (el flujo de canje es de la store).**
 
 ### Fase 1 — Domain (TDD, Dart puro, sin Flutter)
 
@@ -255,3 +255,85 @@ Orden obligatorio del proyecto: **Domain → Tests → Data → UI**, con TDD
   real, se mantienen los 3 planes, free = 15 docs, paywall contextual, promo
   codes de store, precios por plantillas automáticas. Se agrega §10 (plan de
   implementación en 5 fases).
+
+
+
+revision:
+
+
+● Leí el plan completo de Fable. Te doy mi lectura honesta: está muy bien armado y sí, se puede arrancar la próxima sesión — pero con un matiz de secuencia importante.
+
+Lo que está bien
+
+- Respeta el orden del proyecto (Domain→Tests→Data→UI) y marca bien qué se testea con TDD y qué se verifica en device (las capas de plugin nativo). Correcto.
+- RevenueCat + caché local del entitlement para arrancar offline sabiendo si es pro — es exactamente lo que necesita tu público (el mayor no va a estar siempre online, y la app tiene que saber al instante si desbloqueó).
+- Gates contextuales sin UI persistente + "Restaurar compras" prominente — fiel a la filosofía UX. El mayor que nunca choca, nunca ve precios.
+- El domain abstrae RevenueCat detrás de PurchaseRepository — limpio, testeable, y si mañana cambiás de proveedor no tocás la lógica.
+
+El matiz clave de secuencia
+
+No todo se puede empezar igual. Hay dos ritmos:
+
+- Fase 1 (Domain) está 100% libre — es Dart puro, sin depender de las stores ni de RevenueCat. Eso lo arrancamos ya la próxima sesión con TDD (los UseCases CanAddDocument, IsPremiumFeatureUnlocked, la interface
+  PurchaseRepository). Es el arranque perfecto y no depende de nada externo.
+- Fase 0 (stores) tiene tiempo de calendario y bloquea TODO el testing real. El Paid Apps Agreement, los datos bancarios/impositivos en App Store Connect y la cuenta de merchant en Play tardan días y necesitan tus datos. Sin
+  eso, no podés probar una sola compra. Así que eso lo tenés que empezar vos en paralelo, cuanto antes, mientras yo hago el domain.
+
+Resumen: la próxima sesión = Fase 1 (domain, TDD), y vos disparás Fase 0 por tu lado.
+
+Tres cosas para clavar antes de llegar a los gates
+
+1. ¿Qué cuenta para el límite de 15? Las notas son documentos, y un PDF multipágina son N documentos. Un PDF de 12 páginas te comería 12 slots de una. Hay que definir si el free cuenta notas y páginas, o solo "documentos     
+   raíz". (Nota: el multipágina ya es premium, así que se cruza — conviene alinearlo.)
+2. Qué pasa con lo escaneado al chocar el gate. El gate salta al guardar el doc 16, cuando el usuario ya escaneó y esperó el OCR. "Se guarda tras el upgrade o se descarta con aviso" está bien en el papel, pero para un mayor  
+   es delicado — merece diseño de UX, no solo código. Perder lo que acabás de escanear frustra.
+3. El testing de iOS depende del primer TestFlight, que todavía no saliste (está en tus pendientes). Android lo podés probar antes (internal testing track). Así que las compras iOS van a esperar a que el pipeline de Codemagic
+   esté andando.
+
+Un detalle lindo
+
+El gate de "PDF multipágina = premium" se enchufa justo en ImportProvider, donde acabamos de trabajar con el selector de rango. Hay continuidad — cuando lleguemos a Fase 4, ya conocemos ese código al dedillo.
+
+Veredicto: plan sólido, listo para ejecutar. La próxima sesión arrancamos por el domain (Fase 1) y vos ponés en marcha el papeleo de las stores (Fase 0) en paralelo. 
+
+✅ Fase 1 (Domain) completa↓— 13/13 tests GREEN, analyzer sin issues.
+
+Lo que quedó armado
+
+lib/features/subscription/domain/
+├── entitlement.dart              enum Entitlement (free/pro) + FreeTierLimits.maxDocuments = 15
+├── premium_feature.dart          enum PremiumFeature (multipagePdf, batchExport)                                                                                                                                                
+├── purchase_package.dart         PurchasePlan, PurchasePackage, Offering
+├── repositories/
+│   └── purchase_repository.dart  interface pura (getEntitlement, getOfferings, purchase, restore)
+└── usecases/
+├── can_add_document.dart          pro=ilimitado · free < 15
+└── is_premium_feature_unlocked.dart   pro desbloquea todo · free nada
+
+Todo el domain es Dart puro, sin Flutter, sin RevenueCat — como manda el plan. La lógica de negocio quedó testeada con TDD real (RED→GREEN verificado en cada UseCase).
+
+Decisión de diseño que confirmo: CanAddDocument recibe currentCount como parámetro, así que el domain no sabe "qué cuenta para los 15" (notas, páginas de PDF). Esa es la pregunta abierta nº1 del revisor y la resolvemos en    
+Fase 4 (gates), sin bloquear nada ahora.
+
+Estado de las fases
+
+┌────────────────────────────────────────────────────┬─────────────────────────────────────────────┐
+│                        Fase                        │                   Estado                    │
+├────────────────────────────────────────────────────┼─────────────────────────────────────────────┤
+│ 0 — Stores + RevenueCat (papeleos)                 │ �её vos, en curso (Play Console)            │
+├────────────────────────────────────────────────────┼─────────────────────────────────────────────┤
+│ 1 — Domain (TDD)                                   │ ✅ hecha                                    │
+├────────────────────────────────────────────────────┼─────────────────────────────────────────────┤
+│ 2 — Data (PurchaseRepositoryImpl sobre RevenueCat) │ ⏳ bloqueada por Fase 0 (necesita API keys) │
+├────────────────────────────────────────────────────┼─────────────────────────────────────────────┤
+│ 3 — Presentation (paywall, providers)              │ ⏳                                          │
+├────────────────────────────────────────────────────┼─────────────────────────────────────────────┤
+│ 4 — Gates                                          │ ⏳                                          │
+├────────────────────────────────────────────────────┼─────────────────────────────────────────────┤
+│ 5 — Verificación en dispositivo                    │ ⏳                                          │
+└────────────────────────────────────────────────────┴─────────────────────────────────────────────┘
+
+Próximo paso
+
+La Fase 2 necesita las API keys de RevenueCat (que salen de la Fase 0), pero puedo adelantar trabajo que no las requiere: agregar purchases_flutter al pubspec y dejar el esqueleto de PurchaseRepositoryImpl con el mapeo       
+RevenueCat→dominio y la caché local del entitlement, listo para enchufar las keys.

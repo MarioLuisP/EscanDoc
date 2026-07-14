@@ -16,3 +16,6 @@
 -keepattributes *Annotation*
 -keepattributes InnerClasses
 -keepattributes EnclosingMethod
+
+# PdfBox-Android (read_pdf_text) referencia un decoder JPEG2000 opcional que no está incluido
+-dontwarn com.gemalto.jp2.**
