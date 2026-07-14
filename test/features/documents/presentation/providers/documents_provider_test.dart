@@ -224,6 +224,38 @@ void main() {
     });
   });
 
+  group('updateNoteImage', () {
+    test('actualiza noteContent Y filePath en la lista y selectedDocument', () async {
+      when(() => repository.getAllDocuments()).thenAnswer((_) async => [doc1]);
+      when(() => repository.getDocumentById(1)).thenAnswer((_) async => doc1);
+      when(() => repository.updateNoteImage(any(), any(), any()))
+          .thenAnswer((_) async {});
+
+      await provider.loadDocuments();
+      await provider.selectDocument(1);
+      final result = await provider.updateNoteImage(
+          1, 'nota editada', '/docs/nota_nueva.jpg');
+
+      expect(result, true);
+      expect(provider.documents.first.noteContent, 'nota editada');
+      expect(provider.documents.first.filePath, '/docs/nota_nueva.jpg');
+      expect(provider.selectedDocument?.noteContent, 'nota editada');
+      expect(provider.selectedDocument?.filePath, '/docs/nota_nueva.jpg');
+      verify(() => repository.updateNoteImage(1, 'nota editada', '/docs/nota_nueva.jpg'))
+          .called(1);
+    });
+
+    test('sets errorMessage on exception', () async {
+      when(() => repository.updateNoteImage(any(), any(), any()))
+          .thenThrow(Exception('error'));
+
+      final result = await provider.updateNoteImage(1, 'x', '/docs/x.jpg');
+
+      expect(result, false);
+      expect(provider.errorMessage, isNotNull);
+    });
+  });
+
   group('clearSelectedDocument', () {
     test('clears selectedDocument', () async {
       when(() => repository.getDocumentById(1)).thenAnswer((_) async => doc1);

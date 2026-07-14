@@ -203,16 +203,37 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   Future<void> _saveExistingNote(String content, ScaffoldMessengerState messenger) async {
-    final provider = context.read<DocumentsProvider>();
-    final success = await provider.updateNote(_documentId, content.isEmpty ? null : content);
-    if (!success || !mounted) return;
-    messenger.showSnackBar(SnackBar(
-      content: Text('note_saved'.tr(), style: const TextStyle(fontSize: 16)),
-      duration: const Duration(milliseconds: 1500),
-    ));
-    await Future.delayed(const Duration(milliseconds: 1500));
-    if (!mounted) return;
-    Navigator.pop(context, true);
+    setState(() => _isSaving = true);
+    try {
+      // El texto cambió → hay que regenerar la imagen del pergamino y apuntar
+      // el documento a la nueva, si no queda la imagen vieja (obsoleta).
+      final imageFile = await ParchmentImageGenerator.generate(content, context);
+      if (!mounted) return;
+      final provider = context.read<DocumentsProvider>();
+      final success = await provider.updateNoteImage(
+        _documentId,
+        content.isEmpty ? null : content,
+        imageFile.path,
+      );
+      if (!success || !mounted) return;
+      messenger.showSnackBar(SnackBar(
+        content: Text('note_saved'.tr(), style: const TextStyle(fontSize: 16)),
+        duration: const Duration(milliseconds: 1500),
+      ));
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(
+        content: Text('Error al guardar nota: $e',
+            style: const TextStyle(fontSize: 16)),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 4),
+      ));
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   // --- Confirm discard ---

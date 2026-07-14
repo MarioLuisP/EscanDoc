@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:escandoc/features/notes/domain/parchment_text.dart';
 
 /// Genera un JPG estilo pergamino a partir de texto libre.
 ///
@@ -15,12 +16,23 @@ class ParchmentImageGenerator {
   static const double _width = 600.0;
   static const double _minHeight = 848.0;
   static const double _padding = 40.0;
-  static const double _lineSpacing = 45.0;
+
+  /// Multiplicador de alto de línea del texto. Las rayas del renglón se dibujan
+  /// con este MISMO paso (`fontSize * _lineHeightFactor`), si no el texto se
+  /// despega de las rayas y va cayendo renglón a renglón.
+  static const double _lineHeightFactor = 1.8;
+
+  /// Cuánto se sube la raya respecto del pie del renglón, como fracción del
+  /// paso. Sin esto la raya cae al borde de la caja de texto y las letras
+  /// quedan flotando en el medio; subiéndola ~0.38 las letras se apoyan sobre
+  /// la raya (como hoja rayada real). Subir → raya más arriba (más pegada al
+  /// texto); bajar → más gap debajo de las letras.
+  static const double _lineRaiseFactor = 0.34;
 
   /// [context] debe ser un context con un Overlay disponible (cualquier page).
   static Future<File> generate(String text, BuildContext context) async {
     // Pre-cargar la fuente antes de renderizar para evitar fallback
-    await GoogleFonts.pendingFonts([GoogleFonts.dancingScript()]);
+    await GoogleFonts.pendingFonts([GoogleFonts.grandHotel()]);
 
     final repaintKey = GlobalKey();
     late OverlayEntry entry;
@@ -85,8 +97,12 @@ class ParchmentImageGenerator {
         : text.length > 800
             ? 22.0
             : 28.0;
-    final displayText =
+    final truncated =
         text.length > 1500 ? '${text.substring(0, 1497)}…' : text;
+    // Suaviza palabras TODO-MAYÚSCULA (feas en cursiva ligada). Solo la imagen.
+    final displayText = ParchmentText.softenAllCaps(truncated);
+    // El renglón avanza exactamente lo mismo que una línea de texto.
+    final lineSpacing = fontSize * _lineHeightFactor;
 
     return Container(
       width: _width,
@@ -110,18 +126,18 @@ class ParchmentImageGenerator {
       child: CustomPaint(
         painter: _RuledLinesPainter(
           padding: _padding,
-          lineSpacing: _lineSpacing,
+          lineSpacing: lineSpacing,
+          raiseFactor: _lineRaiseFactor,
           lineColor: const Color(0xFFD4B896).withValues(alpha: 0.4),
-          fontSize: fontSize,
         ),
         child: Padding(
           padding: const EdgeInsets.all(_padding),
           child: Text(
             displayText,
-            style: GoogleFonts.dancingScript(
+            style: GoogleFonts.grandHotel(
               fontSize: fontSize,
               color: const Color(0xFF3D2B1F),
-              height: 1.8,
+              height: _lineHeightFactor,
             ),
           ),
         ),
@@ -137,14 +153,14 @@ class ParchmentImageGenerator {
 class _RuledLinesPainter extends CustomPainter {
   final double padding;
   final double lineSpacing;
+  final double raiseFactor;
   final Color lineColor;
-  final double fontSize;
 
   const _RuledLinesPainter({
     required this.padding,
     required this.lineSpacing,
+    required this.raiseFactor,
     required this.lineColor,
-    required this.fontSize,
   });
 
   @override
@@ -153,7 +169,10 @@ class _RuledLinesPainter extends CustomPainter {
       ..color = lineColor
       ..strokeWidth = 1.0;
 
-    double y = padding + fontSize * 1.8;
+    // Primera raya bajo la primera línea de texto, subida `raiseFactor` para que
+    // las letras se apoyen sobre la raya; de ahí en más, un paso por línea →
+    // texto y rayas avanzan en lockstep (sin deriva).
+    double y = padding + lineSpacing * (1 - raiseFactor);
     while (y < size.height - padding) {
       canvas.drawLine(
         Offset(padding, y),

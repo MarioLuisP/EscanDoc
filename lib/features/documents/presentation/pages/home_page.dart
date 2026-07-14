@@ -17,6 +17,9 @@ import 'package:escandoc/features/scan/presentation/widgets/photo_detected_dialo
 import 'package:escandoc/features/image_processing/classification/domain/classification_result.dart';
 import 'package:escandoc/core/user/user_preferences.dart';
 import 'package:escandoc/core/theme/document_type_colors.dart';
+import 'package:escandoc/core/widgets/document_type_chip.dart';
+import 'package:escandoc/core/widgets/page_number_chip.dart';
+import 'package:escandoc/features/documents/domain/document_group.dart';
 import 'package:escandoc/features/backup/presentation/providers/backup_provider.dart';
 
 /// Dashboard principal de EscanDocs
@@ -165,28 +168,50 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     context.locale; // Registra dependencia EasyLocalization → rebuild al cambiar idioma
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F0E8),
-      bottomNavigationBar: _buildBottomBar(context),
-      body: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 32),
-              _buildLogo(),
-              const SizedBox(height: 32),
-              _buildScanButton(context),
-              const SizedBox(height: 8),
-              _buildSubtitle(),
-              const SizedBox(height: 24),
-              const Divider(height: 1),
-              const SizedBox(height: 20),
-              _buildRecentSection(context),
-              const SizedBox(height: 24),
-            ],
+    return Container(
+      // Viñeta radial en TODA la pantalla (incluida la barra inferior de los 3
+      // botones): arena en el centro → arena oscuro (café con leche cargado) en
+      // los bordes. Los `stops` mantienen el arena plano hasta ~55% del radio y
+      // recién ahí arranca el oscurecido, así el borde oscuro queda angosto y
+      // pegado a los costados (no lineal), y el centro donde va el contenido no
+      // pierde legibilidad. El Scaffold y la barra van transparentes para dejar
+      // pasar el gradiente sin costuras.
+      decoration: const BoxDecoration(
+        gradient: RadialGradient(
+          center: Alignment.center,
+          radius: 0.85,
+          colors: [
+            Color(0xFFF5F0E8), // arena actual (centro)
+            Color(0xFFF5F0E8),
+            Color(0xFFE6DAC2), // intermedio cálido
+            Color(0xFFCBB48E), // borde: café con leche cargado
+          ],
+          stops: [0.0, 0.55, 0.82, 1.0],
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        bottomNavigationBar: _buildBottomBar(context),
+        body: SafeArea(
+          bottom: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 32),
+                _buildLogo(),
+                const SizedBox(height: 32),
+                _buildScanButton(context),
+                const SizedBox(height: 8),
+                _buildSubtitle(),
+                const SizedBox(height: 24),
+                const Divider(height: 1),
+                const SizedBox(height: 20),
+                _buildRecentSection(context),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),
@@ -199,15 +224,15 @@ class _HomePageState extends State<HomePage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Image.asset('assets/images/logo.png', width: 64, height: 64),
-        const SizedBox(width: 12),
+        Image.asset('assets/images/logo.png', width: 84, height: 84),
+        const SizedBox(width: 16),
         RichText(
           text: const TextSpan(
             children: [
               TextSpan(
                 text: 'Escan',
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: 42,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF388E3C),
                 ),
@@ -215,7 +240,7 @@ class _HomePageState extends State<HomePage> {
               TextSpan(
                 text: 'Docs',
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: 42,
                   fontWeight: FontWeight.w400,
                   color: Color(0xFF1B5E20),
                 ),
@@ -231,7 +256,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildBottomBar(BuildContext context) {
     return Container(
-      color: const Color(0xFFF5F0E8),
+      color: Colors.transparent, // deja pasar la viñeta del fondo
       child: SafeArea(
         top: false,
         child: Padding(
@@ -445,15 +470,49 @@ class _HomePageState extends State<HomePage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'recent_documents'.tr(),
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+            // Encabezado de sección: placa olivita con ícono (misma gramática
+            // que los botones "Ver Todos / Buscar") + texto en verde de la marca,
+            // para que el título haga conjunto con el resto del home y no quede
+            // como un texto negro suelto.
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFFF3F5EC), Color(0xFFD8E0C0)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFA2B882), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF6A8A50).withValues(alpha: 0.35),
+                        offset: const Offset(0, 3),
+                        blurRadius: 6,
+                        spreadRadius: -1,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.schedule,
+                    size: 22,
+                    color: Color(0xFF4A6A28),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'recent_documents'.tr(),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1B5E20),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             if (docsProvider.isLoading && !docsProvider.hasDocuments)
               const Center(child: CircularProgressIndicator())
             else if (!docsProvider.hasDocuments)
@@ -480,6 +539,11 @@ class _HomePageState extends State<HomePage> {
           _RecentDocItem(
             document: recent[i],
             isProcessingOcr: importProvider.processingOcrIds.contains(recent[i].id),
+            // Solo si es parte de un grupo (no rotular un solitario "Factura_2024").
+            pageNumber:
+                DocumentGroup.membersOf(provider.documents, recent[i]).length > 1
+                    ? DocumentGroup.pageNumberOf(recent[i].title)
+                    : null,
             onTap: () => _navigateToDetail(recent[i].id!),
           ),
           if (i < recent.length - 1) const SizedBox(height: 8),
@@ -1105,11 +1169,13 @@ class _RecentDocItem extends StatelessWidget {
   final DocumentModel document;
   final VoidCallback onTap;
   final bool isProcessingOcr;
+  final int? pageNumber;
 
   const _RecentDocItem({
     required this.document,
     required this.onTap,
     this.isProcessingOcr = false,
+    this.pageNumber,
   });
 
   @override
@@ -1122,10 +1188,10 @@ class _RecentDocItem extends StatelessWidget {
         border: Border.all(color: scheme.border, width: 1),
         boxShadow: [
           BoxShadow(
-            color: scheme.border.withValues(alpha: 0.55),
-            offset: const Offset(0, 3),
-            blurRadius: 6,
-            spreadRadius: -1,
+            color: scheme.border.withValues(alpha: 0.85),
+            offset: const Offset(0, 8),
+            blurRadius: 18,
+            spreadRadius: 0,
           ),
         ],
       ),
@@ -1156,9 +1222,20 @@ class _RecentDocItem extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        _formatDate(document.createdAt),
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                      Row(
+                        children: [
+                          // Un chip por fila: "Pág. N" si es página de un grupo,
+                          // o el tipo con color si es individual.
+                          if (pageNumber != null)
+                            PageNumberChip(page: pageNumber!)
+                          else
+                            DocumentTypeChip(documentType: document.documentType),
+                          const SizedBox(width: 8),
+                          Text(
+                            _formatDate(document.createdAt),
+                            style: TextStyle(fontSize: 16, color: Colors.grey[800]),
+                          ),
+                        ],
                       ),
                       if (isProcessingOcr) ...[
                         const SizedBox(height: 4),

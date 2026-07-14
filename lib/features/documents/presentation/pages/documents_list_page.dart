@@ -6,16 +6,10 @@ import 'package:escandoc/features/documents/data/models/document_model.dart';
 import 'package:escandoc/features/documents/presentation/providers/documents_provider.dart';
 import 'package:escandoc/features/documents/presentation/providers/import_provider.dart';
 import 'package:escandoc/core/theme/document_type_colors.dart';
+import 'package:escandoc/core/widgets/document_type_chip.dart';
+import 'package:escandoc/core/widgets/page_number_chip.dart';
+import 'package:escandoc/features/documents/domain/document_group.dart';
 import 'package:escandoc/features/documents/presentation/pages/pdf_order_page.dart';
-
-/// Retorna la clave i18n del tipo de documento a partir del campo documentType.
-String _docTypeKey(String? documentType) {
-  const known = {
-    'documento', 'foto', 'folleto', 'manuscrito', 'recibo', 'factura', 'nota',
-  };
-  final type = documentType?.toLowerCase() ?? '';
-  return known.contains(type) ? 'doc_type_$type' : 'doc_type_documento';
-}
 
 // ---------------------------------------------------------------------------
 
@@ -56,7 +50,7 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
         return list..sort((a, b) => a.title.compareTo(b.title));
       case _SortOrder.byType:
         return list..sort((a, b) =>
-            _docTypeKey(a.documentType).compareTo(_docTypeKey(b.documentType)));
+            documentTypeKey(a.documentType).compareTo(documentTypeKey(b.documentType)));
     }
   }
 
@@ -71,13 +65,6 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
 
   // --- Selección ---
 
-  void _enterSelectionMode(int docId) {
-    setState(() {
-      _selectionMode = true;
-      _selectedIds.add(docId);
-    });
-  }
-
   /// Entra en modo selección sin preseleccionar nada (botón "Seleccionar").
   /// El usuario luego toca documentos para elegir uno o varios.
   void _startSelection() {
@@ -86,13 +73,55 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
     });
   }
 
-  void _toggleSelection(int docId) {
+  /// Tap sobre un documento en modo selección: lo agrega o lo quita.
+  void _onSelectionTap(DocumentModel doc) {
+    if (_selectedIds.contains(doc.id)) {
+      _deselect(doc.id!);
+    } else {
+      _select(doc);
+    }
+  }
+
+  /// Quita un documento de la selección. Siempre individual, sin diálogo.
+  void _deselect(int docId) {
     setState(() {
-      if (_selectedIds.contains(docId)) {
-        _selectedIds.remove(docId);
-        if (_selectedIds.isEmpty) _selectionMode = false;
+      _selectedIds.remove(docId);
+      if (_selectedIds.isEmpty) _selectionMode = false;
+    });
+  }
+
+  /// Agrega un documento a la selección (tap o long-press).
+  ///
+  /// Si el documento es parte de un PDF multipágina cuyas páginas todavía NO
+  /// están en la selección, pregunta si sumar solo esa o todo el documento.
+  /// Si ese grupo ya está "tocado" (alguna página seleccionada), suma solo esa
+  /// sin volver a preguntar → así el usuario ajusta el grupo página por página.
+  /// La pregunta se hace aunque haya otras cosas seleccionadas (permite unir
+  /// dos grupos, o sumar una carátula suelta a un grupo).
+  Future<void> _select(DocumentModel doc) async {
+    final all = context.read<DocumentsProvider>().documents;
+    final members = DocumentGroup.membersOf(all, doc);
+    final groupIds = members.map((d) => d.id!).toSet();
+    final groupEngaged = groupIds.any(_selectedIds.contains);
+
+    // Solitario, o grupo ya tocado → suma individual directo.
+    if (members.length <= 1 || groupEngaged) {
+      setState(() {
+        _selectionMode = true;
+        _selectedIds.add(doc.id!);
+      });
+      return;
+    }
+
+    // Grupo nuevo → preguntar alcance.
+    final scope = await _showGroupSelectDialog(groupCount: members.length);
+    if (scope == null || !mounted) return;
+    setState(() {
+      _selectionMode = true;
+      if (scope == _SelectScope.group) {
+        _selectedIds.addAll(groupIds);
       } else {
-        _selectedIds.add(docId);
+        _selectedIds.add(doc.id!);
       }
     });
   }
@@ -105,33 +134,15 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
   }
 
   Future<void> _deleteSelected() async {
-    final allDocs = context.read<DocumentsProvider>().documents;
-
-    // Expandir la selección a sus grupos (páginas de un mismo PDF multipágina).
-    final groupExpanded = _expandToGroups(allDocs, _selectedIds);
-    final hasUnselectedSiblings = groupExpanded.length > _selectedIds.length;
-
-    final List<int> idsToDelete;
-    if (hasUnselectedSiblings) {
-      // La selección toca un grupo con páginas no seleccionadas → preguntar.
-      final scope = await _showGroupDeleteDialog(
-        selectedCount: _selectedIds.length,
-        groupCount: groupExpanded.length,
-      );
-      if (scope == null || !mounted) return; // Canceló
-      idsToDelete = scope == _DeleteScope.group
-          ? groupExpanded.toList()
-          : List<int>.from(_selectedIds);
-    } else {
-      // Sin grupo de por medio → confirmación normal.
-      final count = _selectedIds.length;
-      final title = count == 1
-          ? 'delete_confirm_title'.tr()
-          : 'delete_confirm_many'.tr(args: [count.toString()]);
-      final confirmed = await _showDeleteConfirmation(title);
-      if (confirmed != true || !mounted) return;
-      idsToDelete = List<int>.from(_selectedIds);
-    }
+    // La pregunta de grupo ya ocurrió al seleccionar: acá la selección es
+    // exactamente lo que el usuario quiere borrar → confirmación simple.
+    final count = _selectedIds.length;
+    final title = count == 1
+        ? 'delete_confirm_title'.tr()
+        : 'delete_confirm_many'.tr(args: [count.toString()]);
+    final confirmed = await _showDeleteConfirmation(title);
+    if (confirmed != true || !mounted) return;
+    final idsToDelete = List<int>.from(_selectedIds);
 
     final provider = context.read<DocumentsProvider>();
     final messenger = ScaffoldMessenger.of(context);
@@ -151,52 +162,11 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
     ));
   }
 
-  // --- Agrupación de páginas de PDF multipágina ---
-  //
-  // No hay un "grupo" en la BD: las páginas de un PDF importado se guardan como
-  // documentos sueltos. Se infiere el grupo por dos señales combinadas:
-  //   1. Título con patrón `base_N` (ej. "tutorial_1", "tutorial_2"…).
-  //   2. createdAt dentro de la misma ráfaga de import (ventana de tolerancia).
-  // Combinarlas evita falsos positivos (un doc suelto "cosa_3" de otro día no se
-  // agrupa con un "cosa_1" importado hoy).
-
-  static final RegExp _groupPattern = RegExp(r'^(.+)_(\d+)$');
-  // Las páginas de un mismo import comparten `baseTime` (ImportProvider lo captura
-  // una sola vez) y reciben createdAt = baseTime + offset de milisegundos, NO el
-  // tiempo de procesamiento real. Verificado en device: 10 páginas abarcaron 9ms.
-  // Por eso una ventana chica no parte un PDF real (necesitarías ~30.000 páginas)
-  // y a la vez achica el riesgo de fusionar dos imports distintos.
-  static const Duration _groupWindow = Duration(seconds: 30);
-
-  /// Prefijo de grupo de un título `base_N`, o null si no matchea el patrón.
-  String? _groupBase(String title) => _groupPattern.firstMatch(title)?.group(1);
-
-  /// Expande [selectedIds] incluyendo las páginas hermanas del mismo grupo.
-  /// Si ningún seleccionado pertenece a un grupo, devuelve la misma selección.
-  Set<int> _expandToGroups(List<DocumentModel> all, Set<int> selectedIds) {
-    final result = Set<int>.from(selectedIds);
-    final selectedDocs = all.where((d) => selectedIds.contains(d.id));
-    for (final doc in selectedDocs) {
-      final base = _groupBase(doc.title);
-      if (base == null) continue;
-      for (final other in all) {
-        if (other.id == null) continue;
-        if (_groupBase(other.title) == base &&
-            other.createdAt.difference(doc.createdAt).abs() <= _groupWindow) {
-          result.add(other.id!);
-        }
-      }
-    }
-    return result;
-  }
-
-  /// Diálogo de elección cuando la selección toca un grupo de PDF.
+  /// Diálogo al sumar a la selección una página de un PDF multipágina.
+  /// Pregunta si elegir todo el documento o solo esa página.
   /// Devuelve el alcance elegido, o null si cancela.
-  Future<_DeleteScope?> _showGroupDeleteDialog({
-    required int selectedCount,
-    required int groupCount,
-  }) {
-    return showDialog<_DeleteScope>(
+  Future<_SelectScope?> _showGroupSelectDialog({required int groupCount}) {
+    return showDialog<_SelectScope>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => Dialog(
@@ -208,37 +178,40 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'delete_group_title'.tr(),
+                'select_group_title'.tr(),
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
-                'delete_group_message'.tr(),
+                'select_group_message'.tr(),
                 style: TextStyle(fontSize: 15, color: Colors.grey[600]),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
+              // Opción principal: todo el documento (más probable al tocar una
+              // página de un PDF escaneado). Estilo azul, como "Crear PDF".
               SizedBox(
                 width: double.infinity,
                 child: _DeleteDialogButton(
-                  label: 'delete_only_selected'.tr(args: [selectedCount.toString()]),
-                  onTap: () => Navigator.pop(ctx, _DeleteScope.selected),
-                  gradientColors: const [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
-                  textColor: const Color(0xFF5A4A30),
-                  shadowColor: const Color(0xFF9A8060),
-                  border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
+                  label: 'select_whole_group'.tr(args: [groupCount.toString()]),
+                  onTap: () => Navigator.pop(ctx, _SelectScope.group),
+                  gradientColors: const [Color(0xFFE3F2FD), Color(0xFFB3D4EC)],
+                  textColor: const Color(0xFF1565C0),
+                  shadowColor: const Color(0xFF3A7A9A),
+                  border: Border.all(color: const Color(0xFF7AAFC8), width: 1.5),
                 ),
               ),
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: _DeleteDialogButton(
-                  label: 'delete_whole_group'.tr(args: [groupCount.toString()]),
-                  onTap: () => Navigator.pop(ctx, _DeleteScope.group),
-                  gradientColors: [Colors.red[400]!, Colors.red[800]!],
-                  textColor: Colors.white,
-                  shadowColor: Colors.red[900]!,
+                  label: 'select_only_this'.tr(),
+                  onTap: () => Navigator.pop(ctx, _SelectScope.single),
+                  gradientColors: const [Color(0xFFFDFAF4), Color(0xFFE0D4BC)],
+                  textColor: const Color(0xFF5A4A30),
+                  shadowColor: const Color(0xFF9A8060),
+                  border: Border.all(color: const Color(0xFFBBAA88), width: 1.5),
                 ),
               ),
               const SizedBox(height: 12),
@@ -631,17 +604,22 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
               final doc = docs[index];
               final importProvider = context.watch<ImportProvider>();
               final isSelected = _selectedIds.contains(doc.id);
+              // Número de página solo si el doc es realmente parte de un grupo
+              // (evita rotular "Pág. 2024" a un solitario tipo "Factura_2024").
+              final isGrouped =
+                  DocumentGroup.membersOf(provider.documents, doc).length > 1;
+              final pageNumber =
+                  isGrouped ? DocumentGroup.pageNumberOf(doc.title) : null;
               return _DocItem(
                 document: doc,
                 isProcessingOcr: importProvider.processingOcrIds.contains(doc.id),
                 isSelected: isSelected,
                 selectionMode: _selectionMode,
+                pageNumber: pageNumber,
                 onTap: _selectionMode
-                    ? () => _toggleSelection(doc.id!)
+                    ? () => _onSelectionTap(doc)
                     : () => _navigateToDetail(doc.id!),
-                onLongPress: _selectionMode
-                    ? null
-                    : () => _enterSelectionMode(doc.id!),
+                onLongPress: _selectionMode ? null : () => _select(doc),
               );
             },
           ),
@@ -761,8 +739,8 @@ class _DocumentsListPageState extends State<DocumentsListPage> {
 // Widgets privados
 // ---------------------------------------------------------------------------
 
-/// Alcance del borrado cuando la selección toca un grupo de PDF multipágina.
-enum _DeleteScope { selected, group }
+/// Alcance al sumar a la selección una página de un PDF multipágina.
+enum _SelectScope { single, group }
 
 class _DocItem extends StatelessWidget {
   final DocumentModel document;
@@ -771,6 +749,7 @@ class _DocItem extends StatelessWidget {
   final bool isProcessingOcr;
   final bool isSelected;
   final bool selectionMode;
+  final int? pageNumber;
 
   const _DocItem({
     required this.document,
@@ -779,6 +758,7 @@ class _DocItem extends StatelessWidget {
     this.isProcessingOcr = false,
     this.isSelected = false,
     this.selectionMode = false,
+    this.pageNumber,
   });
 
   @override
@@ -836,9 +816,20 @@ class _DocItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 3),
-                    Text(
-                      _formatDate(document.createdAt),
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    Row(
+                      children: [
+                        // Un chip por fila: "Pág. N" si es página de un grupo,
+                        // o el tipo con color si es individual.
+                        if (pageNumber != null)
+                          PageNumberChip(page: pageNumber!)
+                        else
+                          DocumentTypeChip(documentType: document.documentType),
+                        const SizedBox(width: 8),
+                        Text(
+                          _formatDate(document.createdAt),
+                          style: TextStyle(fontSize: 14, color: Colors.grey[800]),
+                        ),
+                      ],
                     ),
                     if (isProcessingOcr) ...[
                       const SizedBox(height: 3),
@@ -865,12 +856,6 @@ class _DocItem extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
-              if (!selectionMode)
-                _TypeChip(
-                  documentType: document.documentType,
-                  typeKey: _docTypeKey(document.documentType),
-                ),
             ],
           ),
         ),
@@ -913,38 +898,6 @@ class _DocItem extends StatelessWidget {
     ];
     final month = months[date.month - 1].tr();
     return '${date.day} $month ${date.year}';
-  }
-}
-
-class _TypeChip extends StatelessWidget {
-  final String? documentType;
-  final String typeKey;
-  const _TypeChip({required this.documentType, required this.typeKey});
-
-  @override
-  Widget build(BuildContext context) {
-    final label = typeKey.tr();
-    final display = label.isEmpty
-        ? label
-        : label[0].toUpperCase() + label.substring(1);
-    final scheme = DocumentTypeColors.of(documentType);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: scheme.bg,
-        borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: scheme.border, width: 1),
-      ),
-      child: Text(
-        display,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: scheme.fg,
-        ),
-      ),
-    );
   }
 }
 

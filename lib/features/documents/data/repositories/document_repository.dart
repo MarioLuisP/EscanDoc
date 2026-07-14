@@ -241,6 +241,24 @@ class DocumentRepository {
     );
   }
 
+  /// Actualiza el texto de la nota y su imagen (nuevo file_path) en una sola
+  /// operación. Se usa al editar una nota: el texto cambió, así que hay que
+  /// regenerar el pergamino y apuntar el documento a la imagen nueva.
+  Future<void> updateNoteImage(
+      int documentId, String? content, String filePath) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'documents',
+      {
+        'note_content': content,
+        'note_search': content != null ? TextNormalizer.normalize(content) : null,
+        'file_path': filePath,
+      },
+      where: 'id = ?',
+      whereArgs: [documentId],
+    );
+  }
+
   /// Cuenta documentos cuyo título empieza con [prefix] creados en [date]
   ///
   /// Usado para generar el número secuencial del nombre:

@@ -1,6 +1,28 @@
 claude-opus-4-7
 claude-sonnet-4-6
 
-claude-opus-4-5-20251101
-claude-sonnet-4-5-20250929
-claude-haiku-4-5-20251001
+Miré todo (menú, ajustes, y el código de undo/redo). Es un editor de texto plano Android en Java — no se copia código, pero hay 3-4 ideas que sí valen para nuestro editor de notas, filtradas por el público 60-85:
+
+  Lo que rescataría (ranked)
+
+  1. Deshacer / Rehacer (undo/redo) — el más valioso.
+  Ellos tienen una implementación robusta (EditTextUndoRedo). Nuestro editor de notas no tiene undo. Para un mayor que borra algo sin querer o mete la pata escribiendo, un botón "↶ Deshacer" es enorme. Y la buena noticia: no
+  hace falta portar el algoritmo de Java — el TextField de Flutter ya trae undo/redo nativo (undoController / gesto de la plataforma). O sea, es barato de sumar. Este es mi #1.
+
+  2. Tamaño de letra ajustable al escribir.
+  Ellos tienen SETTING_FONT_SIZE con escala Extra chico → Extra grande. Nuestro TextField de la nota está fijo en 17. Para vista cansada, dejar que el usuario agrande la letra mientras escribe/lee es probablemente la mejor
+  mejora de accesibilidad que podemos hacerle a las notas. Va justo con nuestra regla del "test del nene de 5 años". Un par de botones A- / A+ o un ajuste en Settings.
+
+  3. Mantener la pantalla encendida mientras edita (wake lock).
+  Tienen SETTING_USE_WAKE_LOCK. Un mayor escribe lento; que la pantalla se apague/bloquee a mitad de la nota molesta. Mantenerla despierta solo dentro del editor es un detalle chico y amable (en Flutter: wakelock_plus, o el
+  flag nativo). Bajo costo.
+
+  4. Autoguardado / red de seguridad (menor).
+  Tienen autosave al cerrar. Nosotros ya tenemos GUARDAR explícito + confirmación al salir + regeneración de imagen, así que no lo copiaría tal cual. Pero una versión liviana —guardar un borrador para que si se cierra la app no
+  se pierda lo tipeado— es una idea de seguridad para tener en el radar.
+
+  Lo que descartaría
+
+  Recientes, encoding de archivos, word-wrap, abrir último archivo, buscar dentro del texto — no aplican a cómo funcionan nuestras notas (van a imagen/pergamino, no a archivos de texto).
+
+  Mi recomendación: para la próxima sesión, Undo/Redo (nativo, barato) + tamaño de letra ajustable son los dos que más mueven la aguja para nuestro usuario. El wake lock es un lindo extra de bajo costo.

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:escandoc/core/services/notification_prompt_service.dart';
 import 'package:escandoc/core/services/notification_service.dart';
@@ -171,6 +172,44 @@ class DocumentsProvider extends ChangeNotifier {
         _documents[index] = _documents[index].copyWith(noteContent: content);
       }
       notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Error al guardar nota';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Actualiza el texto de una nota y su imagen regenerada (nuevo [newFilePath]).
+  ///
+  /// A diferencia de [updateNote], acá el texto cambió → el pergamino se
+  /// regeneró como un archivo nuevo. Apunta el documento a la imagen nueva y
+  /// borra la vieja (best-effort) para no acumular archivos huérfanos.
+  Future<bool> updateNoteImage(
+      int documentId, String? content, String newFilePath) async {
+    try {
+      final index = _documents.indexWhere((d) => d.id == documentId);
+      final oldPath = index != -1
+          ? _documents[index].filePath
+          : _selectedDocument?.filePath;
+
+      await _repository.updateNoteImage(documentId, content, newFilePath);
+
+      if (_selectedDocument?.id == documentId) {
+        _selectedDocument = _selectedDocument!
+            .copyWith(noteContent: content, filePath: newFilePath);
+      }
+      if (index != -1) {
+        _documents[index] = _documents[index]
+            .copyWith(noteContent: content, filePath: newFilePath);
+      }
+      notifyListeners();
+
+      if (oldPath != null && oldPath != newFilePath) {
+        try {
+          await File(oldPath).delete();
+        } catch (_) {/* best-effort */}
+      }
       return true;
     } catch (e) {
       _errorMessage = 'Error al guardar nota';

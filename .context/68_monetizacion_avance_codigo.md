@@ -122,3 +122,6 @@ rama iOS aparte.
 - **2026-07-13/14** — Fase 1 (Domain) implementada con TDD. 13 tests GREEN,
   analyzer limpio. Feature `subscription` creada. Nada dependiente de plugins
   nativos todavía.
+- **2026-07-14** — Confirmado que la monetización funciona en iOS con el mismo
+  código y que el `codemagic.yaml` NO necesita cambios para IAP/RevenueCat (ver
+  sección "Multiplataforma — iOS").
