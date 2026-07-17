@@ -5,11 +5,11 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
-      flutter: 3.41.0
-      # Xcode 16.4 (NO 26) a propósito: ML Kit (MLImage) no trae slice arm64 de
-      # simulador, y Xcode 26 exige arm64 → no linkea. Con Xcode 16.x el simulador
-      # corre en x86_64 (Rosetta), donde MLImage SÍ tiene slice. Solo para Appetize.
-      xcode: 16.4
+      # Combo EXACTO de la build de simulador que SÍ funcionó (9-may-2026, commit
+      # db5ff2d → generó Runner.app 74MB). Confirmado en el log de esa build:
+      # Flutter 3.41.9 + Xcode 26.4.1. Reproducimos eso, sin adivinar.
+      flutter: 3.41.9
+      xcode: 26.4
       cocoapods: default
     cache:
       cache_paths:
