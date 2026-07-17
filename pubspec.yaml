@@ -82,6 +82,7 @@ dependencies:
   path: ^1.9.1                       # Manipulación de rutas
   permission_handler: ^12.0.1        # Manejo de permisos (camera, microphone)
   url_launcher: ^6.3.2               # Abrir URLs en navegador externo
+  auto_size_text: ^3.0.0             # Título del detalle: se achica solo lo justo para caber en 2 líneas sin recortar (min 14pt)
 
 dev_dependencies:
   flutter_test:

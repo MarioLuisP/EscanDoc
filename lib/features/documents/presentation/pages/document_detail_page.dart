@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
@@ -137,7 +138,7 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
             tooltip: 'back_button'.tr(),
           ),
           Expanded(
-            child: Text(
+            child: AutoSizeText(
               title,
               textAlign: TextAlign.center,
               style: const TextStyle(
@@ -145,8 +146,11 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              // Detalle: el título nunca se recorta. Queda 18pt si entra; si es
+              // largo, se achica solo lo necesario para caber en 2 líneas, sin
+              // bajar de 14pt (piso legible para público 60-85).
+              maxLines: 2,
+              minFontSize: 14,
             ),
           ),
           IconButton(

@@ -41,11 +41,12 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.5'
-      # NOTA: NO excluir arm64 del simulador. Xcode 26 en Apple Silicon (Mac M2 de
-      # Codemagic) EXIGE arm64 para el simulador, y Appetize corre en runners arm64.
-      # ML Kit >= 0.15 y tflite >= 0.12 ya traen slice de simulador arm64, así que la
-      # vieja exclusión (por MLImage sin slice de sim) quedó obsoleta y rompía el build.
-      # Solo afecta al build de simulador; la IPA de device no usa este setting.
+      # ML Kit (MLImage) NO trae slice arm64 de simulador (limitación conocida de
+      # Google, sin fix al día de hoy). Por eso el simulador se compila en x86_64:
+      # excluimos arm64 y el workflow de simulador usa Xcode 16.4 (Rosetta). Solo
+      # afecta al build de SIMULADOR (sdk=iphonesimulator*); la IPA de device (Xcode
+      # 26.2) no usa este setting. → para Appetize.
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
       # permission_handler: activar solo los permisos que usa la app
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
         '$(inherited)',

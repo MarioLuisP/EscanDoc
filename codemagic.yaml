@@ -6,7 +6,10 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       flutter: 3.41.0
-      xcode: 26.2
+      # Xcode 16.4 (NO 26) a propósito: ML Kit (MLImage) no trae slice arm64 de
+      # simulador, y Xcode 26 exige arm64 → no linkea. Con Xcode 16.x el simulador
+      # corre en x86_64 (Rosetta), donde MLImage SÍ tiene slice. Solo para Appetize.
+      xcode: 16.4
       cocoapods: default
     cache:
       cache_paths:
