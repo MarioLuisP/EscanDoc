@@ -5,14 +5,19 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
-      flutter: stable
-      xcode: latest
+      flutter: 3.41.0
+      xcode: 26.2
       cocoapods: default
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
+        - ios/Pods
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
       - name: Install pods
-        script: cd ios && pod install --repo-update && cd ..
+        script: cd ios && pod install && cd ..
       - name: Build iOS for simulator
         script: flutter build ios --debug --simulator --no-codesign
     artifacts:
@@ -29,9 +34,14 @@ workflows:
         - app_store_credentials
       vars:
         BUNDLE_ID: "com.passalia.escandoc"
-      flutter: stable
-      xcode: latest
+      flutter: 3.41.0
+      xcode: 26.2
       cocoapods: default
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
+        - ios/Pods
     scripts:
       - name: Enable Push Notifications entitlement
         script: |
@@ -81,15 +91,14 @@ workflows:
         script: keychain add-certificates
       - name: Set up code signing
         script: xcode-project use-profiles
-      - name: Disable Swift Package Manager (el proyecto usa CocoaPods)
-        script: flutter config --no-enable-swift-package-manager
       - name: Install CocoaPods (genera el workspace antes del build)
         # `flutter build ipa` chequea la integración SPM ANTES de crear el
         # workspace con pods, y Runner.xcworkspace no está commiteado → falla con
         # "Xcode workspace not found". Correr pod install acá lo genera a tiempo.
+        # (SPM ya está desactivado desde pubspec.yaml → flutter.config)
         script: |
           cd ios
-          pod install --repo-update
+          pod install
           cd ..
       - name: Build IPA
         script: |

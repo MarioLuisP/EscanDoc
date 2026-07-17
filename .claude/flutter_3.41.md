@@ -28,9 +28,7 @@ Beneficios concretos para este proyecto
   ---
 Alertas importantes
 
-AGP 9 — NO actualizar: El documento advierte explícitamente que no hay que actualizar a Android Gradle Plugin 9 todavía. Si al hacer flutter pub get sugiere actualizar AGP, rechazarlo.
-
-iOS UIScene lifecycle: Ahora activo por default. Si el build de iOS en Codemagic empieza a fallar, revisar la guía de migración de AppDelegate.
+ve
 
   ---
 ¿Qué hacemos?

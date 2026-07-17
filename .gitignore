@@ -100,3 +100,11 @@ Icon?
 # Material de referencia (repos clonados externos)
 # ------------------------------
 .context/repos_qh/
+
+# ------------------------------
+# Solo local — Codemagic NO los necesita (aceleran el fetch del build)
+# Documentación/notas de trabajo y checkpoints de entrenamiento del clasificador.
+# Quedan en disco; salen de git.
+# ------------------------------
+.context/
+z_keras/
