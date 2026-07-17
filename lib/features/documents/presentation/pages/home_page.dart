@@ -184,7 +184,7 @@ class _HomePageState extends State<HomePage> {
             Color(0xFFF5F0E8), // arena actual (centro)
             Color(0xFFF5F0E8),
             Color(0xFFE6DAC2), // intermedio cálido
-            Color(0xFFCBB48E), // borde: café con leche cargado
+            Color(0xFFD6C3A3), // borde: café con leche (aclarado, menos cargado)
           ],
           stops: [0.0, 0.55, 0.82, 1.0],
         ),

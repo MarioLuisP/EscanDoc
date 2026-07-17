@@ -90,7 +90,11 @@ workflows:
       - name: Add certificates to keychain
         script: keychain add-certificates
       - name: Set up code signing
-        script: xcode-project use-profiles
+        # testFlightInternalTestingOnly: la build va SOLO a testers internos → no
+        # dispara el beta review de Apple (que exige "test information" y hacía fallar
+        # el último paso). Se inyecta en el export_options.plist que usa el Build IPA.
+        script: |
+          xcode-project use-profiles --custom-export-options='{"testFlightInternalTestingOnly": true}'
       - name: Install CocoaPods (genera el workspace antes del build)
         # `flutter build ipa` chequea la integración SPM ANTES de crear el
         # workspace con pods, y Runner.xcworkspace no está commiteado → falla con

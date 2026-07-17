@@ -41,7 +41,7 @@ dependencies:
   # ═══════════════════════════════════════════════════════════════════════════
   # OCR & ML (Post-scan processing)
   # ═══════════════════════════════════════════════════════════════════════════
-  google_mlkit_text_recognition: ^0.15.0  # OCR offline después del escaneo
+  google_mlkit_text_recognition: ^0.16.0  # OCR offline. 0.16 agrega simulador Apple Silicon (iOS 26+) → Appetize. Bump: compileSdk 36 en Android.
   tflite_flutter: ^0.12.1                 # TensorFlow Lite para clasificación de imágenes
 
   # ═══════════════════════════════════════════════════════════════════════════
