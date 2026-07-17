@@ -146,10 +146,11 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
-              // Detalle: el título nunca se recorta. Queda 18pt si entra; si es
-              // largo, se achica solo lo necesario para caber en 2 líneas, sin
-              // bajar de 14pt (piso legible para público 60-85).
-              maxLines: 2,
+              // Detalle: el título NUNCA se recorta (prioridad firme). Queda 18pt si
+              // entra; si es largo, se achica hasta 14pt (piso legible 60-85) y usa
+              // una 3ª línea solo si hace falta. Con maxLines:2 los títulos muy largos
+              // perdían palabras aun a 14pt → se sube a 3 para que entren completos.
+              maxLines: 3,
               minFontSize: 14,
             ),
           ),
