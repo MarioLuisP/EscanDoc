@@ -37,8 +37,9 @@ workflows:
         - app_store_credentials
       vars:
         BUNDLE_ID: "com.passalia.escandoc"
-      flutter: 3.41.0
-      xcode: 26.2
+      # Alineado al combo proven (mismo que el simulador): Flutter 3.41.9 + Xcode 26.4.1.
+      flutter: 3.41.9
+      xcode: 26.4
       cocoapods: default
     cache:
       cache_paths:
